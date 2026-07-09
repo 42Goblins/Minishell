@@ -20,8 +20,10 @@ SRCS		=		ft_atoi.c ft_bzero.c ft_calloc.c ft_isalnum.c ft_isalpha.c \
 					ft_putendl_fd.c ft_putnbr_fd.c ft_strmapi.c ft_striteri.c
 
 
+OBJ_DIR		=		objs
+
 # changements des .c en .o #
-OBJS		=		$(SRCS:.c=.o)
+OBJS		=		$(SRCS:%.c=$(OBJ_DIR)/%.o)
 
 # fichiers bonus #
 BONUS_SRCS	=		ft_lstadd_back_bonus.c ft_lstadd_front_bonus.c ft_lstclear_bonus.c \
@@ -29,11 +31,11 @@ BONUS_SRCS	=		ft_lstadd_back_bonus.c ft_lstadd_front_bonus.c ft_lstclear_bonus.c
 					ft_lstmap_bonus.c ft_lstnew_bonus.c ft_lstsize_bonus.c
 
 # changements des fichiers bonus .c en .o #
-BONUS_OBJS	=		$(BONUS_SRCS:.c=.o)
+BONUS_OBJS	=		$(BONUS_SRCS:%.c=$(OBJ_DIR)/%.o)
 
 # commandes #
 CC			=		gcc
-RM			=		rm -f
+RM			=		rm -rf
 AR 			=		ar rcs
 CFLAGS		=		-Wall -Wextra -Werror -I.
 
@@ -49,13 +51,17 @@ all:				$(NAME)
 $(NAME):			$(OBJS)
 					$(AR) $(NAME) $(OBJS)
 
+$(OBJ_DIR)/%.o:		%.c
+					mkdir -p $(OBJ_DIR)
+					$(CC) $(CFLAGS) -c $< -o $@
+
 # Ajout des bonus #
 bonus:				$(OBJS) $(BONUS_OBJS)
-					$(AR) $(NAME) $(BONUS_OBJS)
+					$(AR) $(NAME) $(OBJS) $(BONUS_OBJS)
 
 # Supprimer les fichiers objets (.o) #
 clean:
-					$(RM) $(OBJS) $(BONUS_OBJS)
+					$(RM) $(OBJ_DIR) *.o
 
 # Supprimer tout (objets + librairie) #
 fclean:				clean
@@ -66,7 +72,5 @@ re:					fclean all
 
 # cibles pour eviter les conflits de noms #
 .PHONY:				all clean fclean re bonus
-
-
 
 
