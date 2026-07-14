@@ -229,3 +229,6 @@ Ordre conseille :
 8. Ajouter les erreurs de syntaxe.
 
 Ne pas commencer par les cas compliques comme heredoc + pipes + quotes en meme temps.
+
+Conseil alessio :
+- avoir une boucle while qui prend mes input, et stocker ce que jai ecrit qql part, appeler la bonne fonctiion par apport au message que je recois.

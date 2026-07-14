@@ -22,3 +22,11 @@ voila jai fait quoi ajd mdr c pas grand chose mais voila :
 - Code `add_token_back`: ajoute un token a la fin de la liste chainee.
 
 et juste la je push tout sur main pcq je pense pas tu vas bc coder dici que tu reviennes donc jme suis dit c pas grave, et dans le main.c ya juste des trucs que jai besoin pour avancer au debut mes trucs, mais jme permet pcq jpense tu vas pas bc coder comme jai diiiit voilaaaa
+
+# 14.07.26
+
+jai créé une branche "chloe" et jai mtn compris un peu comment ca marchais et comment on peut utiliser les branches pour taffer lol
+
+(du coup jai enlevé mes trucs de "main", a pars ce que javais deja mis dans le .h,) et ca serait bien que tu ai aussi ta branche, et encore une autre branche "integration", ou on test nos trucs, ou on rejoins nos trucs et on met que sur main ce qui marche et fonctionne.
+
+il est possible que sur ta branche et la mienne on ai un .h, et un main.c pour quand on bosse, (pareil pour "integration") mais quand on merge avc main, il faut les mettre dans le .gitignore, car il peut y avoir des conflits si les fichier sont différents mais ont le meme nom ta capté 
