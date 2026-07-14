@@ -92,6 +92,108 @@ Decisions communes:
 - comment stocker `env` et `last_status`
 - affichage debug temporaire des tokens et commandes
 
+### Contrat v1 simple a proposer a Dounia
+
+Vous n'avez pas besoin d'avoir les structs parfaites des le debut. Par contre,
+il faut une version v1 assez stable pour que Dounia puisse coder l'exec sans
+attendre que tout le parsing soit fini.
+
+Objectif du contrat:
+
+- toi tu transformes une ligne en liste de `t_cmd`
+- Dounia execute uniquement cette liste de `t_cmd`
+- Dounia ne repars pas de la string brute pour deviner les pipes/redirections
+- si le parsing trouve une erreur, l'exec n'est pas appelee
+
+Interface simple possible:
+
+```c
+int	parse_line(char *line, t_shell *shell, t_cmd **cmds);
+int	execute_pipeline(t_cmd *cmds, t_shell *shell);
+```
+
+Comportement attendu:
+
+- `parse_line` renvoie `0` si une commande est prete
+- `parse_line` renvoie `1` si la ligne est vide et qu'il n'y a rien a executer
+- `parse_line` renvoie `2` si erreur de syntaxe, par exemple `|` ou `echo >`
+- `parse_line` renvoie `-1` si erreur malloc
+- si `parse_line` ne renvoie pas `0`, Dounia n'appelle pas l'exec
+
+Pour discuter simplement avec Dounia, tu peux presenter le flow comme ca:
+
+```text
+line
+-> parse_line()
+-> t_cmd *cmds
+-> execute_pipeline(cmds, shell)
+-> free_cmds(cmds)
+```
+
+### Ce que Dounia peut supposer en v1
+
+Si `execute_pipeline` recoit une liste de `t_cmd`, Dounia peut supposer que:
+
+- chaque maillon `t_cmd` correspond a une commande entre deux pipes
+- `cmd->next` veut dire qu'il y a un pipe vers la commande suivante
+- `cmd->argv` est un tableau termine par `NULL`, comme attendu par `execve`
+- `cmd->argv[0]` est le nom de la commande ou du builtin
+- les redirections ne sont pas dans `argv`
+- les redirections sont dans `cmd->redirs`
+- les redirections sont dans l'ordre ou elles apparaissent dans la ligne
+- les quotes de syntaxe ont deja ete retirees
+- les variables ont deja ete expand quand il faut
+
+Exemple:
+
+```sh
+cat < input | grep hello > out
+```
+
+Doit devenir:
+
+```text
+cmd 1:
+  argv: ["cat", NULL]
+  redirs: [R_IN -> "input"]
+  next: cmd 2
+
+cmd 2:
+  argv: ["grep", "hello", NULL]
+  redirs: [R_OUT -> "out"]
+  next: NULL
+```
+
+Avec ce contrat, Dounia peut deja coder:
+
+- execution d'une commande simple avec `argv`
+- detection builtin vs executable
+- pipes en suivant `cmd->next`
+- redirections en parcourant `cmd->redirs`
+- tests d'exec en creant une `t_cmd` a la main meme si ton parser n'est pas fini
+
+### Ce qui peut rester provisoire
+
+Vous pouvez accepter que certaines choses changent plus tard:
+
+- le nom exact de certaines fonctions
+- l'ajout de champs dans `t_shell`
+- des helpers de debug
+- des fonctions de free plus propres
+- les details de heredoc
+
+Par contre, evitez de changer toutes les deux heures:
+
+- le sens de `t_cmd`
+- le fait que `cmd->next` represente les pipes
+- le fait que `argv` soit un tableau termine par `NULL`
+- le fait que les redirections soient separees dans `t_redir`
+- les noms des champs principaux: `argv`, `redirs`, `next`, `type`, `target`
+
+Donc oui, il faut des structs assez exactes pour que Dounia commence, mais elles
+peuvent etre une version v1. Le plus important est que vous soyez d'accord sur
+ce que l'exec a le droit de lire et sur ce que le parsing promet de fournir.
+
 ## 2. Lexique simple du parsing
 
 ### Token
@@ -187,10 +289,21 @@ Regles importantes:
 L'expansion est cote parsing, mais elle a besoin d'informations gardees par le
 core/execution: l'environnement et le dernier exit status.
 
-### Arbre syntaxique
+### Structure de commandes
 
-Un arbre syntaxique est une representation structuree de la commande apres la
-tokenisation. Au lieu d'avoir juste une phrase, on a des blocs avec un sens.
+Pour le Minishell obligatoire, on ne prevoit pas de faire les bonus. Donc on n'a
+pas besoin de construire un vrai arbre syntaxique complexe.
+
+Les bonus comme `&&`, `||`, les parentheses et les priorites demanderaient une
+structure plus avancee. Comme on ne les fait pas, le contrat le plus simple est
+une liste chainee de commandes:
+
+```text
+t_cmd -> t_cmd -> t_cmd
+```
+
+Chaque `t_cmd` represente une commande entre deux pipes. Si `cmd->next` existe,
+ca veut dire qu'il y a un pipe vers la commande suivante.
 
 Exemple:
 
@@ -198,29 +311,22 @@ Exemple:
 echo "hello $USER" | grep h > out.txt
 ```
 
-Structure logique:
+Structure attendue:
 
 ```text
-pipeline
-|-- cmd 1
-|   |-- argv: ["echo", "hello <valeur_de_USER>"]
-|   `-- redirs: []
-`-- cmd 2
-    |-- argv: ["grep", "h"]
-    `-- redirs: [OUT -> out.txt]
+cmd 1:
+  argv: ["echo", "hello <valeur_de_USER>", NULL]
+  redirs: []
+  next: cmd 2
+
+cmd 2:
+  argv: ["grep", "h", NULL]
+  redirs: [R_OUT -> "out.txt"]
+  next: NULL
 ```
 
-Dans un vrai shell complet, l'arbre peut devenir complique avec `&&`, `||`,
-parentheses et priorites.
-
-Pour Minishell obligatoire, une liste chainee de commandes suffit souvent:
-
-```text
-t_cmd -> t_cmd -> t_cmd
-```
-
-Chaque `t_cmd` represente une commande entre deux pipes. Les redirections sont
-attachees a la commande concernee.
+Les redirections sont attachees a la commande concernee, pas gardees comme des
+arguments dans `argv`.
 
 ## 3. Contrat parsing -> execution
 
@@ -690,32 +796,193 @@ Comparer avec `bash` pour les cas ou vous hésitez.
 
 ## 9. Coordination Git et travail d'equipe
 
-Regles simples:
+Objectif: pouvoir travailler chacune de son cote sans casser le travail de
+l'autre, et garder une version stable du projet.
 
-- travailler sur des branches separees
-- ne pas modifier la partie de l'autre sans prevenir
-- stabiliser `include/minishell.h` ensemble
-- faire des petits commits lisibles
-- tester avant de merge
-- ne pas attendre la fin pour brancher parsing et exec ensemble
-- garder des fonctions debug au debut, puis les retirer ou les cacher avant rendu
-
-Branches possibles:
+### Branches conseillees
 
 ```text
-main
-parsing
-exec
-integration
+main         version stable, qui compile
+chloe        travail parsing de Chloe
+dounia       travail execution de Dounia
+integration  branche pour tester vos deux parties ensemble
 ```
 
-Workflow conseille:
+Regle simple:
+
+- `main` doit rester propre
+- Chloe travaille sur `chloe`
+- Dounia travaille sur `dounia`
+- vous mergez dans `integration` pour tester ensemble
+- vous mergez `integration` dans `main` seulement quand ca compile
+
+### Routine de base avant de coder
+
+Au debut d'une session:
+
+```sh
+git status
+git checkout chloe
+git pull origin main
+```
+
+Pour Dounia:
+
+```sh
+git status
+git checkout dounia
+git pull origin main
+```
+
+Si une branche n'existe pas encore:
+
+```sh
+git checkout -b chloe
+git push -u origin chloe
+```
+
+ou:
+
+```sh
+git checkout -b dounia
+git push -u origin dounia
+```
+
+### Routine pendant le travail
+
+Faire des petits commits, pas un enorme commit a la fin de la semaine.
+
+Exemples de bons commits:
 
 ```text
-1. chacune travaille sur sa branche
-2. merge regulier vers integration
-3. tests ensemble sur integration
-4. merge vers main seulement quand ca compile et que les tests de base passent
+add token creation helpers
+add simple lexer debug print
+add exec path lookup
+fix redirection open flags
+```
+
+Commandes:
+
+```sh
+git status
+git add fichier1.c fichier2.h
+git commit -m "add token creation helpers"
+git push
+```
+
+Avant de commit:
+
+- relire `git status`
+- ne pas ajouter les fichiers generes par `make`
+- verifier que le commit ne contient que le travail voulu
+- faire `make` si le code est cense compiler
+
+### Comment eviter les conflits
+
+Regles simples:
+
+- ne pas modifier le fichier de l'autre sans prevenir
+- Chloe evite de toucher a `srcs/exec/` et `srcs/builtins/`
+- Dounia evite de toucher a `srcs/parsing/`
+- `include/minishell.h` est un fichier commun: en parler avant de changer les structs
+- `Makefile` est commun: en parler avant gros changement
+- faire des commits courts et frequents
+- push souvent pour que l'autre voie l'avancement
+
+Fichiers sensibles:
+
+```text
+include/minishell.h
+Makefile
+srcs/main.c
+```
+
+Ces fichiers peuvent creer des conflits parce que vous allez toutes les deux
+en avoir besoin. Il faut les modifier avec prudence.
+
+### Integration de vos branches
+
+Quand Chloe a une partie parsing qui compile:
+
+```sh
+git checkout integration
+git pull origin integration
+git merge chloe
+make
+git push
+```
+
+Quand Dounia a une partie exec qui compile:
+
+```sh
+git checkout integration
+git pull origin integration
+git merge dounia
+make
+git push
+```
+
+Si `integration` compile et que les tests de base passent:
+
+```sh
+git checkout main
+git pull origin main
+git merge integration
+make
+git push
+```
+
+### Si conflit pendant un merge
+
+Ne pas paniquer. Faire:
+
+```sh
+git status
+```
+
+Git va montrer les fichiers en conflit. Ouvrir ces fichiers, chercher les zones:
+
+```text
+<<<<<<<
+=======
+>>>>>>>
+```
+
+Puis:
+
+- garder la bonne version du code
+- supprimer les marqueurs `<<<<<<<`, `=======`, `>>>>>>>`
+- relancer `make`
+- finir le merge:
+
+```sh
+git add fichier_en_conflit.c
+git commit
+```
+
+Si le conflit concerne `include/minishell.h`, le regler ensemble, parce que c'est
+le contrat entre parsing et execution.
+
+### Quand utiliser `main`
+
+`main` ne sert pas a tester des essais rapides. `main` sert a garder une version
+que vous pourriez rendre si besoin.
+
+Avant de merge dans `main`, verifier:
+
+- `make` passe
+- pas de fichiers generes dans `git status`
+- les tests de base passent
+- Chloe et Dounia savent ce qui est merge
+
+Workflow resume:
+
+```text
+1. Chloe code sur chloe
+2. Dounia code sur dounia
+3. chacune push regulierement
+4. merge vers integration pour tester ensemble
+5. merge vers main seulement si integration compile
 ```
 
 ## 10. Priorite ultra courte
