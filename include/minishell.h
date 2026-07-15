@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/09 02:49:41 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/07/15 15:35:32 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,16 +38,14 @@ typedef enum e_token_type
 	T_REDIR_OUT,
 	T_APPEND,
 	T_HEREDOC
-}	t_token_type;
+}			t_token_type;
 
 typedef struct s_token
 {
 	t_token_type	type;
 	char			*value;
 	struct s_token	*next;
-}	t_token;
+}					t_token;
 
-t_token	*new_token(t_token_type type, char *value);
-void	add_token_back(t_token **tokens, t_token *new);
 
 #endif
