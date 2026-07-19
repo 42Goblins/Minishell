@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/15 15:35:32 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/07/19 16:31:49 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@
 # include <termios.h>			// tcsetattr, tcgetattr
 # include <termcap.h>			// tgetent, tgetflag, tgetnum, tgetstr, tputs
 # include "../libft/libft.h"	// libft functions
+# include <stdbool.h>			// bool type
 
 typedef enum e_token_type
 {
@@ -46,6 +47,18 @@ typedef struct s_token
 	char			*value;
 	struct s_token	*next;
 }					t_token;
+
+/* struct temp pour commencer exec (dounia) */
+typedef struct	s_cmd
+{
+	char	**cmd_and_args;
+	char	*path;
+	int		fd_in;
+	int		fd_out;
+	bool	is_builtin;
+	bool	access_check;
+	struct s_cmd	*next;
+}	t_cmd;
 
 
 #endif
