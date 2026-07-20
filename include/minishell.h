@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/19 16:31:49 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/19 18:14:28 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,5 +60,14 @@ typedef struct	s_cmd
 	struct s_cmd	*next;
 }	t_cmd;
 
+typedef struct	s_shell
+{
+	t_sig		sig;
+	t_env		*env;
+	t_token		*token;
+	char		**env_for_exec;
+	t_parser	*parser;
+	char		*path;
+}	t_shell;
 
 #endif
