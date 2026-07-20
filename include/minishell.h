@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/19 18:14:28 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 04:27:26 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,16 @@ typedef struct s_token
 	struct s_token	*next;
 }					t_token;
 
+
+
 /* struct temp pour commencer exec (dounia) */
+typedef struct s_env
+{
+	char			*key;
+	char			*value;
+	struct s_env	*next;
+}	t_env;
+
 typedef struct	s_cmd
 {
 	char	**cmd_and_args;
@@ -66,7 +75,7 @@ typedef struct	s_shell
 	t_env		*env;
 	t_token		*token;
 	char		**env_for_exec;
-	t_parser	*parser;
+	t_cmd		*cmds;
 	char		*path;
 }	t_shell;
 

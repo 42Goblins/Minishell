@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/19 18:16:11 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 04:29:56 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,9 +18,16 @@
 		return (1);
 	return (0);
 } */
+
+void init_env(char **env);
+{
+	// Placeholder for initializing the environment variables
+	// You can implement the logic to parse and store the environment variables her
+
+}
 void set_shell(t_shell *shell, char **env)
 {
-	shell->sig = NULL;       		 // init des signaux à zéro/valeurs par défaut
+	shell->sig = (t_sig){0};       		 // init des signaux à zéro/valeurs par défaut
 	shell->env = init_env(env);     // conversion char** -> t_env* (ta fonction de parsing d'env)
 	shell->token = NULL;            // pas de tokens résiduels après exécution de cd
 	shell->env_for_exec = env;      // tableau d'env brut pour un futur execve (pas utilisé par cd, builtin)
