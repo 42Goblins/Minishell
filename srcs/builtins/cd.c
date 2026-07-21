@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/20 21:09:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 22:50:35 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,10 +23,9 @@ void exec_cd(t_shell *shell, t_cmd *cmd)
 		else
 			printf("cd: HOME not set\n");
 	}
-	
 	if (cmd->cmd_and_args[2])
 	{
-		ft_putendl_fd("minishell: cd: too many arguments", 2);
+		ft_putstr_fd("minishell: cd: too many arguments\n", 2);
 		return (2);
 	}
 	// Change to the specified directory avec getcwd ?
