@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/20 04:27:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 22:49:15 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ typedef struct	s_shell
 	t_sig		sig;
 	t_env		*env;
 	t_token		*token;
-	char		**env_for_exec;
+	// char		**env_for_exec;
 	t_cmd		*cmds;
 	char		*path;
 }	t_shell;
