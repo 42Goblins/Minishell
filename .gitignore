@@ -3,3 +3,4 @@ objs/
 libft/objs/
 libft/libft.a
 main.c
+*.dSYM
