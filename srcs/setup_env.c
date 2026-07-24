@@ -1,24 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cleanup.c                                          :+:      :+:    :+:   */
+/*   setup_env.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/20 03:41:13 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/20 21:31:18 by dgeara           ###   ########.fr       */
+/*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
+/*   Updated: 2026/07/19 17:34:27 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/**
- * @brief 
- * ici add tout cleanup pas oublié les check si les éléments exists 
- * avant d'essayer de free
- */
-
-void cleanup(t_shell *shell)
+void setup_env(char **env)
 {
-	rl_clear_history();
+	// Placeholder for setting up the environment variables
+	// You can implement the logic to initialize your shell's environment here
 }

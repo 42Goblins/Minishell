@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/24 06:41:24 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/24 03:10:37 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ void	set_env_value(t_env *env, const char *key, const char *value)
 {
 	while (env)
 	{
-		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+		if (ft_strcmp(env->key, key) == 0)
 		{
 			free(env->value);
 			env->value = ft_strdup(value);
@@ -46,7 +46,7 @@ char	*get_env_value(t_env *env, const char *key)
 {
 	while (env)
 	{
-		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+		if (ft_strcmp(env->key, key) == 0)
 			return (env->value);
 		env = env->next;
 	}
@@ -82,9 +82,9 @@ void	exec_cd(t_shell *shell, char **cmd)
 		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2));
 	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
 		return (go_to_home_dir(shell->env));
-	if (ft_strncmp(cmd[1], "-", 2) == 0)
+	if (strncmp(cmd[1], "-", 2) == 0)
 		return (go_to_oldpwd(shell->env));
-	if (chdir(cmd[1]) == -1)
+	if (!chdir(cmd[1]))
 	{
 		ft_putstr_fd("minishell: cd:", 2);
 		perror(cmd[1]);
