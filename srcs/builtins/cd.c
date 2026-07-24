@@ -6,11 +6,25 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/23 04:30:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/24 03:10:37 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+void	set_env_value(t_env *env, const char *key, const char *value)
+{
+	while (env)
+	{
+		if (ft_strcmp(env->key, key) == 0)
+		{
+			free(env->value);
+			env->value = ft_strdup(value);
+			return ;
+		}
+		env = env->next;
+	}
+}
 
 void	update_env(t_env *env)
 {
@@ -28,7 +42,18 @@ void	update_env(t_env *env)
 		set_env_value(env, "OLDPWD", oldpwd);
 }
 
-void	go_to_prev_dir(t_env *env)
+char	*get_env_value(t_env *env, const char *key)
+{
+	while (env)
+	{
+		if (ft_strcmp(env->key, key) == 0)
+			return (env->value);
+		env = env->next;
+	}
+	return (NULL);
+}
+
+void	go_to_oldpwd(t_env *env)
 {
 	char	*oldpwd;
 
@@ -58,23 +83,11 @@ void	exec_cd(t_shell *shell, char **cmd)
 	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
 		return (go_to_home_dir(shell->env));
 	if (strncmp(cmd[1], "-", 2) == 0)
-		return (go_to_prev_dir(shell->env));
+		return (go_to_oldpwd(shell->env));
 	if (!chdir(cmd[1]))
 	{
 		ft_putstr_fd("minishell: cd:", 2);
 		perror(cmd[1]);
 	}
 	update_env(shell->env);
-	//update env (getcwd)
-}
-
-char	*get_env_value(t_env *env, const char *key)
-{
-	while (env)
-	{
-		if (ft_strcmp(env->key, key) == 0)
-			return (env->value);
-		env = env->next;
-	}
-	return (NULL);
 }
