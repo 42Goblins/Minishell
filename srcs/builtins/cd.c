@@ -6,75 +6,38 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/23 04:30:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 22:50:35 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	update_env(t_env *env)
+void exec_cd(t_shell *shell, t_cmd *cmd)
 {
-	char	*cwd;
-	char	*oldpwd;
-
-	cwd = getcwd(NULL, 0);
-	oldpwd = get_env_value(env, "PWD");
-	if (cwd)
+	//if rien après cd
+	if (!cmd->cmd_and_args[1])
 	{
-		set_env_value(env, "PWD", cwd);
-		free(cwd);
+		char *home = get_env_value(shell->env, "HOME");
+		if (home)
+			chdir(home);
+		else
+			printf("cd: HOME not set\n");
 	}
-	if (oldpwd)
-		set_env_value(env, "OLDPWD", oldpwd);
-}
-
-void	go_to_prev_dir(t_env *env)
-{
-	char	*oldpwd;
-
-	oldpwd = get_env_value(env, "OLDPWD");
-	if (oldpwd)
-		chdir(oldpwd);
-	else
-		ft_putstr_fd("cd: OLDPWD not set\n", 2);
-}
-
-void	go_to_home_dir(t_env *env)
-{
-	char	*home;
-
-	home = get_env_value(env, "HOME");
-	if (home)
-		chdir(home);
-	else
-		ft_putstr_fd("cd: HOME not set\n", 2);
-}
-
-/* @brief */
-void	exec_cd(t_shell *shell, char **cmd)
-{
-	if (cmd[2])
-		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2));
-	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
-		return (go_to_home_dir(shell->env));
-	if (strncmp(cmd[1], "-", 2) == 0)
-		return (go_to_prev_dir(shell->env));
-	if (!chdir(cmd[1]))
+	if (cmd->cmd_and_args[2])
+	{
+		ft_putstr_fd("minishell: cd: too many arguments\n", 2);
+		return (2);
+	}
+	// Change to the specified directory avec getcwd ?
+	// move to la directory qui suit cd, + check que chdir pas flop !
+	//et retourner le bon msg
+		//if(!chdir(cmd->cmd_and_args[1]);
+		//printf("cd: %s: %s\n", cmd->cmd_and_args[1], strerror(errno)); ???
+		//perror ?? nah errno like real sheel
+	if (!chdir(cmd->cmd_and_args[1]))
 	{
 		ft_putstr_fd("minishell: cd:", 2);
-		perror(cmd[1]);
+		perror(cmd->cmd_and_args[1]);
 	}
-	update_env(shell->env);
-	//update env (getcwd)
-}
-
-char	*get_env_value(t_env *env, const char *key)
-{
-	while (env)
-	{
-		if (ft_strcmp(env->key, key) == 0)
-			return (env->value);
-		env = env->next;
-	}
-	return (NULL);
+	//update env
 }

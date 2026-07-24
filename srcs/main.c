@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/22 16:40:48 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/20 04:29:56 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,6 @@
 {
 	if (ac != 1 || av[0] == NULL)
 		return (1);
-	if(env)
-		setup_env(env);
-	else
-		create_env(env);
-	
 	return (0);
 } */
 
