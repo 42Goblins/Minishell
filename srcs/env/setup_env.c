@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/24 06:22:55 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/24 06:56:02 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,8 @@ char	*cpy_value(char *env)
 	i = 0;
 	while (env[i])
 	{
-		shell->env[i].key = cpy_key(env[i]); // Assuming env is in the format "KEY=VALUE"
-		shell->env[i].value = cpy_value(env[i]); // Assuming env is in the format "KEY=VALUE"
+		shell->env[i].key = cpy_key(env[i]); 
+		shell->env[i].value = cpy_value(env[i]); //
 		i++;
 	}
 } */
@@ -94,7 +94,7 @@ void	setup_env(t_shell *shell, char **env)
 	{
 		node = new_env_node(env[i]);
 		if (!node)
-			return ; // handle allocation failure how you see fit
+			return ;
 		if (!shell->env)
 			shell->env = node;
 		else
