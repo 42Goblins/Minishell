@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/24 06:41:24 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 03:29:55 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,18 +76,19 @@ void	go_to_home_dir(t_env *env)
 }
 
 /* @brief */
-void	exec_cd(t_shell *shell, char **cmd)
+int	exec_cd(t_shell *shell, char **cmd)
 {
 	if (cmd[2])
-		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2));
+		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2), 0);
 	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
-		return (go_to_home_dir(shell->env));
+		return (go_to_home_dir(shell->env), 0);
 	if (ft_strncmp(cmd[1], "-", 2) == 0)
-		return (go_to_oldpwd(shell->env));
+		return (go_to_oldpwd(shell->env), 0);
 	if (chdir(cmd[1]) == -1)
 	{
 		ft_putstr_fd("minishell: cd:", 2);
 		perror(cmd[1]);
 	}
 	update_env(shell->env);
+	return (0);
 }

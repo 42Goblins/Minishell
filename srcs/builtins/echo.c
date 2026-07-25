@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/25 01:39:54 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/25 02:28:11 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 03:29:06 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ int	has_n_flag(char *str)
 	return (1);
 }
 
-void	exec_echo(char **cmd)
+int	exec_echo(char **cmd)
 {
 	int	i;
 	int	no_newline;
@@ -50,4 +50,5 @@ void	exec_echo(char **cmd)
 	}
 	if (!no_newline)
 		ft_putstr_fd("\n", STDOUT_FILENO);
+	return (0);
 }
