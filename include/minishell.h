@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/24 05:57:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 02:30:20 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,13 +100,16 @@ char	*cpy_value(char *env);
 /*                                BUILTINS                                    */
 /* ========================================================================== */
 /*cd.c */
-void exec_cd(t_shell *shell, char **cmd);
-void update_env(t_env *env);
-char *get_env_value(t_env *env, const char *key);
-void set_env_value(t_env *env, const char *key, const char *value);
-void go_to_oldpwd(t_env *env);
-void go_to_home_dir(t_env *env);
+void	exec_cd(t_shell *shell, char **cmd);
+void	update_env(t_env *env);
+char	*get_env_value(t_env *env, const char *key);
+void	set_env_value(t_env *env, const char *key, const char *value);
+void	go_to_oldpwd(t_env *env);
+void	go_to_home_dir(t_env *env);
 
+/* echo.c */
+int		has_n_flag(char *str);
+void	exec_echo(char **cmd);
 
 
 #endif
