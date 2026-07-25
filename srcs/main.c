@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/25 02:34:22 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 03:26:27 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 }
 void set_cmd(t_cmd *cmd)
 {
-	static char *cd_args[] = {"echo", "-nnnn", "-n", "aaaaa", NULL};
+	static char *cd_args[] = {"env", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
 	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
 	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
@@ -50,6 +50,8 @@ void exec_builtins(t_shell *shell, t_cmd *cmd)
 		exec_cd(shell, cmd->cmd_and_args);
 	if (ft_strncmp(cmd->cmd_and_args[0], "echo", 5) == 0)
 		exec_echo(cmd->cmd_and_args);
+	if (ft_strncmp(cmd->cmd_and_args[0], "env", 4) == 0)
+		exec_env(shell->env, cmd->cmd_and_args);
 	else
 		ft_putstr_fd("minishell: command not found\n", 2);
 }
