@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/25 03:33:31 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 04:12:15 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,5 +113,8 @@ int		exec_echo(char **cmd);
 
 /* env.c */
 int		exec_env(t_env *env, char **cmd);
+
+/* pwd.c */
+int	exec_pwd();
 
 #endif
