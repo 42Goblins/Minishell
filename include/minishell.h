@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/25 04:12:15 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/29 01:14:01 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@
 # include "../libft/libft.h"	// libft functions
 # include <stdbool.h>			// bool type
 
+/* enum pour les types de tokens (chloé) */
 typedef enum e_token_type
 {
 	T_WORD,
@@ -42,14 +43,13 @@ typedef enum e_token_type
 	T_HEREDOC
 }			t_token_type;
 
+/* struct temp pour les tokens (chloé) */
 typedef struct s_token
 {
 	t_token_type	type;
 	char			*value;
 	struct s_token	*next;
 }					t_token;
-
-
 
 /* struct temp pour commencer exec (dounia) */
 typedef struct s_env
@@ -116,5 +116,17 @@ int		exec_env(t_env *env, char **cmd);
 
 /* pwd.c */
 int	exec_pwd();
+
+/* ========================================================================== */
+/*                                  LEXER                                     */
+/* ========================================================================== */
+
+t_token		*create_token_node(t_token_type type, char *value);
+void		add_token_back(t_token **head, t_token *new_token);
+void		free_tokens(t_token *head);
+void		print_tokens(t_token *head);
+int			is_blank(char character);
+int			word_length(char *input, int i);
+int			tokenizer(char *input, t_shell *shell);
 
 #endif

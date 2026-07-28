@@ -1,11 +1,5 @@
 # TODO — Début tokenisation et parsing
 
-Cette liste concerne uniquement la partie de Chloé.
-
-Référence principale : branche `niko` du minishell de nos amis.
-Le but est de comprendre et adapter leur logique à notre projet, pas de tout
-copier d'un coup.
-
 ## 1. Préparer les tokens
 
 - [ ] Relire `t_token_type` et `t_token` dans `include/minishell.h`.
