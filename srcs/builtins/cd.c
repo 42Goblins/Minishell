@@ -6,39 +6,89 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/20 21:09:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 03:29:55 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void exec_cd(t_shell *shell, t_cmd *cmd)
+void	set_env_value(t_env *env, const char *key, const char *value)
 {
-	//if rien après cd
-	if (!cmd->cmd_and_args[1])
+	while (env)
 	{
-		char *home = get_env_value(shell->env, "HOME");
-		if (home)
-			chdir(home);
-		else
-			printf("cd: HOME not set\n");
+		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+		{
+			free(env->value);
+			env->value = ft_strdup(value);
+			return ;
+		}
+		env = env->next;
 	}
-	
-	if (cmd->cmd_and_args[2])
+}
+
+void	update_env(t_env *env)
+{
+	char	*cwd;
+	char	*oldpwd;
+
+	cwd = getcwd(NULL, 0);
+	oldpwd = get_env_value(env, "PWD");
+	if (cwd)
 	{
-		ft_putendl_fd("minishell: cd: too many arguments", 2);
-		return (2);
+		set_env_value(env, "PWD", cwd);
+		free(cwd);
 	}
-	// Change to the specified directory avec getcwd ?
-	// move to la directory qui suit cd, + check que chdir pas flop !
-	//et retourner le bon msg
-		//if(!chdir(cmd->cmd_and_args[1]);
-		//printf("cd: %s: %s\n", cmd->cmd_and_args[1], strerror(errno)); ???
-		//perror ?? nah errno like real sheel
-	if (!chdir(cmd->cmd_and_args[1]))
+	if (oldpwd)
+		set_env_value(env, "OLDPWD", oldpwd);
+}
+
+char	*get_env_value(t_env *env, const char *key)
+{
+	while (env)
+	{
+		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+			return (env->value);
+		env = env->next;
+	}
+	return (NULL);
+}
+
+void	go_to_oldpwd(t_env *env)
+{
+	char	*oldpwd;
+
+	oldpwd = get_env_value(env, "OLDPWD");
+	if (oldpwd)
+		chdir(oldpwd);
+	else
+		ft_putstr_fd("cd: OLDPWD not set\n", 2);
+}
+
+void	go_to_home_dir(t_env *env)
+{
+	char	*home;
+
+	home = get_env_value(env, "HOME");
+	if (home)
+		chdir(home);
+	else
+		ft_putstr_fd("cd: HOME not set\n", 2);
+}
+
+/* @brief */
+int	exec_cd(t_shell *shell, char **cmd)
+{
+	if (cmd[2])
+		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2), 0);
+	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
+		return (go_to_home_dir(shell->env), 0);
+	if (ft_strncmp(cmd[1], "-", 2) == 0)
+		return (go_to_oldpwd(shell->env), 0);
+	if (chdir(cmd[1]) == -1)
 	{
 		ft_putstr_fd("minishell: cd:", 2);
-		perror(cmd->cmd_and_args[1]);
+		perror(cmd[1]);
 	}
-	//update env
+	update_env(shell->env);
+	return (0);
 }

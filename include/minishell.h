@@ -6,13 +6,14 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/20 04:27:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/25 04:12:15 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
+# include "libft.h"
 # include <stdio.h>				// printf
 # include <stdlib.h>			// malloc, free, exit
 # include <string.h>			// strerror
@@ -71,12 +72,49 @@ typedef struct	s_cmd
 
 typedef struct	s_shell
 {
-	t_sig		sig;
+	// t_sig		sig;
 	t_env		*env;
 	t_token		*token;
-	char		**env_for_exec;
+	// char		**env_for_exec;
 	t_cmd		*cmds;
 	char		*path;
 }	t_shell;
+
+
+/* ========================================================================== */
+/*                                  MAIN                                      */
+/* ========================================================================== */
+/* main.c */
+int		main(int ac, char **av, char **env);
+
+
+/* ========================================================================== */
+/*                                  ENV                                       */
+/* ========================================================================== */
+/* setup_env.c */
+void	setup_env(t_shell *shell, char **env);
+char	*cpy_key(char *env);
+char	*cpy_value(char *env);
+
+/* ========================================================================== */
+/*                                BUILTINS                                    */
+/* ========================================================================== */
+/*cd.c */
+int		exec_cd(t_shell *shell, char **cmd);
+void	update_env(t_env *env);
+char	*get_env_value(t_env *env, const char *key);
+void	set_env_value(t_env *env, const char *key, const char *value);
+void	go_to_oldpwd(t_env *env);
+void	go_to_home_dir(t_env *env);
+
+/* echo.c */
+int		has_n_flag(char *str);
+int		exec_echo(char **cmd);
+
+/* env.c */
+int		exec_env(t_env *env, char **cmd);
+
+/* pwd.c */
+int	exec_pwd();
 
 #endif
