@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:04:32 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/29 18:18:08 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 }
 void set_cmd(t_cmd *cmd)
 {
-	static char *cd_args[] = {"echo", "$PATH", NULL};
+	static char *cd_args[] = {"unset", "SHLVL", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
 	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
 	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
@@ -71,6 +71,7 @@ int	main(int ac, char **av, char **env)
 	printf("oldpwd: %s\n", getcwd(NULL, 0));
 	exec_builtins(&shell, shell.cmds);
 	printf("newpwd: %s\n", getcwd(NULL, 0));
+		
 	return (0);
 }
 
