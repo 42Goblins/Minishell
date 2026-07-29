@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 02:32:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:39:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/29 18:44:41 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,18 +55,5 @@ int	exec_unset(t_env **env, char **cmd)
 		}
 		i++;
 	}
-
-	t_env *tmp;
-
-	tmp = *env;
-	i = 0;
-	while (tmp)
-    {
-    printf("%s\n", tmp->key);
-    printf("%d\n", i);
-    tmp = tmp->next;
-    i++;
-    }
-	
 	return (0);
 }
