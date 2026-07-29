@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/25 04:12:15 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/29 17:57:43 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,5 +116,11 @@ int		exec_env(t_env *env, char **cmd);
 
 /* pwd.c */
 int	exec_pwd();
+
+/* unset.c */
+void	free_t_env(t_env *env);
+void	del_env_variable(t_env **first, t_env *prev, t_env *current);
+int		exec_unset(t_env **env, char **cmd);
+
 
 #endif
