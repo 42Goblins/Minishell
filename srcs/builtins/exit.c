@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/30 05:10:10 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/07/30 05:13:46 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ int	exec_exit(char **cmd)
 			ft_putstr_fd(": numeric argument required\n", 2);
 			exit (2); // a modif avec clean
 		}
-		else if(cmd[2])
+		else if (cmd[2])
 		{
 			ft_putstr_fd("minishell: exit: too many arguments\n", 2);
 			// need add get status ? et return 2 ??
