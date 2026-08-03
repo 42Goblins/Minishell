@@ -13,7 +13,7 @@
 #include "minishell.h"
 
 /**
- * @brief Checks whether a character separates two shell words.
+ * @brief Checks whether a character is a blank.
  */
 int	is_blank(char character)
 {

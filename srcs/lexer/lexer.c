@@ -6,49 +6,45 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:43 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/03 19:31:34 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/03 19:54:07 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+static int	tokenize_current_char(char *input, int i, t_shell *shell);
+static int	tokenizer_error(t_shell *shell);
+static int	add_word_token(char *input, int start, int length, t_shell *shell);
+
 /**
- * @brief Extracts one word and adds it to the token list.
+ * @brief Tokenizes a line into a linked list of tokens.
  */
-static int	add_word_token(char *input, int start, int length, t_shell *shell)
+int	tokenizer(char *input, t_shell *shell)
 {
-	char		*value;
-	t_token		*new_token;
+	int	i;
+	int	length;
 
-	value = ft_substr(input, start, length);
-	if (!value)
+	if (!input || !shell)
 		return (1);
-	new_token = create_token_node(T_WORD, value);
-	if (!new_token)
-		return (free(value), 1);
-	add_token_back(&shell->token, new_token);
-	return (0);
-}
-
-static int	add_operator_token(t_shell *shell, t_token_type type, char *str)
-{
-	t_token	*new_token;
-	char	*value;
-
-	value = ft_strdup(str);
-	if (!value)
-		return (1);
-	new_token = create_token_node(type, value);
-	if (!new_token)
-		return (free(value), 1);
-	add_token_back(&shell->token, new_token);
+	i = 0;
+	while (input[i])
+	{
+		while (is_blank(input[i]))
+			i++;
+		if (!input[i])
+			break ;
+		length = tokenize_current_char(input, i, shell);
+		if (length == -1)
+			return (tokenizer_error(shell));
+		i += length;
+	}
 	return (0);
 }
 
 /**
  * @brief Adds the token at index and returns its consumed length.
  */
-static int	add_next_token(char *input, int i, t_shell *shell)
+static int	tokenize_current_char(char *input, int i, t_shell *shell)
 {
 	int	length;
 
@@ -58,30 +54,10 @@ static int	add_next_token(char *input, int i, t_shell *shell)
 			return (-1);
 		return (1);
 	}
-	if (input[i] == '<' && input[i + 1] == '<')
-	{
-		if (add_operator_token(shell, T_HEREDOC, "<<"))
-			return (-1);
-		return (2);
-	}
-	if (input[i] == '>' && input[i + 1] == '>')
-	{
-		if (add_operator_token(shell, T_APPEND, ">>"))
-			return (-1);
-		return (2);
-	}
 	if (input[i] == '<')
-	{
-		if (add_operator_token(shell, T_REDIR_IN, "<"))
-			return (-1);
-		return (1);
-	}
+		return (add_redir_in_or_heredoc(input, i, shell));
 	if (input[i] == '>')
-	{
-		if (add_operator_token(shell, T_REDIR_OUT, ">"))
-			return (-1);
-		return (1);
-	}
+		return (add_redir_out_or_append(input, i, shell));
 	length = word_length(input, i);
 	if (add_word_token(input, i, length, shell))
 		return (-1);
@@ -99,26 +75,37 @@ static int	tokenizer_error(t_shell *shell)
 }
 
 /**
- * @brief Tokenizes a line containing words separated by blanks.
+ * @brief Creates an operator token and adds it to the token list.
  */
-int	tokenizer(char *input, t_shell *shell)
+int	add_operator_token(t_shell *shell, t_token_type type, char *str)
 {
-	int	i;
-	int	length;
+	t_token	*new_token;
+	char	*value;
 
-	if (!input || !shell)
+	value = ft_strdup(str);
+	if (!value)
 		return (1);
-	i = 0;
-	while (input[i])
-	{
-		while (is_blank(input[i]))
-			i++;
-		if (!input[i])
-			break ;
-		length = add_next_token(input, i, shell);
-		if (length == -1)
-			return (tokenizer_error(shell));
-		i += length;
-	}
+	new_token = create_token_node(type, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
+	return (0);
+}
+
+/**
+ * @brief Extracts one word and adds it to the token list.
+ */
+static int	add_word_token(char *input, int start, int length, t_shell *shell)
+{
+	char		*value;
+	t_token		*new_token;
+
+	value = ft_substr(input, start, length);
+	if (!value)
+		return (1);
+	new_token = create_token_node(T_WORD, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
 	return (0);
 }

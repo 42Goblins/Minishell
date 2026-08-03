@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/03 19:31:52 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/03 19:58:08 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ int	main(int ac, char **av, char **env)
 	(void)av;
 	(void)env;
 	ft_bzero(&shell, sizeof(t_shell));
-	if (tokenizer("echo hello<<output", &shell))
+	if (tokenizer("echo hello>>output", &shell))
 		return (1);
 	print_tokens(shell.token);
 	free_tokens(shell.token);
