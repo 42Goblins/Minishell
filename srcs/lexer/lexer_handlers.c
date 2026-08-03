@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:45:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/29 01:45:00 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/03 16:56:48 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,8 @@ int	word_length(char *input, int i)
 
 	length = 0;
 	while (input[i + length] && !is_blank(input[i + length])
-		&& input[i + length] != '|')
+		&& input[i + length] != '|' && input[i + length] != '<'
+		&& input[i + length] != '>')
 		length++;
 	return (length);
 }

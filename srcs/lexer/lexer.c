@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:43 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/29 01:41:48 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/03 17:04:42 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,78 @@ static int	add_pipe_token(t_shell *shell)
 }
 
 /**
+ * @brief Creates a heredoc token and adds it to the token list.
+ */
+static int	add_heredoc_token(t_shell *shell)
+{
+	t_token	*new_token;
+	char	*value;
+
+	value = ft_strdup("<<");
+	if (!value)
+		return (1);
+	new_token = create_token_node(T_HEREDOC, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
+	return (0);
+}
+
+/**
+ * @brief Creates a redir IN token and adds it to the token list.
+ */
+static int	add_redir_in_token(t_shell *shell)
+{
+	t_token	*new_token;
+	char	*value;
+
+	value = ft_strdup("<");
+	if (!value)
+		return (1);
+	new_token = create_token_node(T_REDIR_IN, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
+	return (0);
+}
+
+/**
+ * @brief Creates a redir OUT token and adds it to the token list.
+ */
+static int	add_redir_out_token(t_shell *shell)
+{
+	t_token	*new_token;
+	char	*value;
+
+	value = ft_strdup(">");
+	if (!value)
+		return (1);
+	new_token = create_token_node(T_REDIR_OUT, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
+	return (0);
+}
+
+/**
+ * @brief Creates an append token and adds it to the token list.
+ */
+static int	add_append_token(t_shell *shell)
+{
+	t_token	*new_token;
+	char	*value;
+
+	value = ft_strdup(">>");
+	if (!value)
+		return (1);
+	new_token = create_token_node(T_APPEND, value);
+	if (!new_token)
+		return (free(value), 1);
+	add_token_back(&shell->token, new_token);
+	return (0);
+}
+
+/**
  * @brief Adds the token at index and returns its consumed length.
  */
 static int	add_next_token(char *input, int i, t_shell *shell)
@@ -58,6 +130,30 @@ static int	add_next_token(char *input, int i, t_shell *shell)
 	if (input[i] == '|')
 	{
 		if (add_pipe_token(shell))
+			return (-1);
+		return (1);
+	}
+	if (input[i] == '<' && input[i + 1] == '<')
+	{
+		if (add_heredoc_token(shell))
+			return (-1);
+		return (2);
+	}
+	if (input[i] == '<')
+	{
+		if (add_redir_in_token(shell))
+			return (-1);
+		return (1);
+	}
+	if (input[i] == '>' && input[i + 1] == '>')
+	{
+		if (add_append_token(shell))
+			return (-1);
+		return (2);
+	}
+	if (input[i] == '>')
+	{
+		if (add_redir_out_token(shell))
 			return (-1);
 		return (1);
 	}
