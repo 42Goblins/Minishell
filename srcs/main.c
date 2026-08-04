@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/30 05:11:13 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/04 05:22:15 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 }
 void set_cmd(t_cmd *cmd)
 {
-	static char *cd_args[] = {"exit", "12", "bbb", NULL};
+	static char *cd_args[] = {"export", "PATATE", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
 	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
 	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
@@ -58,6 +58,8 @@ void exec_builtins(t_shell *shell, t_cmd *cmd)
 		exec_unset(&shell->env, cmd->cmd_and_args);
 	else if (ft_strncmp(cmd->cmd_and_args[0], "exit", 5) == 0)
 		(exec_exit(cmd->cmd_and_args));
+		else if (ft_strncmp(cmd->cmd_and_args[0], "export", 7) == 0)
+		(exec_export(&shell->env, cmd->cmd_and_args));
 	else
 		ft_putstr_fd("minishell: command not found\n", 2);
 }

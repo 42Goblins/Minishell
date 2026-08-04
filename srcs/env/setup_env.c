@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/24 06:56:02 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/04 04:50:14 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ char	*cpy_value(char *env)
 	}
 } */
 
-static t_env	*new_env_node(char *env_line)
+t_env	*new_env_node(char *env_line)
 {
 	t_env	*node;
 
