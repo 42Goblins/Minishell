@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/29 01:14:01 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/05 16:19:51 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,9 @@ int	exec_pwd();
 t_token		*create_token_node(t_token_type type, char *value);
 void		add_token_back(t_token **head, t_token *new_token);
 void		free_tokens(t_token *head);
-void		print_tokens(t_token *head);
+int			add_operator_token(t_shell *shell, t_token_type type, char *str);
+int			add_redir_in_or_heredoc(char *input, int i, t_shell *shell);
+int			add_redir_out_or_append(char *input, int i, t_shell *shell);
 int			is_blank(char character);
 int			word_length(char *input, int i);
 int			tokenizer(char *input, t_shell *shell);
