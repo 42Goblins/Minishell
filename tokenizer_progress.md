@@ -15,6 +15,11 @@ cat<input
 echo hello>output
 cat<<EOF
 echo hello>>output
+echo 'hello world'
+echo "hello world"
+echo hello" world"
+echo "hello"world
+echo abc"def"ghi
 ```
 
 Pour `echo hello|wc`, la liste obtenue est :
@@ -40,6 +45,21 @@ T_HEREDOC("<<")
 T_APPEND(">>")
 ```
 
+Les quotes simples et doubles sont reconnues dans les mots. Elles empêchent les
+espaces de couper le token, et les quotes collées à du texte restent dans le
+même `T_WORD`. Pour le moment, les quotes restent dans `value`; elles seront
+retirées plus tard au moment du traitement quotes/expansion.
+
+Les quotes non fermées font échouer le tokenizer :
+
+```sh
+echo "hello
+echo 'hello
+```
+
+Chaque token possède maintenant un champ `had_quotes`, initialisé à `false`, qui
+passe à `true` pour les mots contenant `'` ou `"`.
+
 ## Organisation des fichiers
 
 ### `srcs/lexer/lexer_nodes.c`
@@ -49,11 +69,14 @@ T_APPEND(">>")
 - `free_tokens` libère la valeur et le nœud de chaque token.
 
 Le token devient propriétaire de la chaîne placée dans `value`. C'est donc
-`free_tokens` qui doit finalement libérer cette chaîne.
+`free_tokens` qui doit finalement libérer cette chaîne. `create_token_node`
+initialise aussi `had_quotes` à `false`.
 
 ### `srcs/lexer/lexer.c`
 
 - `add_word_token` crée un token `T_WORD`.
+  Si la valeur contient une quote simple ou double, son champ `had_quotes` est
+  mis à `true`.
 - `add_operator_token` crée un token opérateur à partir d'un type et d'une
   chaîne.
 - `tokenize_current_char` choisit quel token créer à l'index courant et indique
@@ -84,12 +107,15 @@ Ces fonctions retournent `1` ou `2` selon le nombre de caractères consommés, e
 - `is_blank` reconnaît un espace ou une tabulation.
 - `word_length` calcule la longueur du prochain mot sans modifier l'index.
   Un mot s'arrête maintenant sur un blank, `|`, `<` ou `>`.
+- `quoted_word_length` calcule la longueur d'une portion entre quotes et
+  retourne `-1` si la quote fermante manque.
 
 ### `tests/test_lexer.c`
 
 Ce fichier teste le tokenizer sans modifier le `main.c` utilisé par Dounia. Il
-tokenize plusieurs lignes, affiche la liste, puis la libère. Le helper
-temporaire `print_tokens` vit directement dans ce fichier de test.
+tokenize plusieurs lignes valides, teste aussi quelques entrées invalides,
+affiche la liste, puis la libère. Le helper temporaire `print_tokens` vit
+directement dans ce fichier de test et affiche aussi `had_quotes`.
 
 ## Lancer le test
 
@@ -111,13 +137,11 @@ Puis l'exécuter :
 /tmp/test_lexer
 ```
 
-Exemple de résultat attendu pour `echo hello>>output` :
+Exemple de résultat attendu pour `echo "hello world"` :
 
 ```text
 type: 0, value: echo
-type: 0, value: hello
-type: 4, value: >>
-type: 0, value: output
+type: 0, value: "hello world", had_quotes: 1
 ```
 
 ## Rapport avec le code de Nico
@@ -130,12 +154,15 @@ Quelques adaptations ont été faites pour avancer progressivement :
 
 - `i` reste un index simple et n'est pas transmis comme `int *` ;
 - la liste est encore simplement chaînée ;
-- les champs liés aux quotes et à l'expansion ne sont pas encore ajoutés ;
+- le champ `had_quotes` a été ajouté pour préparer l'expansion et les heredocs ;
 - les allocations partielles sont nettoyées si le tokenizer échoue.
 - contrairement à Nico, les fonctions de lecture ne modifient pas `i`
   directement ; elles retournent la longueur consommée.
+- comme chez Nico, les quotes restent d'abord dans `value`; elles seront
+  retirées plus tard dans une étape dédiée.
 
 ## Prochaine étape
 
-Vérifier la Norminette sur les fichiers du lexer, puis passer aux quotes simples
-et doubles. L'expansion viendra après les quotes.
+Vérifier la Norminette sur les fichiers du lexer, puis commencer l'étape dédiée
+au traitement quotes/expansion : retirer les quotes au bon moment et gérer la
+différence entre simple quotes, double quotes et expansion `$`.

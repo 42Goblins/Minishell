@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 23:58:42 by cmauley           #+#    #+#             */
-/*   Updated: 2026/07/29 00:48:10 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/05 19:14:26 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ t_token	*create_token_node(t_token_type type, char *value)
 		return (NULL);
 	new_token->type = type;
 	new_token->value = value;
+	new_token->had_quotes = false;
 	new_token->next = NULL;
 	return (new_token);
 }

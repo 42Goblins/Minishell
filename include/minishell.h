@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/05 16:19:51 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/05 19:13:44 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ typedef struct s_token
 {
 	t_token_type	type;
 	char			*value;
+	bool			had_quotes;
 	struct s_token	*next;
 }					t_token;
 

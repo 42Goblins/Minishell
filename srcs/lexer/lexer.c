@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:43 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/03 19:54:07 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/05 19:16:34 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,8 @@ static int	tokenize_current_char(char *input, int i, t_shell *shell)
 	if (input[i] == '>')
 		return (add_redir_out_or_append(input, i, shell));
 	length = word_length(input, i);
+	if (length == -1)
+		return (-1);
 	if (add_word_token(input, i, length, shell))
 		return (-1);
 	return (length);
@@ -106,6 +108,8 @@ static int	add_word_token(char *input, int start, int length, t_shell *shell)
 	new_token = create_token_node(T_WORD, value);
 	if (!new_token)
 		return (free(value), 1);
+	if (ft_strchr(value, '\'') || ft_strchr(value, '"'))
+		new_token->had_quotes = true;
 	add_token_back(&shell->token, new_token);
 	return (0);
 }

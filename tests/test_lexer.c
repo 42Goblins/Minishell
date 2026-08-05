@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/05 16:23:42 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/05 19:20:38 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,8 @@ static void	print_tokens(t_token *head)
 	current = head;
 	while (current)
 	{
-		printf("type: %d, value: %s\n", current->type, current->value);
+		printf("type: %d, value: %s, had_quotes: %d\n",
+			current->type, current->value, current->had_quotes);
 		current = current->next;
 	}
 }
@@ -38,6 +39,25 @@ static int	test_input(char *input)
 	print_tokens(shell.token);
 	free_tokens(shell.token);
 	return (0);
+}
+
+static int	test_invalid_input(char *input)
+{
+	t_shell	shell;
+
+	ft_bzero(&shell, sizeof(t_shell));
+	printf("\ninput: %s\n", input);
+	if (tokenizer(input, &shell))
+	{
+		printf("tokenizer failed as expected\n");
+		return (0);
+	}
+	else
+	{
+		print_tokens(shell.token);
+		free_tokens(shell.token);
+		return (1);
+	}
 }
 
 /**
@@ -59,6 +79,20 @@ int	main(int ac, char **av, char **env)
 	if (test_input("cat<<EOF"))
 		return (1);
 	if (test_input("echo hello>>output"))
+		return (1);
+	if (test_input("echo 'hello world'"))
+		return (1);
+	if (test_input("echo \"hello world\""))
+		return (1);
+	if (test_input("echo hello\" world\""))
+		return (1);
+	if (test_input("echo \"hello\"world"))
+		return (1);
+	if (test_input("echo abc\"def\"ghi"))
+		return (1);
+	if (test_invalid_input("echo \"hello"))
+		return (1);
+	if (test_invalid_input("echo 'hello"))
 		return (1);
 	return (0);
 }
