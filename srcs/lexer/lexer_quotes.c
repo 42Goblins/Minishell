@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/06 16:07:24 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/06 18:49:07 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/08 20:28:16 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,28 @@
 
 static int	stripped_length(char *value);
 
-
+/**
+ * @brief Removes active quotes from every quoted word token.
+ */
 int	remove_quotes_from_tokens(t_token *tokens)
 {
 	t_token	*current;
-	
+	char	*new_value;
+
+	current = tokens;
 	while (current)
 	{
 		if (current->type == T_WORD && current->had_quotes)
 		{
-			new_value = remove_quotes
+			new_value = remove_quotes(current->value);
+			if (!new_value)
+				return (1);
+			free(current->value);
+			current->value = new_value;
 		}
+		current = current->next;
 	}
+	return (0);
 }
 
 /**

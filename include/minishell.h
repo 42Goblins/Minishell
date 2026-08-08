@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/05 19:13:44 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/08 20:27:42 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,5 +132,6 @@ char		*remove_quotes(char *value);
 int			is_blank(char character);
 int			word_length(char *input, int i);
 int			tokenizer(char *input, t_shell *shell);
+int			remove_quotes_from_tokens(t_token *tokens);
 
 #endif
