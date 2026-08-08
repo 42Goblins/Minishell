@@ -1,26 +1,38 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   ft_lstnew_bonus.c                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/15 19:59:01 by dgeara            #+#    #+#             */
+/*   Updated: 2025/10/28 16:12:08 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+t_list	*ft_lstnew(void *content)
 {
-	char	*pwd;
+	t_list	*node;
 
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	node = malloc(sizeof(t_list));
+	if (!node)
+		return (NULL);
+	node->content = content;
+	node->next = NULL;
+	return (node);
 }
+
+/* int main(void)
+{
+	t_list *test1;
+	int x = 42;
+	test1 = ft_lstnew(&x);
+	printf("%d\n", *(int *)test1->content);
+
+	t_list *test2;
+	test2 = ft_lstnew("AAA");
+	printf("%s\n", (char *)test2->content);
+	return (0);
+} */

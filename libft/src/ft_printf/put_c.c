@@ -1,26 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   put_c.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/21 08:34:28 by dgeara            #+#    #+#             */
+/*   Updated: 2026/03/05 01:32:39 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+int	put_c(int c)
 {
-	char	*pwd;
-
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	return (write(1, &c, 1));
 }

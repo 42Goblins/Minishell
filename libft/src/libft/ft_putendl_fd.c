@@ -1,26 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   ft_putendl_fd.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/14 18:13:04 by dgeara            #+#    #+#             */
+/*   Updated: 2025/10/14 18:13:05 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+void	ft_putendl_fd(char *s, int fd)
 {
-	char	*pwd;
-
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	while (*s)
+		write(fd, s++, 1);
+	write(fd, "\n", 1);
 }
+/* int	main(void)
+{
+	int	fd;
+	char str[] = "ABC";
+
+	fd = 1;
+	ft_putendl_fd("AAA", fd);
+	ft_putendl_fd(str, fd);
+	return (0);
+} */

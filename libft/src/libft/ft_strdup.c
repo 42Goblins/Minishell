@@ -1,26 +1,38 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   ft_strdup.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/14 18:12:45 by dgeara            #+#    #+#             */
+/*   Updated: 2025/10/14 18:12:46 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+char	*ft_strdup(const char *s1)
 {
-	char	*pwd;
+	char	*dup;
+	int		i;
 
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	dup = malloc(ft_strlen(s1) + 1);
+	if (!dup)
+		return (NULL);
+	i = 0;
+	while (s1[i])
+	{
+		dup[i] = s1[i];
+		i++;
+	}
+	dup[i] = '\0';
+	return (dup);
 }
+
+/* int main(void)
+{
+	char str[] = "LIFESTYLE";
+	printf("%s\n", ft_strdup(str));
+	printf("%s\n", strdup(str));
+} */

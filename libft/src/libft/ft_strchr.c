@@ -1,26 +1,38 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   ft_strchr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/14 18:12:49 by dgeara            #+#    #+#             */
+/*   Updated: 2025/10/14 18:12:50 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+char	*ft_strchr(const char *s, int c)
 {
-	char	*pwd;
+	size_t	i;
 
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == (char)c)
+			return ((char *)&s[i]);
+		i++;
+	}
+	if (s[i] == (char)c)
+		return ((char *)&s[i]);
+	return (NULL);
 }
+
+/* int main(void)
+{
+	char s[]= "Biughhgfj";
+	char c = 'h';
+	printf("%s\n", ft_strchr(s,c));
+	printf("%s\n", strchr(s, c));
+	return (0);
+} */

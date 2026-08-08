@@ -13,7 +13,6 @@
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
-# include "libft.h"
 # include <stdio.h>				// printf
 # include <stdlib.h>			// malloc, free, exit
 # include <string.h>			// strerror
@@ -29,7 +28,7 @@
 # include <sys/ioctl.h>			// ioctl, isatty, ttyname, ttyslot
 # include <termios.h>			// tcsetattr, tcgetattr
 # include <termcap.h>			// tgetent, tgetflag, tgetnum, tgetstr, tputs
-# include "../libft/libft.h"	// libft functions
+# include "../libft/inc/libft.h"	// libft functions
 # include <stdbool.h>			// bool type
 
 /* enum pour les types de tokens (chloé) */
@@ -93,9 +92,10 @@ int		main(int ac, char **av, char **env);
 /*                                  ENV                                       */
 /* ========================================================================== */
 /* setup_env.c */
-void	setup_env(t_shell *shell, char **env);
 char	*cpy_key(char *env);
 char	*cpy_value(char *env);
+void	setup_env(t_shell *shell, char **env);
+t_env	*new_env_node(char *env_line);
 
 /* ========================================================================== */
 /*                                BUILTINS                                    */
@@ -117,6 +117,27 @@ int		exec_env(t_env *env, char **cmd);
 
 /* pwd.c */
 int	exec_pwd();
+
+/* unset.c */
+void	free_t_env(t_env *env);
+void	del_env_variable(t_env **first, t_env *prev, t_env *current);
+int		exec_unset(t_env **env, char **cmd);
+
+/* exit.c */
+int	is_num(char *str);
+int	exec_exit(char **cmd);
+
+/* export_print.c */
+t_env **lst_cpy(t_env *env);
+t_env **sort_export(t_env *env);
+int print_export(t_env *env);
+
+/* export.c */
+int		export_error(char *str);
+void	add_new_var(t_env **env, char *key, char *value);
+int		parse_export(char *str, char **key, char **value);
+void	update_env_vars(t_env **env, char *key, char *value);
+int		exec_export(t_env **env, char **cmd);
 
 /* ========================================================================== */
 /*                                  LEXER                                     */

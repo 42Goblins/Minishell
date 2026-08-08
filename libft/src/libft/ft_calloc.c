@@ -1,26 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   ft_calloc.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/25 03:47:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/29 18:45:19 by dgeara           ###   ########.fr       */
+/*   Created: 2025/10/14 18:13:57 by dgeara            #+#    #+#             */
+/*   Updated: 2025/10/14 18:13:58 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include "libft.h"
 
-int	exec_pwd(void)
+void	*ft_calloc(size_t count, size_t size)
 {
-	char	*pwd;
+	unsigned char	*ret;
 
-	pwd = getcwd(NULL, 0);
-	if (!pwd)
-		return (perror("getcwd :"), 1);
-	ft_putstr_fd(pwd, STDOUT_FILENO);
-	ft_putstr_fd("\n", STDOUT_FILENO);
-	free(pwd);
-	return (0);
+	ret = malloc(count * size);
+	if (!ret)
+		return (NULL);
+	return (ft_memset(ret, 0, count * size));
 }
+
+/* int main(void)
+{
+	printf("%s\n", (char *)ft_calloc(10, 1));
+	printf("%s\n", (char *)calloc(10 , 1));
+	return (0);
+} */
