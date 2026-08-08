@@ -14,7 +14,7 @@
 
 static int	tokenize_current_char(char *input, int i, t_shell *shell);
 static int	tokenizer_error(t_shell *shell);
-static int	add_word_token(char *input, int start, int length, t_shell *shell);
+static int	add_word_token(char *input, int start, int len, t_shell *shell);
 
 /**
  * @brief Tokenizes a line into a linked list of tokens.
@@ -22,7 +22,7 @@ static int	add_word_token(char *input, int start, int length, t_shell *shell);
 int	tokenizer(char *input, t_shell *shell)
 {
 	int	i;
-	int	length;
+	int	len;
 
 	if (!input || !shell)
 		return (1);
@@ -33,10 +33,10 @@ int	tokenizer(char *input, t_shell *shell)
 			i++;
 		if (!input[i])
 			break ;
-		length = tokenize_current_char(input, i, shell);
-		if (length == -1)
+		len = tokenize_current_char(input, i, shell);
+		if (len == -1)
 			return (tokenizer_error(shell));
-		i += length;
+		i += len;
 	}
 	return (0);
 }
@@ -46,7 +46,7 @@ int	tokenizer(char *input, t_shell *shell)
  */
 static int	tokenize_current_char(char *input, int i, t_shell *shell)
 {
-	int	length;
+	int	len;
 
 	if (input[i] == '|')
 	{
@@ -58,12 +58,12 @@ static int	tokenize_current_char(char *input, int i, t_shell *shell)
 		return (add_redir_in_or_heredoc(input, i, shell));
 	if (input[i] == '>')
 		return (add_redir_out_or_append(input, i, shell));
-	length = word_length(input, i);
-	if (length == -1)
+	len = word_len(input, i);
+	if (len == -1)
 		return (-1);
-	if (add_word_token(input, i, length, shell))
+	if (add_word_token(input, i, len, shell))
 		return (-1);
-	return (length);
+	return (len);
 }
 
 /**
@@ -97,12 +97,12 @@ int	add_operator_token(t_shell *shell, t_token_type type, char *str)
 /**
  * @brief Extracts one word and adds it to the token list.
  */
-static int	add_word_token(char *input, int start, int length, t_shell *shell)
+static int	add_word_token(char *input, int start, int len, t_shell *shell)
 {
 	char		*value;
 	t_token		*new_token;
 
-	value = ft_substr(input, start, length);
+	value = ft_substr(input, start, len);
 	if (!value)
 		return (1);
 	new_token = create_token_node(T_WORD, value);

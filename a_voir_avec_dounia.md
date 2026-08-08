@@ -102,8 +102,39 @@ Ces points ne bloquent pas immédiatement `$VAR`, mais il faut les noter :
 La nouvelle Libft contient des fichiers `libft/obj/*.o` suivis par Git.
 
 - [ ] Lui signaler que les `.o` devraient normalement être dans `.gitignore`.
-- [ ] Décider ensemble qui fera le commit de nettoyage sur `dev`.
 - [ ] Ne pas supprimer ces fichiers uniquement sur `chloe` sans coordination.
+
+Le `.gitignore` ignore actuellement `libft/objs/`, mais le nouveau Makefile
+utilise `libft/obj/` sans `s`.
+
+Faire le nettoyage depuis une branche créée à partir de `dev` :
+
+```sh
+git switch dev
+git pull --ff-only
+git switch -c chore/repo-cleanup
+```
+
+Ajouter cette ligne dans `.gitignore` :
+
+```gitignore
+libft/obj/
+```
+
+Retirer ensuite les objets du suivi Git sans supprimer les copies locales :
+
+```sh
+git rm -r --cached libft/obj
+git add .gitignore
+git commit -m "chore: stop tracking generated object files"
+git push -u origin chore/repo-cleanup
+```
+
+- [ ] Ouvrir une PR de `chore/repo-cleanup` vers `dev`.
+- [ ] Vérifier après la PR qu'un `make` recrée les `.o` sans les faire
+  apparaître dans `git status`.
+- [ ] Ne pas faire ce nettoyage directement sur `main` : les suppressions déjà
+  présentes sur `dev` arriveront avec la PR finale `dev -> main`.
 
 ## Répartition confirmée
 

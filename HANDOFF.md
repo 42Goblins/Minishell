@@ -1,112 +1,100 @@
-# Reprise du travail sur Minishell
+# HANDOFF — reprise Minishell sur le portable
 
-Ce document donne le contexte nécessaire pour reprendre le travail dans une
-nouvelle conversation, sur une autre machine, sans devoir tout réexpliquer.
+Dernière mise à jour : 9 août 2026, branche `chloe`.
 
-## 1. Contexte du projet
+## 1. Contexte et manière de travailler
 
-Projet Minishell de 42 réalisé en binôme :
+Projet Minishell de 42, mandatory uniquement.
 
-- Chloé (`cmauley`) travaille sur la tokenisation, les quotes, l'expansion et
-  le parsing.
-- Dounia travaille principalement sur l'environnement, les builtins et l'exec.
-- Les bonus ne sont pas faits pour le moment.
+- Chloé : lexer/tokenisation, expansion, retrait des quotes, syntaxe et parser.
+- Dounia : environnement, builtins et exec.
+- Référence logique : branche `niko` de
+  <https://github.com/Jdavid765/minishell/tree/niko>.
+- Ne pas copier Nico aveuglément : garder ses contrats et sa logique quand ils
+  conviennent, mais expliquer les adaptations.
+- Chloé préfère que `i` reste un simple index, pas un `int *`.
+- Utiliser `len`, pas `length`, pour les noms de variables et fonctions.
+- Avancer linéairement par très petites étapes pédagogiques.
+- Ne pas donner toute une fonction d'un coup, sauf demande explicite.
+- Laisser les commentaires temporaires utiles à Chloé. Signaler la Norm sans
+  les supprimer automatiquement.
+- Les petits commentaires de travail peuvent être en français. Les `@brief`
+  officiels restent courts et en anglais.
+- Ne pas modifier le code de Dounia sans le dire et sans nécessité.
 
-Chloé travaille sur la branche `chloe`.
-
-Règle importante : ne pas supprimer ou réécrire le travail de Dounia sans
-nécessité. Les tests du lexer restent dans `tests/` afin de ne pas modifier son
-`main.c`.
-
-## 2. Références à utiliser
-
-Références officielles :
-
-- sujet Minishell obligatoire : `/home/gpalemo/en.subject (1).pdf` ;
-- Norme officielle : `/home/gpalemo/en.norm.pdf`.
-
-Projet de référence des amis :
-
-<https://github.com/Jdavid765/minishell/tree/niko>
-
-La branche `niko` sert de référence principale pour la logique de tokenisation,
-d'expansion, de parsing et pour le contrat envoyé à l'exec de Dounia. Il ne faut
-pas copier aveuglément ce projet : proposer une adaptation plus claire si elle
-est mieux adaptée au code actuel, en expliquant pourquoi.
-
-Points déjà observés chez Nico :
-
-- le lexer garde d'abord les quotes dans les tokens ;
-- `had_quotes` sert plus tard pour l'expansion et les heredocs ;
-- les quotes sont retirées dans une étape quote/expansion, pas directement au
-  moment de créer le token ;
-- Nico passe souvent `int *i`, mais Chloé préfère garder `i` comme index simple
-  et retourner la longueur consommée.
-
-## 3. Manière de travailler demandée
-
-- Avancer linéairement, par petites étapes logiques.
-- Expliquer le raisonnement avant de donner du code.
-- Agir comme un professeur : Chloé doit comprendre et pouvoir expliquer le code
-  pendant l'évaluation.
-- Ne pas donner directement tout le code sauf si elle le demande.
-- Garder `i` comme un simple index entier dans le tokenizer.
-- Les commentaires `@brief` sont courts, utiles, placés au-dessus des fonctions
-  et écrits en anglais conformément à la Norme.
-- Chloé aime que les fichiers soient rangés pour lecture top-down :
-  prototypes `static` en haut, fonction principale tôt dans le fichier, puis
-  helpers dans l'ordre logique d'appel.
-- Ne pas corriger le code de Dounia pour des problèmes sans rapport avec la
-  partie lexer/parsing.
-
-Ordre de priorité pour les décisions :
-
-1. Sujet officiel.
-2. Norme officielle.
-3. Contrat avec l'exec de Dounia.
-4. Logique du projet de Nico.
-5. Adaptations pédagogiques clairement annoncées.
-
-## 4. État Git actuel
-
-Dernier état observé le 8 août 2026 :
+Documents officiels disponibles localement :
 
 ```text
-chloe est alignée avec origin/chloe au commit :
-454a023 feat#21: handle basic lexer quotes
+/home/gpalemo/en.subject.pdf
+/home/gpalemo/en.norm.pdf
 ```
 
-Mais le working tree contient du travail non commité :
+## 2. État Git au moment du handoff
 
 ```text
- M include/minishell.h
- D notes_chloe.md
- M tests/test_lexer.c
-?? .vscode/
-?? srcs/lexer/lexer_quotes.c
+branche : chloe
+HEAD    : 4037735 docs: add integration checklist for expansion
+remote  : origin/chloe au même commit
 ```
 
-Notes :
-
-- `.vscode/` est non suivi et ne doit pas être ajouté sans demande explicite.
-- `notes_chloe.md` est supprimé localement ; ne pas le restaurer ou le supprimer
-  définitivement sans vérifier l'intention de Chloé.
-- `srcs/lexer/lexer_quotes.c` est nouveau et contient du travail en cours.
-
-Remote après `git fetch --prune origin` :
+Le travail de cette session est encore non commité :
 
 ```text
-origin/dev    ea2703f feat: #3 export: added .h changes
-origin/chloe  454a023 feat#21: handle basic lexer quotes
+M  .gitignore
+M  a_voir_avec_dounia.md
+M  include/minishell.h
+M  srcs/lexer/lexer.c
+M  srcs/lexer/lexer_handlers.c
+M  srcs/lexer/lexer_quotes.c
+M  tokenizer_progress.md
+?? expansion_progress.md
+?? srcs/expansion/
+?? tests/test_expansion.c
 ```
 
-`origin/dev` contient du travail récent de Dounia sur `export`, `unset`, `exit`,
-`exec`, `env` et une restructuration importante de `libft`. Un futur merge avec
-`dev` aura presque sûrement un conflit dans `include/minishell.h`.
+Important pour passer au portable : les fichiers non commités ne seront pas
+récupérables avec un simple `git pull`. Avant de changer de machine, faire un
+commit et un push sur `chloe`, après un dernier `git diff` et les tests.
 
-## 5. État actuel du tokenizer
+Sur le portable :
 
-Le tokenizer transforme une ligne en liste chaînée de `t_token`.
+```sh
+cd /chemin/du/minishell
+git fetch --prune origin
+git switch chloe
+git pull --ff-only origin chloe
+git status
+```
+
+Ne pas merger vers `dev` tant que le travail n'est pas propre et sélectionné.
+Les tests et documents temporaires peuvent rester sur `chloe`.
+
+## 3. Pipeline décidée
+
+```text
+readline/input
+-> tokenizer
+-> expansion des variables en respectant les quotes
+-> remove_quotes_from_tokens
+-> validation de syntaxe
+-> parser vers t_cmd
+-> exec de Dounia
+```
+
+L'expansion doit précéder le retrait des quotes :
+
+```sh
+'$USER'   # pas d'expansion
+"$USER"   # expansion
+$USER     # expansion
+```
+
+Si on supprimait d'abord les quotes, on perdrait cette information.
+
+## 4. Lexer/tokenizer : terminé
+
+La tokenisation mandatory est considérée terminée. Détails complets dans
+`tokenizer_progress.md`.
 
 Types reconnus :
 
@@ -119,327 +107,282 @@ T_APPEND
 T_HEREDOC
 ```
 
-Cas actuellement compris :
+Fonctionnalités validées :
 
-```sh
-echo hello
-echo hello | wc
-echo hello|wc
-cat<input
-echo hello>output
-cat<<EOF
-echo hello>>output
-echo 'hello world'
-echo "hello world"
-echo hello" world"
-echo "hello"world
-echo abc"def"ghi
-```
+- espaces et tabulations ;
+- opérateurs avec ou sans espaces autour ;
+- single et double quotes ;
+- quotes collées au texte dans le même mot ;
+- quotes vides ;
+- opérateurs protégés par les quotes ;
+- détection des quotes non fermées ;
+- nettoyage d'une liste partielle en cas d'échec ;
+- champ `had_quotes` ;
+- retrait des quotes actives.
 
-Les quotes simples et doubles :
+Les quotes restent d'abord dans `token->value`. `had_quotes` reste vrai après
+leur retrait, car il conserve une information historique utile au heredoc.
 
-- empêchent les espaces de couper un `T_WORD` ;
-- peuvent être collées à du texte ;
-- restent pour l'instant dans `token->value` ;
-- font passer `token->had_quotes` à `true` si le mot contient `'` ou `"`.
+Les suites `|||` ou `><` sont tokenisées. Leur invalidité appartient à la future
+validation de syntaxe, pas au tokenizer.
 
-Les quotes non fermées sont détectées :
-
-```sh
-echo "hello
-echo 'hello
-```
-
-Dans ce cas, `word_length` retourne `-1`, `tokenize_current_char` propage `-1`,
-et `tokenizer` nettoie les tokens partiels via `tokenizer_error`.
-
-## 6. Structures et contrat mémoire
-
-Le token actuel :
-
-```c
-typedef struct s_token
-{
-	t_token_type	type;
-	char			*value;
-	bool			had_quotes;
-	struct s_token	*next;
-}					t_token;
-```
-
-Contrat mémoire :
+Architecture :
 
 ```text
-ft_substr / ft_strdup / remove_quotes allouent une string
--> le token devient propriétaire de value
--> free_tokens libère value puis le token
-```
-
-`create_token_node` initialise :
-
-```text
-type
-value
-had_quotes = false
-next = NULL
-```
-
-Quand `add_word_token` crée un `T_WORD`, il met `had_quotes = true` si `value`
-contient `'` ou `"`.
-
-## 7. Organisation actuelle des fichiers lexer
-
-### `srcs/lexer/lexer.c`
-
-Contient la boucle principale et le dispatch général.
-
-Ordre actuel voulu par Chloé :
-
-```text
-tokenizer
-tokenize_current_char
-tokenizer_error
-add_operator_token
-add_word_token
-```
-
-Rôles :
-
-- `tokenizer` parcourt l'input avec `i`.
-- `tokenize_current_char` choisit quoi tokeniser à l'index courant.
-- `tokenizer_error` nettoie une liste partielle en cas d'erreur.
-- `add_operator_token` crée un token opérateur (`|`, `<`, `>`, `<<`, `>>`).
-- `add_word_token` extrait un `T_WORD` et pose `had_quotes` si nécessaire.
-
-### `srcs/lexer/lexer_redir.c`
-
-Gère les redirections, proche de l'esprit Nico mais avec retour de longueur :
-
-- `add_redir_in_or_heredoc` choisit entre `<` et `<<`.
-- `add_redir_out_or_append` choisit entre `>` et `>>`.
-
-Ces fonctions retournent :
-
-```text
-1 ou 2 = nombre de caractères consommés
--1 = erreur d'allocation
-```
-
-### `srcs/lexer/lexer_handlers.c`
-
-Contient les helpers de lecture :
-
-- `is_blank` reconnaît espace et tabulation.
-- `word_length` calcule la longueur du prochain mot.
-- `quoted_word_length` calcule une portion entre quotes et retourne `-1` si la
-  quote fermante manque.
-
-`word_length` s'arrête sur :
-
-```text
-blank, |, <, >
-```
-
-mais saute correctement les espaces situés dans quotes.
-
-### `srcs/lexer/lexer_nodes.c`
-
-Contient :
-
-- `create_token_node`
-- `add_token_back`
-- `free_tokens`
-
-### `srcs/lexer/lexer_quotes.c`
-
-Nouveau fichier de travail pour le traitement des quotes après tokenisation.
-
-Fonctions présentes :
-
-- `remove_quotes` : fonction publique qui retourne une nouvelle string sans les
-  quotes actives.
-- `stripped_length` : helper `static` qui calcule la taille après retrait des
-  quotes actives.
-
-Exemples validés en test isolé :
-
-```text
-"hello world" -> hello world
-'hello world' -> hello world
-abc"def"ghi -> abcdefghi
-"\'hello\'" -> 'hello'
-'\"hello\"' -> "hello"
-```
-
-Attention : au dernier état observé, `lexer_quotes.c` contient aussi une
-fonction commencée mais incomplète :
-
-```c
-int	remove_quotes_from_tokens(t_token *tokens)
-```
-
-Elle ne compile pas encore et doit être terminée ou retirée avant de compiler
-avec `srcs/lexer/lexer_quotes.c`.
-
-### `tests/test_lexer.c`
-
-Test isolé du tokenizer. Il ne modifie pas `main.c`.
-
-Contient :
-
-- `print_tokens` local au test ;
-- `test_input` pour les entrées valides ;
-- `test_invalid_input` pour les entrées qui doivent échouer ;
-- `test_remove_quotes` pour tester `remove_quotes` isolément.
-
-`lexer_debug.c` a été supprimé, car `print_tokens` ne sert qu'aux tests.
-
-## 8. Compiler et lancer les tests
-
-Construire la Libft si nécessaire :
-
-```sh
-make -C libft
-```
-
-Compiler le test actuel en incluant `lexer_quotes.c` seulement si la fonction
-WIP `remove_quotes_from_tokens` est terminée ou retirée :
-
-```sh
-cc -Wall -Wextra -Werror -Iinclude -Ilibft tests/test_lexer.c srcs/lexer/lexer.c srcs/lexer/lexer_redir.c srcs/lexer/lexer_handlers.c srcs/lexer/lexer_nodes.c srcs/lexer/lexer_quotes.c libft/libft.a -o /tmp/test_lexer
-```
-
-Lancer :
-
-```sh
-/tmp/test_lexer
-```
-
-Si `remove_quotes_from_tokens` est encore incomplète, compiler sans
-`lexer_quotes.c` ne testera pas `remove_quotes`; il vaut mieux terminer ou
-commenter cette fonction incomplète plutôt que contourner durablement le
-problème.
-
-## 9. État du travail de Dounia utile pour l'expansion
-
-Après fetch, `origin/dev` contient maintenant côté env/builtins :
-
-```text
-setup_env
-new_env_node
-cpy_key
-cpy_value
-get_env_value
-set_env_value
-update_env
-exec_env
-exec_export
-parse_export
-update_env_vars
-add_new_var
-print_export
-```
-
-Pour l'expansion `$VAR`, Chloé doit lire l'env sans la modifier :
-
-```c
-get_env_value(shell->env, "HOME")
-```
-
-Contrat souhaité :
-
-```text
-Dounia maintient shell->env via env/export/unset/cd.
-Chloé lit shell->env pour remplacer $VAR pendant l'expansion.
-```
-
-Ne pas dupliquer une fonction de recherche env côté parsing.
-
-Point à décider plus tard avec Dounia :
-
-```text
-où stocker le dernier exit status pour gérer $?
-```
-
-Pour l'instant, `t_shell` ne contient pas encore de champ clair du style
-`last_status`.
-
-## 10. Prochaine étape exacte
-
-Reprendre à `srcs/lexer/lexer_quotes.c`.
-
-Objectif immédiat :
-
-```text
-terminer remove_quotes_from_tokens
-```
-
-Logique voulue :
-
-```text
-current = tokens
-while current
-    if current->type == T_WORD && current->had_quotes
-        new_value = remove_quotes(current->value)
-        if !new_value
-            return 1
-        free(current->value)
-        current->value = new_value
-    current = current->next
-return 0
-```
-
-Quand cette fonction compile :
-
-1. Ajouter son prototype dans `include/minishell.h`.
-2. Ajouter un test dédié dans `tests/test_lexer.c`.
-3. Ne pas encore l'appeler automatiquement dans `tokenizer`.
-4. Tester d'abord sur une liste de tokens déjà créée :
-
-```text
-tokenizer("echo \"hello world\"", &shell)
-print avant remove_quotes_from_tokens
-remove_quotes_from_tokens(shell.token)
-print après
-free_tokens(shell.token)
-```
-
-Résultat attendu :
-
-```text
-avant : value: "hello world", had_quotes: 1
-après : value: hello world, had_quotes: 1
-```
-
-Important : ne pas attaquer l'expansion `$VAR` tant que le retrait des quotes
-sur tokens n'est pas testé proprement.
-
-## 11. Reprendre sur un autre ordinateur
-
-Après avoir ouvert le dépôt :
-
-```sh
-git fetch --prune origin
-git switch chloe
-git pull --ff-only origin chloe
-git status
-```
-
-Si le travail non commité de cette machine n'a pas encore été push, il faut le
-récupérer ou le refaire avant de continuer. Vérifier en priorité :
-
-```text
+srcs/lexer/lexer.c
+srcs/lexer/lexer_handlers.c
+srcs/lexer/lexer_nodes.c
+srcs/lexer/lexer_redir.c
 srcs/lexer/lexer_quotes.c
-include/minishell.h
-tests/test_lexer.c
 ```
 
-Message à donner à une nouvelle conversation :
+Différence assumée avec Nico : ses fonctions passent souvent `int *i`, tandis
+que les handlers de Chloé retournent une longueur consommée et laissent `i`
+comme index simple.
+
+Dernière validation complète du lexer :
 
 ```text
-Lis entièrement HANDOFF.md et tokenizer_progress.md, puis inspecte l'état actuel
-des fichiers du lexer. Reprends à la section « Prochaine étape exacte ». Ne
-modifie pas le travail de Dounia sans lien direct avec le lexer/parsing. Guide-moi
-pédagogiquement, par petites étapes, sans me donner tout le code sauf demande
-explicite.
+-Wall -Wextra -Werror : OK
+Norminette : tous les fichiers lexer OK
+Valgrind : 121 allocations, 121 frees, 0 erreur
 ```
+
+## 5. Retrait des quotes : terminé mais pas encore intégré
+
+Dans `srcs/lexer/lexer_quotes.c` :
+
+```c
+char *remove_quotes(char *value);
+int  remove_quotes_from_tokens(t_token *tokens);
+```
+
+`remove_quotes` alloue au maximum `ft_strlen(value) + 1`, puis copie sans les
+quotes actives. La logique dupliquée de calcul de longueur a été supprimée.
+
+`remove_quotes_from_tokens` remplace proprement les valeurs des `T_WORD` ayant
+eu des quotes. Ne pas l'appeler dans `tokenizer` : elle sera appelée après
+l'expansion.
+
+## 6. Expansion : état exact
+
+Détails complémentaires dans `expansion_progress.md`.
+
+Fichiers :
+
+```text
+srcs/expansion/expansion_handlers.c
+srcs/expansion/expansion.c
+tests/test_expansion.c
+```
+
+Prototypes actuels :
+
+```c
+int   var_name_len(char *var);
+char  *get_var_value(char *var, t_env *env);
+bool  is_dollar_expand(char *word, int i, bool in_single);
+char  *expand_word(char *word, t_env *env);
+char  *append_expansion_part(char *built, char *part);
+```
+
+### Fonctions terminées
+
+`var_name_len` :
+
+- reçoit le texte juste après `$` ;
+- premier caractère : lettre ou `_` ;
+- suivants : alphanumériques ou `_` ;
+- `USER/test` retourne `4` ;
+- `2USER` retourne `0`.
+
+`get_var_name`, static :
+
+- appelle `var_name_len` ;
+- alloue le nom avec `ft_substr` ;
+- utilisée uniquement par `get_var_value`.
+
+`get_var_value` :
+
+- récupère le nom ;
+- appelle `get_env_value` ;
+- libère le nom ;
+- retourne un `ft_strdup` de la valeur ;
+- variable absente : retourne une chaîne vide allouée ;
+- nom invalide : retourne `NULL`.
+
+Contrat mémoire essentiel :
+
+```text
+get_env_value retourne une adresse empruntée -> ne pas la free
+get_var_value retourne une nouvelle chaîne  -> le caller la free
+```
+
+`is_dollar_expand` :
+
+- vérifie que l'index contient `$` ;
+- refuse l'expansion dans les single quotes ;
+- exige un nom valide après `$` ;
+- ne gère pas encore `$?`.
+
+`append_expansion_part` :
+
+- reçoit `built`, la chaîne construite jusque-là ;
+- reçoit `part`, le nouveau morceau ;
+- appelle `ft_strjoin` ;
+- libère toujours `built` et `part` ;
+- retourne la nouvelle chaîne ou `NULL`.
+
+Ne jamais lui passer directement des littéraux, puisqu'elle les libère :
+
+```c
+append_expansion_part(ft_strdup("hello "), ft_strdup("chloe"));
+```
+
+### `expand_word` est volontairement incomplète
+
+Elle parcourt déjà le mot avec :
+
+```c
+int  i;
+bool in_single;
+bool in_double;
+```
+
+Les états de quotes sont protégés de manière croisée : une apostrophe située
+dans des doubles quotes est un caractère normal, et inversement.
+
+Le bloc détectant `is_dollar_expand` est encore vide, avec des commentaires
+`// TODO` français. `expand_word` retourne encore `ft_strdup(word)` et ne
+remplace donc aucune variable pour l'instant.
+
+Les `// TODO` provoquent volontairement des erreurs Norminette. De plus,
+`expand_word` dépasse actuellement 25 lignes à cause de ces commentaires. Ne
+pas corriger la Norm en supprimant les repères avant que Chloé ait terminé et
+compris la fonction.
+
+## 7. Prochaine micro-étape exacte
+
+Reprendre `expand_word` sans coder toute la fonction d'un coup.
+
+Faire uniquement :
+
+1. ajouter `int start` ;
+2. ajouter `char *built` ;
+3. après la vérification de `word`, mettre `start = 0` ;
+4. faire `built = ft_strdup("")` ;
+5. si l'allocation échoue, retourner `NULL` ;
+6. ne pas encore remplir le bloc du `$`.
+
+Sens :
+
+```text
+i     = caractère lu maintenant
+start = début du texte pas encore copié
+built = chaîne reconstruite jusque-là
+```
+
+Après cette micro-étape, expliquer avec `hello-$USER` avant d'avancer.
+
+## 8. Tests expansion
+
+`tests/test_expansion.c` utilise un environnement local contrôlé :
+
+```text
+USER=chloe
+HOME=/home/chloe
+```
+
+Sections présentes :
+
+- longueurs de noms ;
+- valeurs récupérées ;
+- décision d'expand un `$` ;
+- parcours des quotes ;
+- assemblage de chaînes allouées.
+
+Les tests `[PASS]/[FAIL]` automatisés passent. Attention : la section
+`QUOTE-AWARE WORD SCAN` affiche actuellement l'attendu, mais comme le `printf`
+temporaire de `expand_word` a été retiré au profit des TODO, cette section ne
+valide plus automatiquement le point d'expansion. Elle devra être remplacée par
+des tests du vrai résultat lorsque `expand_word` sera fonctionnelle.
+
+Compilation :
+
+```sh
+cc -Wall -Wextra -Werror \
+-Iinclude -Ilibft/inc \
+tests/test_expansion.c \
+srcs/expansion/expansion.c \
+srcs/expansion/expansion_handlers.c \
+srcs/builtins/cd.c \
+libft/libft.a \
+-o /tmp/test_expansion
+
+/tmp/test_expansion
+```
+
+Dernier Valgrind avant les TODO :
+
+```text
+25 allocations, 25 frees
+0 byte restant
+0 erreur
+```
+
+## 9. Contrat avec Dounia à confirmer
+
+Voir aussi `a_voir_avec_dounia.md`.
+
+### Environnement
+
+Dounia possède et modifie `shell->env` via setup/export/unset/cd. Chloé le lit
+pour l'expansion et ne libère jamais les valeurs empruntées.
+
+`get_env_value` et `set_env_value` utilisent actuellement :
+
+```c
+ft_strncmp(env->key, key, ft_strlen(key))
+```
+
+Cela peut confondre `HOME` et `HOME_TEST`. Valider avec Dounia une comparaison
+exacte, probablement `ft_strcmp`.
+
+### `$?`
+
+`t_shell` n'a pas encore de `last_status`. Décision souhaitée :
+
+```text
+Dounia met à jour shell->last_status après exec/builtin/erreur
+Chloé le lit pour expand $?
+```
+
+Ne pas implémenter définitivement `$?` avant ce contrat.
+
+### Heredoc
+
+Le token délimiteur conserve `had_quotes`. Il faut confirmer que Dounia utilise
+cette information pour décider si les variables du contenu du heredoc doivent
+être expansées.
+
+## 10. Robustesse finale attendue
+
+La logique reste proche de Nico, mais il faudra faire une comparaison ciblée
+avec sa branche quand expansion + parser seront terminés.
+
+Objectif de cette comparaison : chercher les cas manquants, pas copier le code.
+En particulier :
+
+- plusieurs variables dans un même mot ;
+- variables au début, milieu et fin ;
+- variables absentes et valeurs vides ;
+- quotes adjacentes et imbriquées selon les règles shell ;
+- `$` isolé et caractères invalides après `$` ;
+- redirections sans cible ;
+- pipes au début, à la fin ou consécutifs ;
+- combinaisons de redirections ;
+- nettoyage mémoire sur toutes les erreurs.
+
+Le tokenizer est solide, mais la majorité des cas destinés à casser un
+minishell se concentrera effectivement dans l'expansion, la syntaxe, le parser,
+les heredocs et leur intégration avec l'exec.

@@ -12,7 +12,7 @@
 
 #include "minishell.h"
 
-static int	stripped_length(char *value);
+static void	copy_without_quotes(char *value, char *stripped);
 
 /**
  * @brief Removes active quotes from every quoted word token.
@@ -43,17 +43,25 @@ int	remove_quotes_from_tokens(t_token *tokens)
  */
 char	*remove_quotes(char *value)
 {
-	int		i;
-	int		j;
-	int		length;
-	bool	in_single;
-	bool	in_double;
 	char	*stripped;
 
-	length = stripped_length(value);
-	stripped = malloc(sizeof(char) * (length + 1));
+	stripped = malloc(sizeof(char) * (ft_strlen(value) + 1));
 	if (!stripped)
 		return (NULL);
+	copy_without_quotes(value, stripped);
+	return (stripped);
+}
+
+/**
+ * @brief Copies a word while removing its active quotes.
+ */
+static void	copy_without_quotes(char *value, char *stripped)
+{
+	int		i;
+	int		j;
+	bool	in_single;
+	bool	in_double;
+
 	i = 0;
 	j = 0;
 	in_single = false;
@@ -72,32 +80,4 @@ char	*remove_quotes(char *value)
 		i++;
 	}
 	stripped[j] = '\0';
-	return (stripped);
-}
-
-/**
- * @brief Returns the length of a word after removing active quotes.
- */
-static int	stripped_length(char *value)
-{
-	int		i;
-	int		length;
-	bool	in_single;
-	bool	in_double;
-
-	i = 0;
-	length = 0;
-	in_single = false;
-	in_double = false;
-	while (value[i])
-	{
-		if (value[i] == '\'' && !in_double)
-			in_single = !in_single;
-		else if (value[i] == '"' && !in_single)
-			in_double = !in_double;
-		else
-			length++;
-		i++;
-	}
-	return (length);
 }

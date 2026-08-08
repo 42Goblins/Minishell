@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/08 20:27:42 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/08 23:30:34 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,8 +151,18 @@ int			add_redir_in_or_heredoc(char *input, int i, t_shell *shell);
 int			add_redir_out_or_append(char *input, int i, t_shell *shell);
 char		*remove_quotes(char *value);
 int			is_blank(char character);
-int			word_length(char *input, int i);
+int			word_len(char *input, int i);
 int			tokenizer(char *input, t_shell *shell);
 int			remove_quotes_from_tokens(t_token *tokens);
+
+/* ========================================================================== */
+/*                                  EXPANSION                                 */
+/* ========================================================================== */
+
+int			var_name_len(char *var);
+char		*get_var_value(char *var, t_env *env);
+bool		is_dollar_expand(char *word, int i, bool in_single);
+char		*expand_word(char *word, t_env *env);
+char		*append_expansion_part(char *built, char *part);
 
 #endif
