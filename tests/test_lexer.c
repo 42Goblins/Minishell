@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 01:10:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/05 19:20:38 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/06 18:45:21 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,19 @@ static int	test_invalid_input(char *input)
 	}
 }
 
+static int	test_remove_quotes(char *input)
+{
+	char	*stripped;
+
+	stripped = remove_quotes(input);
+	if (!stripped)
+		return (1);
+	printf("\nremove_quotes input: %s\n", input);
+	printf("remove_quotes output: %s\n", stripped);
+	free(stripped);
+	return (0);
+}
+
 /**
  * @brief Temporarily tests the first tokenizer version in isolation (to not modify main.c)
  */
@@ -93,6 +106,16 @@ int	main(int ac, char **av, char **env)
 	if (test_invalid_input("echo \"hello"))
 		return (1);
 	if (test_invalid_input("echo 'hello"))
+		return (1);
+	if (test_remove_quotes("\"hello world\""))
+		return (1);
+	if (test_remove_quotes("'hello world'"))
+		return (1);
+	if (test_remove_quotes("abc\"def\"ghi"))
+		return (1);
+	if (test_remove_quotes("\"'hello'\""))
+		return (1);
+	if (test_remove_quotes("'\"hello\"'"))
 		return (1);
 	return (0);
 }

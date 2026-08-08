@@ -128,6 +128,7 @@ void		free_tokens(t_token *head);
 int			add_operator_token(t_shell *shell, t_token_type type, char *str);
 int			add_redir_in_or_heredoc(char *input, int i, t_shell *shell);
 int			add_redir_out_or_append(char *input, int i, t_shell *shell);
+char		*remove_quotes(char *value);
 int			is_blank(char character);
 int			word_length(char *input, int i);
 int			tokenizer(char *input, t_shell *shell);
