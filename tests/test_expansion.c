@@ -12,6 +12,9 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Compare deux resultats de test, en gerant aussi le cas NULL.
+ */
 static bool	values_match(char *value, char *expected)
 {
 	if (!value && !expected)
@@ -21,6 +24,9 @@ static bool	values_match(char *value, char *expected)
 	return (ft_strcmp(value, expected) == 0);
 }
 
+/**
+ * @brief Cree un petit environnement fake pour tester l'expansion.
+ */
 static void	init_test_env(t_env *user, t_env *home)
 {
 	home->key = "HOME";
@@ -31,6 +37,9 @@ static void	init_test_env(t_env *user, t_env *home)
 	user->next = home;
 }
 
+/**
+ * @brief Teste l'assemblage de deux morceaux alloues de l'expansion.
+ */
 static void	test_append_part(char *first, char *second, char *expected)
 {
 	char	*result;
@@ -46,7 +55,7 @@ static void	test_append_part(char *first, char *second, char *expected)
 }
 
 /**
- * @brief Temporarily tests the assembly of allocated expansion parts.
+ * @brief Lance plusieurs tests sur append_expansion_part.
  */
 static void	test_append_parts(void)
 {
@@ -57,6 +66,9 @@ static void	test_append_parts(void)
 	test_append_part("$", "USER", "$USER");
 }
 
+/**
+ * @brief Teste si un dollar donne bien une expansion ou non.
+ */
 static void	test_one_dollar(char *word, int i, bool in_single, bool expected)
 {
 	bool	result;
@@ -71,7 +83,7 @@ static void	test_one_dollar(char *word, int i, bool in_single, bool expected)
 }
 
 /**
- * @brief Temporarily tests when a dollar sign starts an expansion.
+ * @brief Teste les regles qui disent si un dollar est expandable.
  */
 static void	test_dollar_expansion(void)
 {
@@ -87,7 +99,7 @@ static void	test_dollar_expansion(void)
 }
 
 /**
- * @brief Temporarily checks one expanded variable value and frees it.
+ * @brief Teste la valeur recuperee pour un nom de variable apres le dollar.
  */
 static void	test_get_var_value(char *input, t_env *env, char *expected)
 {
@@ -104,6 +116,9 @@ static void	test_get_var_value(char *input, t_env *env, char *expected)
 	free(value);
 }
 
+/**
+ * @brief Teste la longueur du nom de variable situe apres un dollar.
+ */
 static void	test_one_var_len(char *input, int expected)
 {
 	int	result;
@@ -118,7 +133,7 @@ static void	test_one_var_len(char *input, int expected)
 }
 
 /**
- * @brief Temporarily tests variable lookup with a controlled environment.
+ * @brief Teste la recherche de valeurs dans un environnement controle.
  */
 static void	test_get_var_values(void)
 {
@@ -136,7 +151,7 @@ static void	test_get_var_values(void)
 }
 
 /**
- * @brief Temporarily compares variable-name lengths with expected values.
+ * @brief Teste les longueurs de noms de variables valides ou invalides.
  */
 static void	test_var_name_len(void)
 {
@@ -151,17 +166,26 @@ static void	test_var_name_len(void)
 	test_one_var_len(NULL, 0);
 }
 
+/**
+ * @brief Teste le resultat final retourne par expand_word.
+ */
 static void	test_expand_scan(char *word, t_env *env, char *expected)
 {
 	char	*result;
 
-	printf("\nword: %s\nexpected: %s\n", word, expected);
 	result = expand_word(word, env);
+	if (values_match(result, expected))
+		printf("[PASS] ");
+	else
+		printf("[FAIL] ");
+	printf("word: %-15s | result: %-15s | expected: %s\n",
+		word ? word : "(NULL)", result ? result : "(NULL)",
+		expected ? expected : "(NULL)");
 	free(result);
 }
 
 /**
- * @brief Temporarily checks expansion detection while scanning quoted words.
+ * @brief Teste expand_word avec des mots quotes et non quotes.
  */
 static void	test_expand_scans(void)
 {
@@ -170,14 +194,17 @@ static void	test_expand_scans(void)
 
 	init_test_env(&user, &home);
 	printf("\n=== QUOTE-AWARE WORD SCAN ===\n");
-	test_expand_scan("$USER", &user, "expansion at index 0");
-	test_expand_scan("'$USER'", &user, "no expansion");
-	test_expand_scan("\"$USER\"", &user, "expansion at index 1");
-	test_expand_scan("abc$USER", &user, "expansion at index 3");
-	test_expand_scan("\"it's $USER\"", &user, "expansion at index 6");
-	test_expand_scan("'\"$USER\"'", &user, "no expansion");
+	test_expand_scan("$USER", &user, "chloe");
+	test_expand_scan("'$USER'", &user, "'$USER'");
+	test_expand_scan("\"$USER\"", &user, "\"chloe\"");
+	test_expand_scan("abc$USER", &user, "abcchloe");
+	test_expand_scan("\"it's $USER\"", &user, "\"it's chloe\"");
+	test_expand_scan("'\"$USER\"'", &user, "'\"$USER\"'");
 }
 
+/**
+ * @brief Lance tous les tests temporaires de la partie expansion.
+ */
 int	main(int ac, char **av, char **env)
 {
 	(void)ac;
