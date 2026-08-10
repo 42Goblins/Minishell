@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/25 03:29:55 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/09 17:28:12 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ void	set_env_value(t_env *env, const char *key, const char *value)
 {
 	while (env)
 	{
-		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+		if (ft_strcmp(env->key, key))
 		{
 			free(env->value);
 			env->value = ft_strdup(value);
@@ -46,7 +46,7 @@ char	*get_env_value(t_env *env, const char *key)
 {
 	while (env)
 	{
-		if (ft_strncmp(env->key, key, ft_strlen(key)) == 0)
+		if (ft_strcmp(env->key, key))
 			return (env->value);
 		env = env->next;
 	}
