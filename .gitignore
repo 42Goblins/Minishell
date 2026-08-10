@@ -1,6 +1,5 @@
 minishell
 objs/
-libft/objs/
 libft/obj
 libft/libft.a
 main.c
