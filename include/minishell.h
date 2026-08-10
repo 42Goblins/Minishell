@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/04 05:21:38 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/09 21:52:06 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ typedef struct	s_shell
 	// char		**env_for_exec;
 	t_cmd		*cmds;
 	char		*path;
-}	t_shell;
+}				t_shell;
 
 
 /* ========================================================================== */
@@ -85,7 +85,7 @@ typedef struct	s_shell
 /* ========================================================================== */
 /* main.c */
 int		main(int ac, char **av, char **env);
-
+int		*get_status(void);
 
 /* ========================================================================== */
 /*                                  ENV                                       */
@@ -138,5 +138,16 @@ int		parse_export(char *str, char **key, char **value);
 void	update_env_vars(t_env **env, char *key, char *value);
 int		exec_export(t_env **env, char **cmd);
 
+/* ========================================================================== */
+/*                                    EXEC                                    */
+/* ========================================================================== */
+
+/* exec_external.c */
+void	free_tab(char **tab);
+char	*try_path(char *dir, char *cmd);
+char	*get_path(char **env);
+char	*find_path(char *cmd, char **env);
+void	exec_external(t_cmd *cmd, char **env);
+void	exec_single_external(t_cmd *cmd, char **env);
 
 #endif
