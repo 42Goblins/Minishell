@@ -91,7 +91,10 @@ static void	test_dollar_expansion(void)
 	test_one_dollar("$USER", 0, false, true);
 	test_one_dollar("abc$USER", 3, false, true);
 	test_one_dollar("$USER", 0, true, false);
-	test_one_dollar("$2USER", 0, false, false);
+	test_one_dollar("$?", 0, false, true);
+	test_one_dollar("$?", 0, true, false);
+	test_one_dollar("$2USER", 0, false, true);
+	test_one_dollar("$2USER", 0, true, false);
 	test_one_dollar("$", 0, false, false);
 	test_one_dollar("USER", 0, false, false);
 	test_one_dollar(NULL, 0, false, false);
@@ -141,11 +144,13 @@ static void	test_get_var_values(void)
 	t_env	user;
 
 	init_test_env(&user, &home);
+	*get_status() = 42;
 	printf("\n=== VARIABLE VALUES ===\n");
 	test_get_var_value("USER/test", &user, "chloe");
 	test_get_var_value("HOME!", &user, "/home/chloe");
+	test_get_var_value("?", &user, "42");
 	test_get_var_value("MISSING", &user, "");
-	test_get_var_value("2USER", &user, NULL);
+	test_get_var_value("2USER", &user, "");
 	test_get_var_value("", &user, NULL);
 	test_get_var_value(NULL, &user, NULL);
 }
@@ -193,6 +198,7 @@ static void	test_expand_scans(void)
 	t_env	user;
 
 	init_test_env(&user, &home);
+	*get_status() = 127;
 	printf("\n=== QUOTE-AWARE WORD SCAN ===\n");
 	test_expand_scan("$USER", &user, "chloe");
 	test_expand_scan("'$USER'", &user, "'$USER'");
@@ -200,6 +206,22 @@ static void	test_expand_scans(void)
 	test_expand_scan("abc$USER", &user, "abcchloe");
 	test_expand_scan("\"it's $USER\"", &user, "\"it's chloe\"");
 	test_expand_scan("'\"$USER\"'", &user, "'\"$USER\"'");
+	test_expand_scan("$?", &user, "127");
+	test_expand_scan("status:$?", &user, "status:127");
+	test_expand_scan("\"$?\"", &user, "\"127\"");
+	test_expand_scan("'$?'", &user, "'$?'");
+	test_expand_scan("$?$USER", &user, "127chloe");
+	test_expand_scan("$MISSING", &user, "");
+	test_expand_scan("a$MISSINGb", &user, "a");
+	test_expand_scan("$USER$HOME", &user, "chloe/home/chloe");
+	test_expand_scan("$?abc", &user, "127abc");
+	test_expand_scan("$USER?", &user, "chloe?");
+	test_expand_scan("\"$USER$?\"", &user, "\"chloe127\"");
+	test_expand_scan("'$USER'$HOME", &user, "'$USER'/home/chloe");
+	test_expand_scan("$2USER", &user, "USER");
+	test_expand_scan("$12USER", &user, "2USER");
+	test_expand_scan("$9abc", &user, "abc");
+	test_expand_scan("$1", &user, "");
 }
 
 /**

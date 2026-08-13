@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/08 23:30:34 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/12 00:46:19 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,5 +164,12 @@ char		*get_var_value(char *var, t_env *env);
 bool		is_dollar_expand(char *word, int i, bool in_single);
 char		*expand_word(char *word, t_env *env);
 char		*append_expansion_part(char *built, char *part);
+void		free_three_strings(char *first, char *second, char *third);
+
+/* ========================================================================== */
+/*                                  UTILS                                     */
+/* ========================================================================== */
+
+int	*get_status(void);
 
 #endif

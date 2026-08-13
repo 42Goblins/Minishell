@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   expansion_handlers.c                               :+:      :+:    :+:   */
+/*   expansion_vars.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 21:54:51 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/08 23:53:29 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/13 16:02:31 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,10 @@ bool	is_dollar_expand(char *word, int i, bool in_single)
 		return (false);
 	if (in_single)
 		return (false);
+	if (word[i + 1] == '?')
+		return (true);
+	if (ft_isdigit(word[i + 1]))
+		return (true);
 	return (var_name_len(&word[i + 1]) > 0);
 }
 
@@ -37,6 +41,10 @@ char	*get_var_value(char *var, t_env *env)
 	char	*name;
 	char	*value;
 
+	if (var && var[0] == '?')
+		return (ft_itoa(*get_status()));
+	if (var && ft_isdigit(var[0]))
+		return (ft_strdup(""));
 	name = get_var_name(var);
 	if (!name)
 		return (NULL);
