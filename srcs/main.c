@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 15:25:50 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/10 17:10:41 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,32 +42,16 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 }
 void set_cmd(t_cmd *cmd)
 {
-	static char *cd_args[] = {"nope", "salut", NULL};
+	static char *cd_args[] = {"ldfyfx", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
 	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
 	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
 	cmd->fd_out = 1;                // STDOUT_FILENO (pas de redirection)
-	cmd->is_builtin = 1;            // true, cd est bien un builtin
+	cmd->is_builtin = 0;            // true, cd est bien un builtin
 	cmd->access_check = 1;          // true, on considère l'accès valide (rien à checker sur un builtin)
 	cmd->next = NULL;               // pas de pipe, donc pas de commande suivante
 }
-void exec_builtins(t_shell *shell, t_cmd *cmd)
-{
-	if (ft_strncmp(cmd->cmd_and_args[0], "cd", 3) == 0)
-		*get_status() = exec_cd(shell, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "echo", 5) == 0)
-		*get_status() = exec_echo(cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "env", 4) == 0)
-		*get_status() = exec_env(shell->env, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "pwd", 4) == 0)
-		*get_status() = exec_pwd();
-	else if (ft_strncmp(cmd->cmd_and_args[0], "unset", 6) == 0)
-		*get_status() = exec_unset(&shell->env, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "exit", 5) == 0)
-		*get_status() = exec_exit(cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "export", 7) == 0)
-		*get_status() = exec_export(&shell->env, cmd->cmd_and_args);
-}
+
 
 
 
@@ -83,8 +67,8 @@ int	main(int ac, char **av, char **env)
 
 	// exec_single_external(shell.cmds, env);
 	// exec_pipeline(shell.cmds, env);
-	
-	void	launch_exec(t_shell shell, t_cmd cmds);
+
+	launch_exec(shell, cmd);
 	
 	/* printf("oldpwd: %s\n", getcwd(NULL, 0));
 	exec_builtins(&shell, shell.cmds);
