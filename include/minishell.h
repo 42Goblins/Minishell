@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/17 03:31:10 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/17 22:01:48 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -169,9 +169,19 @@ void		free_three_strings(char *first, char *second, char *third);
 int			expand_tokens(t_token *tokens, t_env *env);
 
 /* ========================================================================== */
+/*                                  PARSER                                    */
+/* ========================================================================== */
+
+int			count_cmd_args(t_token *tokens);
+char		**create_cmd_args(t_token *tokens);
+t_cmd		*create_cmd_node(t_token *tokens);
+t_cmd		*parse_tokens(t_token *tokens);
+
+/* ========================================================================== */
 /*                                  UTILS                                     */
 /* ========================================================================== */
 
-int	*get_status(void);
+int			*get_status(void);
+void		free_tab(char **tab);
 
 #endif

@@ -30,6 +30,7 @@ $2USER      # $2 vaut vide, USER reste littéral
 
 ```text
 srcs/expansion/expansion.c
+srcs/expansion/expand_tokens.c
 srcs/expansion/expansion_vars.c
 srcs/expansion/expansion_utils.c
 srcs/utils/get_status.c
@@ -54,6 +55,16 @@ Contient la logique principale :
 - `update_quote_state`
 - `replace_current_var`
 - `join_three_parts`
+
+```text
+expand_tokens.c
+```
+
+Contient la fonction qui applique l'expansion sur une liste de tokens :
+
+- expand tous les `T_WORD` ;
+- skip le token juste après `T_HEREDOC` ;
+- modifie les `value` en place.
 
 ```text
 expansion_vars.c
@@ -233,6 +244,25 @@ $9abc              -> abc
 $1                 -> ""
 ```
 
+Les tests pipeline couvrent aussi :
+
+```text
+tokenizer -> expand_tokens
+tokenizer -> expand_tokens -> remove_quotes_from_tokens
+```
+
+Cas validés :
+
+```text
+echo "$USER" '$USER' $? -> echo, "chloe", '$USER', 127
+cat << "$USER"          -> cat, <<, "$USER"
+
+après remove quotes :
+echo "$USER" '$USER' $? -> echo, chloe, $USER, 127
+echo '$USER'$HOME       -> echo, $USER/home/chloe
+cat << "$USER"          -> cat, <<, $USER
+```
+
 ## Commande de test
 
 ```sh
@@ -241,8 +271,14 @@ cc -Wall -Wextra -Werror \
 -Iinclude -Ilibft/inc \
 tests/test_expansion.c \
 srcs/expansion/expansion.c \
+srcs/expansion/expand_tokens.c \
 srcs/expansion/expansion_vars.c \
 srcs/expansion/expansion_utils.c \
+srcs/lexer/lexer.c \
+srcs/lexer/lexer_nodes.c \
+srcs/lexer/lexer_redir.c \
+srcs/lexer/lexer_quotes.c \
+srcs/lexer/lexer_utils.c \
 srcs/builtins/cd.c \
 srcs/utils/get_status.c \
 libft/libft.a \
@@ -254,54 +290,7 @@ Dernier état connu : la compilation passe et tous les tests expansion passent.
 
 ## Ce qui reste à faire
 
-### 1. Brancher l'expansion sur les tokens
-
-Créer une fonction qui parcourt la liste de tokens et applique `expand_word` aux
-tokens concernés.
-
-Idée :
-
-```text
-pour chaque token
-    si token WORD doit être expand
-        token->value = expand_word(token->value, shell->env)
-```
-
-Ne pas encore mélanger heredoc dans cette étape.
-
-### 2. Valider l'ordre avec le retrait des quotes
-
-L'ordre doit rester :
-
-```text
-expansion
--> remove_quotes_from_tokens
-```
-
-À tester avec :
-
-```sh
-echo "$USER"
-echo '$USER'
-echo '$USER'$HOME
-echo "$USER$?"
-```
-
-### 3. Ajouter des tests pipeline
-
-Pour l'instant, les tests appellent surtout `expand_word` directement.
-
-Prochaine couche de tests :
-
-```text
-input brut
--> tokenizer
--> expansion sur tokens
--> remove_quotes_from_tokens
--> print tokens
-```
-
-### 4. Redirections
+### 1. Valider les redirections dans les tests pipeline
 
 À valider au moment de l'intégration :
 
@@ -312,7 +301,27 @@ cat < "$INPUT"
 
 Les noms de fichiers doivent être expandés puis débarrassés de leurs quotes.
 
-### 5. Heredoc
+### 2. Parser vers `t_cmd` / `cmd_and_args`
+
+Prochaine grosse étape côté Chloé : transformer les tokens déjà préparés en
+structure exploitable par l'exec.
+
+Objectif :
+
+```text
+tokens après expansion + remove quotes
+-> t_cmd
+-> cmd_and_args
+-> redirections attachées à la bonne commande
+```
+
+À clarifier avec Dounia :
+
+- structure exacte attendue par l'exec ;
+- ownership mémoire des tableaux et strings ;
+- format des redirections.
+
+### 3. Heredoc
 
 À traiter séparément.
 
@@ -326,7 +335,7 @@ cat << "EOF"    # contenu heredoc non expandé
 Le delimiter doit perdre ses quotes, mais `had_quotes` doit rester disponible
 pour décider si le contenu du heredoc doit être expandé.
 
-### 6. Brancher réellement `get_status`
+### 4. Brancher réellement `get_status`
 
 `$?` lit déjà `get_status`, mais il faudra que Dounia branche les écritures :
 
@@ -336,7 +345,24 @@ commande introuvable -> *get_status() = 127
 Ctrl-C -> *get_status() = 130
 ```
 
-### 7. Refacto / Norm
+### 5. Brancher la pipeline dans la boucle globale
+
+À faire après accord avec Dounia sur le format envoyé à l'exec.
+
+Ordre proposé :
+
+```text
+readline
+tokenizer
+expand_tokens
+remove_quotes_from_tokens
+syntax
+parser
+exec
+cleanup
+```
+
+### 6. Refacto / Norm
 
 `expand_word` est encore un peu longue.
 

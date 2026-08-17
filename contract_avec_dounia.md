@@ -65,6 +65,39 @@ echo "$USER" '$USER' $? -> echo, chloe, $USER, 127
 cat << "$USER"          -> cat, <<, $USER
 ```
 
+## À décider / faire ensemble maintenant
+
+Objectif court terme : pouvoir donner à l'exec une structure claire, sans que
+Dounia ait besoin de relire la ligne brute.
+
+Ordre proposé pour la boucle globale :
+
+```text
+line = readline(prompt)
+si EOF -> exit propre
+si line non vide -> add_history
+tokenizer(line, shell)
+expand_tokens(shell->token, shell->env)
+remove_quotes_from_tokens(shell->token)
+validation syntaxique
+parser tokens -> t_cmd / cmd_and_args / redirections
+exec
+cleanup de la commande courante
+```
+
+Ce qu'on peut brancher en local sur `chloe` avant merge :
+
+- un wrapper de pipeline qui appelle tokenizer, expansion et retrait des quotes ;
+- des tests pipeline sans toucher à l'exec de Dounia ;
+- le parser vers `cmd_and_args`, tant que le contrat de sortie est clair.
+
+Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
+
+- où `get_status()` est mis à jour après exec / builtins / erreurs / signaux ;
+- quel format exact l'exec attend pour les commandes et redirections ;
+- comment le heredoc reçoit le delimiter et l'information `had_quotes` ;
+- qui possède/libère les `t_cmd`, `cmd_and_args` et chemins de redirection.
+
 ## Environnement et `$VAR`
 
 Contrat :

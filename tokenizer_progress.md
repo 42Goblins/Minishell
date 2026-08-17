@@ -1,4 +1,4 @@
-# Tokenizer terminé — 9 août 2026
+# Tokenizer terminé — 17 août 2026
 
 ## Statut
 
@@ -72,7 +72,7 @@ l'information nécessaire au heredoc.
 `i` reste uniquement l'index courant. Les handlers retournent le nombre de
 caractères consommés.
 
-### `srcs/lexer/lexer_handlers.c`
+### `srcs/lexer/lexer_utils.c`
 
 - `is_blank` reconnaît espace et tabulation ;
 - `word_len` mesure le prochain mot ;
@@ -90,6 +90,15 @@ caractères consommés.
 - `free_tokens` libère les valeurs et les nœuds.
 
 Le token devient propriétaire de la chaîne placée dans `value`.
+
+La liste de tokens est maintenant doublement chaînée :
+
+```text
+prev <- current -> next
+```
+
+`prev` est utilisé par `expand_tokens` pour ne pas expand le delimiter heredoc,
+c'est-à-dire le `T_WORD` placé juste après `T_HEREDOC`.
 
 ### `srcs/lexer/lexer_quotes.c`
 
@@ -132,7 +141,7 @@ cc -Wall -Wextra -Werror \
 tests/test_lexer.c \
 srcs/lexer/lexer.c \
 srcs/lexer/lexer_redir.c \
-srcs/lexer/lexer_handlers.c \
+srcs/lexer/lexer_utils.c \
 srcs/lexer/lexer_nodes.c \
 srcs/lexer/lexer_quotes.c \
 libft/libft.a \
