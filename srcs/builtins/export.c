@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/04 05:21:30 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/09 19:47:05 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,7 @@ int	exec_export(t_env **env, char **cmd)
 
 	i = 1;
 	ret = 0;
-	if (!cmd[i])
+	if (!cmd[1])
 		return (print_export(*env), ret);
 	while (cmd[i])
 	{
