@@ -12,6 +12,9 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Returns the shared storage for the last command status.
+ */
 int	*get_status(void)
 {
 	static int	status;

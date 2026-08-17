@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 22:46:29 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/08 22:59:57 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/17 03:20:54 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -225,6 +225,112 @@ static void	test_expand_scans(void)
 }
 
 /**
+ * @brief Compare les values des tokens avec les values attendues.
+ */
+static bool	token_values_match(t_token *tokens, char **expected)
+{
+	t_token	*current;
+	int		i;
+
+	current = tokens;
+	i = 0;
+	while (current && expected[i])
+	{
+		if (!values_match(current->value, expected[i]))
+			return (false);
+		current = current->next;
+		i++;
+	}
+	return (current == NULL && expected[i] == NULL);
+}
+
+/**
+ * @brief Teste expand_tokens sur une liste produite par le tokenizer.
+ */
+static void	test_expand_tokens(char *input, t_env *env, char **expected)
+{
+	t_shell	shell;
+
+	shell.token = NULL;
+	if (tokenizer(input, &shell))
+	{
+		printf("[FAIL] tokenizer: %s\n", input);
+		return ;
+	}
+	if (expand_tokens(shell.token, env))
+	{
+		printf("[FAIL] expand_tokens: %s\n", input);
+		free_tokens(shell.token);
+		return ;
+	}
+	if (token_values_match(shell.token, expected))
+		printf("[PASS] ");
+	else
+		printf("[FAIL] ");
+	printf("expand tokens: %s\n", input);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Teste expand_tokens puis remove_quotes_from_tokens.
+ */
+static void	test_expand_and_remove_quotes(char *input, t_env *env,
+	char **expected)
+{
+	t_shell	shell;
+
+	shell.token = NULL;
+	if (tokenizer(input, &shell))
+	{
+		printf("[FAIL] tokenizer: %s\n", input);
+		return ;
+	}
+	if (expand_tokens(shell.token, env))
+	{
+		printf("[FAIL] expand_tokens: %s\n", input);
+		free_tokens(shell.token);
+		return ;
+	}
+	if (remove_quotes_from_tokens(shell.token))
+	{
+		printf("[FAIL] remove_quotes_from_tokens: %s\n", input);
+		free_tokens(shell.token);
+		return ;
+	}
+	if (token_values_match(shell.token, expected))
+		printf("[PASS] ");
+	else
+		printf("[FAIL] ");
+	printf("expand + remove quotes: %s\n", input);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Teste l'expansion sur une liste de tokens, sans retirer les quotes.
+ */
+static void	test_expand_token_lists(void)
+{
+	t_env	home;
+	t_env	user;
+	char	*expanded_args[] = {"echo", "\"chloe\"", "'$USER'", "127", NULL};
+	char	*expanded_heredoc[] = {"cat", "<<", "\"$USER\"", NULL};
+	char	*clean_args[] = {"echo", "chloe", "$USER", "127", NULL};
+	char	*clean_mixed[] = {"echo", "$USER/home/chloe", NULL};
+	char	*clean_heredoc[] = {"cat", "<<", "$USER", NULL};
+
+	init_test_env(&user, &home);
+	*get_status() = 127;
+	printf("\n=== EXPAND TOKENS ===\n");
+	test_expand_tokens("echo \"$USER\" '$USER' $?", &user, expanded_args);
+	test_expand_tokens("cat << \"$USER\"", &user, expanded_heredoc);
+	printf("\n=== EXPAND THEN REMOVE QUOTES ===\n");
+	test_expand_and_remove_quotes("echo \"$USER\" '$USER' $?", &user,
+		clean_args);
+	test_expand_and_remove_quotes("echo '$USER'$HOME", &user, clean_mixed);
+	test_expand_and_remove_quotes("cat << \"$USER\"", &user, clean_heredoc);
+}
+
+/**
  * @brief Lance tous les tests temporaires de la partie expansion.
  */
 int	main(int ac, char **av, char **env)
@@ -236,6 +342,7 @@ int	main(int ac, char **av, char **env)
 	test_get_var_values();
 	test_dollar_expansion();
 	test_expand_scans();
+	test_expand_token_lists();
 	test_append_parts();
 	return (0);
 }

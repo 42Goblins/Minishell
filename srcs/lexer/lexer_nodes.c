@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 23:58:42 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/05 19:14:26 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/16 18:21:52 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ t_token	*create_token_node(t_token_type type, char *value)
 	new_token->type = type;
 	new_token->value = value;
 	new_token->had_quotes = false;
+	new_token->prev = NULL;
 	new_token->next = NULL;
 	return (new_token);
 }
@@ -47,6 +48,7 @@ void	add_token_back(t_token **head, t_token *new_token)
 	while (current->next)
 		current = current->next;
 	current->next = new_token;
+	new_token->prev = current;
 }
 
 /**

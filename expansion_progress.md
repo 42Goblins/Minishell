@@ -1,4 +1,4 @@
-# Avancement de l'expansion — 10 août 2026
+# Avancement de l'expansion — 16 août 2026
 
 ## Objectif
 
@@ -6,29 +6,33 @@ Pipeline retenue :
 
 ```text
 tokens avec quotes conservées
--> expansion de $VAR / $? en respectant les quotes
+-> expansion de $VAR / $? / $digit en respectant les quotes
 -> retrait des quotes avec remove_quotes_from_tokens
 -> validation syntaxique
 -> parser vers t_cmd
 -> exec
 ```
 
-Règles importantes :
+Les quotes restent présentes pendant l'expansion. Elles sont retirées après,
+sinon on perdrait la différence entre single quotes et double quotes.
+
+Règles principales :
 
 ```sh
 $USER       # expansion
 "$USER"     # expansion
 '$USER'     # pas d'expansion
+$?          # dernier status
+$2USER      # $2 vaut vide, USER reste littéral
 ```
-
-Les quotes restent donc présentes pendant l'expansion. Elles sont retirées
-après, sinon on perdrait la différence entre single quotes et double quotes.
 
 ## Fichiers concernés
 
 ```text
-srcs/expansion/expansion_handlers.c
 srcs/expansion/expansion.c
+srcs/expansion/expansion_vars.c
+srcs/expansion/expansion_utils.c
+srcs/utils/get_status.c
 tests/test_expansion.c
 ```
 
@@ -38,13 +42,142 @@ Le code de retrait des quotes est dans :
 srcs/lexer/lexer_quotes.c
 ```
 
+## Architecture actuelle
+
+```text
+expansion.c
+```
+
+Contient la logique principale :
+
+- `expand_word`
+- `update_quote_state`
+- `replace_current_var`
+- `join_three_parts`
+
+```text
+expansion_vars.c
+```
+
+Contient la logique liée aux variables :
+
+- `is_dollar_expand`
+- `get_var_value`
+- `var_name_len`
+- `get_var_name`
+- `is_var_char`
+
+```text
+expansion_utils.c
+```
+
+Contient les helpers techniques :
+
+- `free_three_strings`
+- `append_expansion_part`
+
+```text
+get_status.c
+```
+
+Contient `get_status`, utilisé par `$?`.
+
+## Décision importante
+
+La logique suit l'esprit de Nico sans être un copier-coller :
+
+```text
+result = ft_strdup(word)
+scanner result
+quand un $ expandable est trouvé :
+    remplacer directement dans result
+reprendre le scan après la valeur insérée
+return result
+```
+
+Cette approche évite l'ancienne logique `built/start`, qui devenait difficile à
+lire.
+
 ## Fonctions terminées
+
+### `expand_word`
+
+Scanne un mot complet avec ses quotes encore présentes.
+
+La boucle fait trois choses :
+
+- met à jour l'état single/double quotes ;
+- remplace un `$` expandable si le contexte l'autorise ;
+- avance au caractère suivant sinon.
+
+### `replace_current_var`
+
+Remplace une expansion trouvée à l'index du `$`.
+
+Découpage :
+
+```text
+before = tout avant le $
+value  = valeur de $VAR, $? ou $digit
+after  = tout après la partie consommée
+```
+
+Exemple :
+
+```text
+result = "hello $USER!"
+
+before = "hello "
+value  = "chloe"
+after  = "!"
+
+new_result = "hello chloe!"
+```
+
+`new_i` indique où `expand_word` doit reprendre après remplacement.
+
+### `is_dollar_expand`
+
+Décide si le `$` courant doit déclencher une expansion.
+
+Elle accepte :
+
+- `$VAR`
+- `$?`
+- `$digit`
+
+Elle refuse :
+
+- `$` dans des single quotes ;
+- `$` seul ;
+- `$` suivi d'un caractère non supporté comme `-` ou `.`.
+
+### `get_var_value`
+
+Retourne une nouvelle string allouée.
+
+Contrat mémoire :
+
+```text
+get_env_value -> adresse empruntée à shell->env, ne jamais free
+get_var_value -> nouvelle chaîne allouée, le caller doit free
+```
+
+Cas gérés :
+
+```text
+USER    -> valeur de USER dans env
+?       -> ft_itoa(*get_status())
+2USER   -> "" parce que $2 vaut vide dans notre minishell
+MISSING -> ""
+invalide -> NULL
+```
 
 ### `var_name_len`
 
-Mesure le nom situé juste après `$`.
+Mesure un nom de variable classique.
 
-Règles actuelles :
+Règles :
 
 - premier caractère : lettre ou `_` ;
 - caractères suivants : alphanumériques ou `_`.
@@ -58,244 +191,168 @@ _NAME=    -> 5
 2USER     -> 0
 ```
 
-### `get_var_value`
+### `get_status`
 
-Extrait le nom de variable, appelle `get_env_value`, puis retourne une nouvelle
-chaîne allouée.
+Retourne l'adresse d'un `static int status`.
 
-Contrat mémoire :
-
-```text
-get_env_value -> adresse empruntée à shell->env, ne jamais free
-get_var_value -> nouvelle chaîne allouée, le caller doit free
-variable absente -> chaîne vide allouée
-nom invalide -> NULL
-```
-
-### `is_dollar_expand`
-
-Décide si le `$` à l'index courant commence une expansion.
-
-Elle refuse :
-
-- `$` dans des single quotes ;
-- `$` sans nom valide derrière ;
-- `$?` pour l'instant.
-
-`$?` sera ajouté plus tard avec `get_status()`.
-
-### `append_expansion_part`
-
-Assemble deux chaînes allouées :
+Contrat décidé avec Dounia :
 
 ```text
-built + part
+exec / builtins / erreurs / signaux -> écrivent *get_status()
+expansion de $?                    -> lit *get_status()
 ```
 
-Elle libère toujours les deux arguments. Ne jamais lui passer directement des
-littéraux.
+Valeur initiale : `0`.
 
-## Décision importante : approche façon Nico
+## Cas testés actuellement
 
-On a commencé avec une approche `built/start`, mais elle devenait trop difficile
-à lire.
-
-Décision prise : repartir vers une logique plus proche de Nico.
-
-Nouvelle logique prévue :
+Les tests dans `tests/test_expansion.c` couvrent :
 
 ```text
-result = ft_strdup(word)
-scanner result
-quand un $VAR expandable est trouvé :
-    remplacer ce $VAR directement dans result
-continuer à scanner la nouvelle string
-return result
+$USER              -> chloe
+'$USER'            -> '$USER'
+"$USER"            -> "chloe"
+abc$USER           -> abcchloe
+"it's $USER"       -> "it's chloe"
+'"$USER"'          -> '"$USER"'
+$?                 -> 127
+status:$?          -> status:127
+"$?"               -> "127"
+'$?'               -> '$?'
+$?$USER            -> 127chloe
+$MISSING           -> ""
+a$MISSINGb         -> a
+$USER$HOME         -> chloe/home/chloe
+$?abc              -> 127abc
+$USER?             -> chloe?
+"$USER$?"          -> "chloe127"
+'$USER'$HOME       -> '$USER'/home/chloe
+$2USER             -> USER
+$12USER            -> 2USER
+$9abc              -> abc
+$1                 -> ""
 ```
 
-Exemple :
-
-```text
-result = "hello-$USER!"
-
-before = "hello-"
-value  = "chloe"
-after  = "!"
-
-result = before + value + after
-result = "hello-chloe!"
-```
-
-## Où on en est
-
-`expand_word` a été volontairement remise à une base simple :
-
-```text
-si word == NULL -> NULL
-sinon -> ft_strdup(word)
-```
-
-Des commentaires `TODO` sont présents dans `srcs/expansion/expansion.c` pour
-indiquer où reprendre.
-
-Attention : la fonction `replace_current_var` est WIP. Comme elle est `static`
-et pas encore appelée, `expansion.c` ne compilera pas proprement avec
-`-Werror` tant qu'elle n'est pas branchée ou temporairement retirée.
-
-## Fonction WIP : `replace_current_var`
-
-But :
-
-```text
-remplacer le $VAR situé à l'index i dans result par sa valeur env
-```
-
-Signature actuelle :
-
-```c
-static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
-```
-
-Exemple :
-
-```text
-result = "hello-$USER!"
-i      = index du $
-env    = USER=chloe
-```
-
-Découpage :
-
-```text
-before = "hello-"
-value  = "chloe"
-after  = "!"
-```
-
-Puis :
-
-```text
-new_result = before + value + after
-```
-
-La fonction calcule déjà :
-
-- `var_len` ;
-- `before` ;
-- `value` ;
-- `after` ;
-- `new_i` ;
-- `new_result`.
-
-Problème actuel :
-
-- la fonction est trop longue ;
-- le bloc de cleanup en cas d'erreur prend trop de place ;
-- elle n'est pas encore appelée par `expand_word`.
-
-## Où reprendre demain
-
-Ne pas repartir sur toute la logique d'un coup.
-
-Le point exact où reprendre est dans `replace_current_var`, sur le bloc :
-
-```c
-if (!before || !value || !after)
-{
-	free(before);
-	free(value);
-	free(after);
-	free(result);
-	return (NULL);
-}
-```
-
-Ce bloc marche, mais il rend la fonction lourde. La prochaine étape sert juste à
-le sortir dans un helper pour que `replace_current_var` redevienne lisible.
-
-## Prochaine micro-étape exacte
-
-Reprendre dans `srcs/expansion/expansion.c`.
-
-Faire d'abord un petit helper de cleanup pour alléger `replace_current_var`.
-
-Nom proposé :
-
-```c
-static char	*free_var_parts(char *before, char *value,
-		char *after, char *result)
-```
-
-Rôle :
-
-```text
-free before
-free value
-free after
-free result
-return NULL
-```
-
-Ensuite remplacer ce bloc :
-
-```c
-if (!before || !value || !after)
-{
-	free(before);
-	free(value);
-	free(after);
-	free(result);
-	return (NULL);
-}
-```
-
-par :
-
-```text
-if allocation failed
-    return free_var_parts(...)
-```
-
-Après ça seulement :
-
-1. vérifier que `replace_current_var` reste compréhensible ;
-2. brancher `replace_current_var` dans `expand_word` ;
-3. faire scanner `expand_word` avec `in_single` / `in_double` ;
-4. tester `$USER`, `abc$USER`, `"$USER"` et `'$USER'`.
-
-## Tests actuels
-
-`tests/test_expansion.c` contient déjà des tests pour :
-
-- `var_name_len` ;
-- `get_var_value` ;
-- `is_dollar_expand` ;
-- `append_expansion_part` ;
-- des scans quote-aware temporaires.
-
-La section `QUOTE-AWARE WORD SCAN` n'est pas encore un vrai test du résultat de
-`expand_word`, parce que `expand_word` retourne encore une copie du mot.
-
-Commande de compilation prévue quand `replace_current_var` sera branchée :
+## Commande de test
 
 ```sh
+make -C libft
 cc -Wall -Wextra -Werror \
 -Iinclude -Ilibft/inc \
 tests/test_expansion.c \
 srcs/expansion/expansion.c \
-srcs/expansion/expansion_handlers.c \
+srcs/expansion/expansion_vars.c \
+srcs/expansion/expansion_utils.c \
 srcs/builtins/cd.c \
+srcs/utils/get_status.c \
 libft/libft.a \
 -o /tmp/test_expansion
-
 /tmp/test_expansion
 ```
 
-## À ne pas faire tout de suite
+Dernier état connu : la compilation passe et tous les tests expansion passent.
 
-- Ne pas commencer `$?` avant d'ajouter/utiliser `get_status()`.
-- Ne pas retirer les quotes avant l'expansion.
-- Ne pas intégrer à tout le pipeline tant que `expand_word` n'est pas testée
-  seule.
-- Ne pas corriger la Norm en supprimant les repères pédagogiques avant d'avoir
-  fini la logique.
+## Ce qui reste à faire
+
+### 1. Brancher l'expansion sur les tokens
+
+Créer une fonction qui parcourt la liste de tokens et applique `expand_word` aux
+tokens concernés.
+
+Idée :
+
+```text
+pour chaque token
+    si token WORD doit être expand
+        token->value = expand_word(token->value, shell->env)
+```
+
+Ne pas encore mélanger heredoc dans cette étape.
+
+### 2. Valider l'ordre avec le retrait des quotes
+
+L'ordre doit rester :
+
+```text
+expansion
+-> remove_quotes_from_tokens
+```
+
+À tester avec :
+
+```sh
+echo "$USER"
+echo '$USER'
+echo '$USER'$HOME
+echo "$USER$?"
+```
+
+### 3. Ajouter des tests pipeline
+
+Pour l'instant, les tests appellent surtout `expand_word` directement.
+
+Prochaine couche de tests :
+
+```text
+input brut
+-> tokenizer
+-> expansion sur tokens
+-> remove_quotes_from_tokens
+-> print tokens
+```
+
+### 4. Redirections
+
+À valider au moment de l'intégration :
+
+```sh
+echo hi > $FILE
+cat < "$INPUT"
+```
+
+Les noms de fichiers doivent être expandés puis débarrassés de leurs quotes.
+
+### 5. Heredoc
+
+À traiter séparément.
+
+Règle :
+
+```sh
+cat << EOF      # contenu heredoc expandé
+cat << "EOF"    # contenu heredoc non expandé
+```
+
+Le delimiter doit perdre ses quotes, mais `had_quotes` doit rester disponible
+pour décider si le contenu du heredoc doit être expandé.
+
+### 6. Brancher réellement `get_status`
+
+`$?` lit déjà `get_status`, mais il faudra que Dounia branche les écritures :
+
+```text
+commande réussie -> *get_status() = 0
+commande introuvable -> *get_status() = 127
+Ctrl-C -> *get_status() = 130
+```
+
+### 7. Refacto / Norm
+
+`expand_word` est encore un peu longue.
+
+Décision actuelle : ne pas refacto lourdement tant que l'intégration tokens /
+quotes / redirections n'est pas stabilisée.
+
+À faire plus tard :
+
+- réduire `expand_word` si nécessaire ;
+- relancer `norminette` sur les fichiers expansion ;
+- garder le découpage compréhensible avant de chercher une Norm parfaite.
+
+## À ne pas faire maintenant
+
+- Ne pas gérer `$$` comme PID.
+- Ne pas gérer `$-` comme bash complet.
+- Ne pas gérer `${VAR}`.
+- Ne pas retirer les quotes avant expansion.
+- Ne pas refacto lourdement `expand_word` avant l'intégration.

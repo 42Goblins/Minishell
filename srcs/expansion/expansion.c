@@ -18,6 +18,11 @@ static bool	update_quote_state(char c, bool *in_single, bool *in_double);
 
 /**
  * @brief Expands variables in a word while respecting quote rules.
+ *
+ * The loop does three things:
+ * - updates quote states when it reads a quote character
+ * - replaces an expandable dollar expression when allowed
+ * - otherwise moves to the next character
  */
 char	*expand_word(char *word, t_env *env)
 {
@@ -53,6 +58,9 @@ char	*expand_word(char *word, t_env *env)
 	return (result);
 }
 
+/**
+ * @brief Updates single and double quote states for the current character.
+ */
 static bool	update_quote_state(char c, bool *in_single, bool *in_double)
 {
 	if (c == '\'' && !*in_double)
@@ -68,6 +76,17 @@ static bool	update_quote_state(char c, bool *in_single, bool *in_double)
 	return (false);
 }
 
+/**
+ * @brief Replaces one expansion found at index i in result.
+ *
+ * Splits result into three parts:
+ * - before: everything before the dollar sign
+ * - value: the expanded value of $VAR, $? or $digit
+ * - after: everything after the consumed variable name
+ *
+ * The function joins those parts into a new string, frees the old result,
+ * and stores in new_i the index where expand_word should resume scanning.
+ */
 static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
 {
 	int		var_len;
@@ -94,6 +113,9 @@ static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
 	return (new_result);
 }
 
+/**
+ * @brief Joins three allocated strings and frees them.
+ */
 static char	*join_three_parts(char *first, char *second, char *third)
 {
 	char	*tmp;

@@ -16,7 +16,7 @@ static int	is_var_char(char c);
 static char	*get_var_name(char *var);
 
 /**
- * @brief Checks whether a dollar sign starts an expandable variable.
+ * @brief Checks whether a dollar sign starts a supported expansion.
  */
 bool	is_dollar_expand(char *word, int i, bool in_single)
 {
@@ -34,7 +34,7 @@ bool	is_dollar_expand(char *word, int i, bool in_single)
 }
 
 /**
- * @brief Allocates the value of the variable found at the start of a string.
+ * @brief Allocates the value for a variable, status, or digit expansion.
  */
 char	*get_var_value(char *var, t_env *env)
 {

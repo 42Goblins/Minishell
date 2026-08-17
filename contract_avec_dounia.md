@@ -26,8 +26,8 @@ Ordre retenu :
 
 ```text
 tokenizer avec quotes conservées
--> expansion selon single/double/unquoted
--> retrait des quotes
+-> expand_tokens(tokens, env)
+-> remove_quotes_from_tokens(tokens)
 -> validation syntaxique
 -> parser vers t_cmd
 -> exec
@@ -43,6 +43,27 @@ $USER     # expansion
 
 Si les quotes étaient retirées avant l'expansion, on ne pourrait plus
 distinguer single quotes et double quotes.
+
+Contrat actuel côté Chloé :
+
+```text
+expand_tokens expand tous les tokens WORD sauf le delimiter heredoc.
+remove_quotes_from_tokens passe après expand_tokens.
+```
+
+Exemples après `expand_tokens`, avant retrait des quotes :
+
+```text
+echo "$USER" '$USER' $? -> echo, "chloe", '$USER', 127
+cat << "$USER"          -> cat, <<, "$USER"
+```
+
+Exemples après `remove_quotes_from_tokens` :
+
+```text
+echo "$USER" '$USER' $? -> echo, chloe, $USER, 127
+cat << "$USER"          -> cat, <<, $USER
+```
 
 ## Environnement et `$VAR`
 
@@ -73,6 +94,23 @@ Variable absente :
 
 ```text
 $MISSING -> chaîne vide
+```
+
+Cas spéciaux déjà gérés côté expansion :
+
+```text
+$?      -> lit *get_status()
+$2USER  -> USER
+$12USER -> 2USER
+$1      -> chaîne vide
+```
+
+On ne gère pas pour l'instant :
+
+```text
+$$      # PID shell bash
+$-      # options shell bash
+${VAR}  # syntaxe braces
 ```
 
 ## Point à corriger côté recherche env
@@ -142,19 +180,21 @@ Important :
 ne pas mélanger get_status() et shell->last_status
 ```
 
-`$?` ne doit pas être codé définitivement avant que `get_status()` soit ajouté
-dans le projet.
+`get_status()` existe côté Chloé et `$?` le lit déjà dans l'expansion. Il reste
+à brancher les écritures côté exec / builtins / erreurs / signaux.
 
 ## Heredoc
 
 Le token du délimiteur conserve `had_quotes` même après retrait des quotes.
 
-Contrat souhaité :
+Contrat retenu :
 
 ```text
-Chloé fournit le délimiteur sans quotes.
+Le token après T_HEREDOC n'est pas expandé par expand_tokens.
+Le délimiteur passe quand même dans remove_quotes_from_tokens.
+Chloé fournit donc le délimiteur sans quotes.
 Chloé conserve had_quotes sur le token.
-Dounia utilise had_quotes pour décider si le contenu heredoc doit être expand.
+Dounia utilise had_quotes pour décider si le contenu heredoc doit être expandé.
 ```
 
 Exemples :
@@ -166,6 +206,26 @@ cat << "EOF"
 
 Dans le second cas, les variables dans le contenu du heredoc ne doivent pas être
 expandées.
+
+Exemple :
+
+```text
+cat << "$USER"
+```
+
+Après `expand_tokens` :
+
+```text
+cat, <<, "$USER"
+```
+
+Après `remove_quotes_from_tokens` :
+
+```text
+cat, <<, $USER
+```
+
+Le delimiter n'a pas été expandé, mais ses quotes ont été retirées.
 
 ## Points à fiabiliser plus tard côté environnement/exec
 
@@ -226,7 +286,9 @@ $VAR lit shell->env via get_env_value.
 get_env_value retourne une adresse empruntée.
 get_var_value retourne une string allouée.
 $? utilisera get_status(), pas shell->last_status.
-L'expansion précède le retrait des quotes.
+$digit vaut vide pour le digit, le reste du mot est conservé.
+expand_tokens précède remove_quotes_from_tokens.
+Le delimiter heredoc n'est pas expandé comme un WORD normal.
 L'exec reçoit des arguments déjà expandés et sans quotes syntaxiques.
 had_quotes reste utile après retrait des quotes, surtout pour heredoc.
 ```

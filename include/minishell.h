@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/12 00:46:19 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/17 03:31:10 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ typedef struct s_token
 	t_token_type	type;
 	char			*value;
 	bool			had_quotes;
+	struct s_token	*prev;
 	struct s_token	*next;
 }					t_token;
 
@@ -59,7 +60,7 @@ typedef struct s_env
 	struct s_env	*next;
 }	t_env;
 
-typedef struct	s_cmd
+typedef struct s_cmd
 {
 	char	**cmd_and_args;
 	char	*path;
@@ -165,6 +166,7 @@ bool		is_dollar_expand(char *word, int i, bool in_single);
 char		*expand_word(char *word, t_env *env);
 char		*append_expansion_part(char *built, char *part);
 void		free_three_strings(char *first, char *second, char *third);
+int			expand_tokens(t_token *tokens, t_env *env);
 
 /* ========================================================================== */
 /*                                  UTILS                                     */
