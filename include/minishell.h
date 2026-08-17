@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/10 17:01:32 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/17 22:12:11 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 # include "../libft/inc/libft.h"	// libft functions
 # include <stdbool.h>			// bool type
 
+/* enum pour les types de tokens (chloé) */
 typedef enum e_token_type
 {
 	T_WORD,
@@ -41,14 +42,15 @@ typedef enum e_token_type
 	T_HEREDOC
 }			t_token_type;
 
+/* struct temp pour les tokens (chloé) */
 typedef struct s_token
 {
 	t_token_type	type;
 	char			*value;
+	bool			had_quotes;
+	struct s_token	*prev;
 	struct s_token	*next;
 }					t_token;
-
-
 
 /* struct temp pour commencer exec (dounia) */
 typedef struct s_env
@@ -58,7 +60,7 @@ typedef struct s_env
 	struct s_env	*next;
 }	t_env;
 
-typedef struct	s_cmd
+typedef struct s_cmd
 {
 	char	**cmd_and_args;
 	char	*path;
@@ -85,7 +87,6 @@ typedef struct	s_shell
 /* ========================================================================== */
 /* main.c */
 int		main(int ac, char **av, char **env);
-int		*get_status(void);
 
 /* ========================================================================== */
 /*                                  ENV                                       */
@@ -139,6 +140,43 @@ void	update_env_vars(t_env **env, char *key, char *value);
 int		exec_export(t_env **env, char **cmd);
 
 /* ========================================================================== */
+/*                                  LEXER                                     */
+/* ========================================================================== */
+
+t_token	*create_token_node(t_token_type type, char *value);
+void	add_token_back(t_token **head, t_token *new_token);
+void	free_tokens(t_token *head);
+int		add_operator_token(t_shell *shell, t_token_type type, char *str);
+int		add_redir_in_or_heredoc(char *input, int i, t_shell *shell);
+int		add_redir_out_or_append(char *input, int i, t_shell *shell);
+char	*remove_quotes(char *value);
+int		is_blank(char character);
+int		word_len(char *input, int i);
+int		tokenizer(char *input, t_shell *shell);
+int		remove_quotes_from_tokens(t_token *tokens);
+
+/* ========================================================================== */
+/*                                EXPANSION                                   */
+/* ========================================================================== */
+
+int		var_name_len(char *var);
+char	*get_var_value(char *var, t_env *env);
+bool	is_dollar_expand(char *word, int i, bool in_single);
+char	*expand_word(char *word, t_env *env);
+char	*append_expansion_part(char *built, char *part);
+void	free_three_strings(char *first, char *second, char *third);
+int		expand_tokens(t_token *tokens, t_env *env);
+
+/* ========================================================================== */
+/*                                  PARSER                                    */
+/* ========================================================================== */
+
+int		count_cmd_args(t_token *tokens);
+char	**create_cmd_args(t_token *tokens);
+t_cmd	*create_cmd_node(t_token *tokens);
+t_cmd	*parse_tokens(t_token *tokens);
+
+/* ========================================================================== */
 /*                                    EXEC                                    */
 /* ========================================================================== */
 
@@ -147,7 +185,6 @@ int		count_cmds(t_cmd *cmds);
 void	launch_exec(t_shell shell, t_cmd cmds);
 
 /* exec_external.c */
-void	free_tab(char **tab);
 char	*try_path(char *dir, char *cmd);
 char	*get_path(t_env *env);
 char	*find_path(char *cmd, t_env *env);
@@ -159,4 +196,12 @@ void	exec_builtins(t_shell *shell, t_cmd *cmd);
 
 /* exec_pipeline.c */
 int		exec_pipeline(t_shell *shell, t_cmd *cmds);
+
+/* ========================================================================== */
+/*                                  UTILS                                     */
+/* ========================================================================== */
+
+int		*get_status(void);
+void	free_tab(char **tab);
+
 #endif
