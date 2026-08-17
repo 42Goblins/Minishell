@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 17:12:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/17 20:01:08 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ char	**t_env_to_tab(t_env *env, char **env_tab)
 {
 	int		i;
 	t_env	*tmp;
+	char	*tmp_env_tab;
 
 	i = 0;
 	tmp = env;
@@ -30,8 +31,9 @@ char	**t_env_to_tab(t_env *env, char **env_tab)
 	i = 0;
 	while (env)
 	{
-		env_tab[i] = ft_strjoin(env->key, "=");
-		env_tab[i] = ft_strjoin(env_tab[i], env->value);
+		tmp_env_tab = ft_strjoin(env->key, "=");
+		env_tab[i] = ft_strjoin(tmp_env_tab, env->value);
+		free(tmp_env_tab);
 		env = env->next;
 		i++;
 	}
@@ -118,7 +120,7 @@ void exec_external(t_cmd *cmd, t_env *env)
 		exit(127);
 	}
 	t_env_to_tab(env, env_tab);
-	execve(path, cmd->cmd_and_args, env_tab);
+	execve(path, cmd->cmd_and_args, NULL);
 	perror("execve");
 	free(path);
 	free_tab(env_tab);

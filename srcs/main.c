@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 17:10:41 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/17 18:41:54 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 }
 void set_cmd(t_cmd *cmd)
 {
-	static char *cd_args[] = {"ldfyfx", NULL};
+	static char *cd_args[] = {"ls", "-a", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
 	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
 	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
@@ -68,7 +68,7 @@ int	main(int ac, char **av, char **env)
 	// exec_single_external(shell.cmds, env);
 	// exec_pipeline(shell.cmds, env);
 
-	launch_exec(shell, cmd);
+	launch_exec(&shell, &cmd);
 	
 	/* printf("oldpwd: %s\n", getcwd(NULL, 0));
 	exec_builtins(&shell, shell.cmds);
