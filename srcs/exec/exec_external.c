@@ -6,11 +6,38 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/09 22:32:42 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/10 17:12:07 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+char	**t_env_to_tab(t_env *env, char **env_tab)
+{
+	int		i;
+	t_env	*tmp;
+
+	i = 0;
+	tmp = env;
+	while (tmp)
+	{
+		i++;
+		tmp = tmp->next;
+	}
+	env_tab = malloc(sizeof(char *) * (i + 1));
+	if (!env_tab)
+		return (NULL);
+	i = 0;
+	while (env)
+	{
+		env_tab[i] = ft_strjoin(env->key, "=");
+		env_tab[i] = ft_strjoin(env_tab[i], env->value);
+		env = env->next;
+		i++;
+	}
+	env_tab[i] = NULL;
+	return (env_tab);
+}
 
 void	free_tab(char **tab)
 {
@@ -36,21 +63,18 @@ char	*try_path(char *dir, char *cmd)
 	return (NULL);
 }
 
-char	*get_path(char **env)
+char	*get_path(t_env  *env)
 {
-	int	i;
-
-	i = 0;
-	while (env[i])
+	while (env)
 	{
-		if (ft_strncmp(env[i], "PATH=", 5) == 0)
-			return (env[i] + 5);
-		i++;
+		if (ft_strcmp(env->key, "PATH") == 0)
+			return (env->value);
+		env = env->next;
 	}
 	return (NULL);
 }
 
-char	*find_path(char *cmd, char **env)
+char	*find_path(char *cmd, t_env *env)
 {
 	char	**dirs;
 	char	*path;
@@ -79,24 +103,28 @@ char	*find_path(char *cmd, char **env)
 	return (free_tab(dirs), NULL);
 }
 
-void exec_external(t_cmd *cmd, char **env)
+void exec_external(t_cmd *cmd, t_env *env)
 {
 	char    *path;
+	char	**env_tab;
 
+	env_tab = NULL;
 	path = find_path(cmd->cmd_and_args[0], env);
 	if (!path)
 	{
+		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
 		ft_putstr_fd(": command not found\n", STDERR_FILENO);
 		exit(127);
 	}
-	execve(path, cmd->cmd_and_args, env);
+	t_env_to_tab(env, env_tab);
+	execve(path, cmd->cmd_and_args, env_tab);
 	perror("execve");
 	free(path);
-	exit(126);
+	free_tab(env_tab);
 }
 
-void exec_single_external(t_cmd *cmd, char **env)
+void exec_single_external(t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
 	int		status;
