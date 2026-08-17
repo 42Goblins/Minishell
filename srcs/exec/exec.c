@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 02:40:17 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 15:24:54 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/10 17:09:40 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,14 @@ void	launch_exec(t_shell shell, t_cmd cmds)
 	int	cmd_count;
 	
 	cmd_count = count_cmds(&cmds);
+	printf("cmd_count: %d\n", cmd_count);
 	if (cmd_count == 1 && cmds.is_builtin)
 		exec_builtins(&shell, &cmds);
 	else if (cmd_count == 1)
-		exec_external(&shell, &cmds);
+	{
+		printf("external launching\n");	
+		exec_external(&cmds, shell.env);
+	}
 	else
 		exec_pipeline(&shell, &cmds);
 }

@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/09 21:52:06 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/10 17:01:32 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,12 +142,21 @@ int		exec_export(t_env **env, char **cmd);
 /*                                    EXEC                                    */
 /* ========================================================================== */
 
+/* exec.c */
+int		count_cmds(t_cmd *cmds);
+void	launch_exec(t_shell shell, t_cmd cmds);
+
 /* exec_external.c */
 void	free_tab(char **tab);
 char	*try_path(char *dir, char *cmd);
-char	*get_path(char **env);
-char	*find_path(char *cmd, char **env);
-void	exec_external(t_cmd *cmd, char **env);
-void	exec_single_external(t_cmd *cmd, char **env);
+char	*get_path(t_env *env);
+char	*find_path(char *cmd, t_env *env);
+void	exec_external(t_cmd *cmd, t_env *env);
+void	exec_single_external(t_cmd *cmd, t_env *env);
 
+/* exec_builtins.c */
+void	exec_builtins(t_shell *shell, t_cmd *cmd);
+
+/* exec_pipeline.c */
+int		exec_pipeline(t_shell *shell, t_cmd *cmds);
 #endif
