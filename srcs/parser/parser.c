@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/17 22:01:23 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/08/18 02:50:05 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,7 @@ char	**create_cmd_args(t_token *tokens)
 			if (cmd_and_args[i] == NULL)
 			{
 				cmd_and_args[i] = NULL;
-				free_tab(cmd_and_args);
-				return (NULL);
+				return (free_tab(cmd_and_args), NULL);
 			}
 			i++;
 		}
