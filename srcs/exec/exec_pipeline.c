@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 16:27:10 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/19 02:19:12 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ int	exec_pipeline(t_shell *shell, t_cmd *cmds)
 {
 	(void)shell;
 	(void)cmds;
-	/* int		pipe_fds[2];
+	int		pipe_fds[2];
 	int		prev_fd;
 	pid_t	*pids;
 	int		i;
@@ -53,6 +53,6 @@ int	exec_pipeline(t_shell *shell, t_cmd *cmds)
 	close(pipe_fds[0]);
 	close(pipe_fds[1]);
 	wait(NULL);
-	wait(NULL); */
+	wait(NULL);
 	return (0);
 }
