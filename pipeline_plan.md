@@ -26,6 +26,14 @@ L'exec ne doit pas refaire le lexer, l'expansion ou le retrait des quotes.
 
 ## État actuel
 
+### État Git / branches
+
+```text
+La PR clean lexer / expansion / parser a été mergée dans dev.
+La branche chloe reste la branche atelier avec les .md et tests temporaires.
+Ne pas ouvrir de PR depuis chloe telle quelle.
+```
+
 ### Déjà fait côté Chloé
 
 - tokenizer mandatory ;
@@ -43,13 +51,23 @@ L'exec ne doit pas refaire le lexer, l'expansion ou le retrait des quotes.
 tokenizer -> expand_tokens
 tokenizer -> expand_tokens -> remove_quotes_from_tokens
 ```
+- parser V1 pour commande simple :
+
+```text
+tokens préparés -> t_cmd -> cmd_and_args
+```
+- mini boucle locale dans `tests/test_loop.c` :
+
+```text
+readline -> add_history -> tokenizer -> expand_tokens -> print tokens
+```
 
 ### Pas encore branché dans le vrai minishell
 
 - appel réel de `expand_tokens` dans la boucle principale ;
 - appel réel de `remove_quotes_from_tokens` après expansion ;
 - syntax validation ;
-- parser vers `t_cmd` / `cmd_and_args` ;
+- parser complet vers `t_cmd` / `cmd_and_args` avec pipes et redirections ;
 - exec avec les structures finales ;
 - heredoc complet.
 
@@ -179,35 +197,56 @@ cat << "EOF"    # contenu non expandé
 
 ## Merge vers dev
 
-Ne pas merger directement si Dounia a beaucoup changé `dev`.
+Dernier merge réalisé :
+
+```text
+chloe-lexer-parser-pr -> dev
+méthode GitHub : rebase and merge
+```
+
+Pour les prochains merges, garder la même stratégie :
+
+```text
+chloe = branche atelier avec notes et tests temporaires
+branche-pr-clean = branche créée depuis origin/dev avec seulement le code à merger
+```
 
 Plan recommandé :
 
 ```text
 1. commit propre sur chloe
 2. push origin chloe
-3. fetch dev
-4. discuter du contrat avec Dounia
-5. rebase ou merge dev dans chloe si nécessaire
-6. régler conflits du header à deux
-7. PR / merge vers dev
+3. fetch origin
+4. créer une branche PR clean depuis origin/dev
+5. restaurer uniquement les fichiers de code depuis chloe
+6. vérifier Files changed : pas de .md perso, pas de tests temporaires
+7. PR vers dev
 ```
 
 Le point sensible attendu : `include/minishell.h`.
 
 ## Prochaine étape recommandée
 
-Si Dounia est disponible :
+Dans `tests/test_loop.c` :
 
 ```text
-valider ensemble le contrat t_cmd / cmd_and_args
+1. brancher remove_quotes_from_tokens après expand_tokens
+2. afficher les tokens après retrait des quotes
+3. brancher parse_tokens
+4. afficher cmd_and_args
 ```
 
-Si Chloé avance seule :
+Ensuite seulement :
 
 ```text
-commencer le parser minimal commande simple -> cmd_and_args
+tester launch_exec sur une commande externe simple
 ```
 
-Ne pas brancher l'exec tant que le format exact attendu par Dounia n'est pas
-validé.
+Point bloquant connu avec Dounia :
+
+```text
+get_env_value / set_env_value doivent comparer avec ft_strcmp(...) == 0
+```
+
+Tant que ce bug existe, les tests `$USER`, `$HOME`, etc. peuvent sortir une
+mauvaise valeur même si l'expansion est bien appelée.

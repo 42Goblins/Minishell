@@ -1,4 +1,4 @@
-# Avancement de l'expansion — 16 août 2026
+# Avancement de l'expansion — 19 août 2026
 
 ## Objectif
 
@@ -33,8 +33,8 @@ srcs/expansion/expansion.c
 srcs/expansion/expand_tokens.c
 srcs/expansion/expansion_vars.c
 srcs/expansion/expansion_utils.c
-srcs/utils/get_status.c
 tests/test_expansion.c
+tests/test_loop.c
 ```
 
 Le code de retrait des quotes est dans :
@@ -87,11 +87,9 @@ Contient les helpers techniques :
 - `free_three_strings`
 - `append_expansion_part`
 
-```text
-get_status.c
-```
-
-Contient `get_status`, utilisé par `$?`.
+`get_status()` est actuellement défini côté Dounia dans `srcs/main.c`.
+Les tests locaux avec leur propre `main` peuvent définir un stub `get_status`
+dans le fichier de test.
 
 ## Décision importante
 
@@ -215,6 +213,13 @@ expansion de $?                    -> lit *get_status()
 
 Valeur initiale : `0`.
 
+État après merge avec `dev` :
+
+```text
+srcs/main.c contient get_status()
+tests/test_loop.c contient un stub local pour éviter un double main
+```
+
 ## Cas testés actuellement
 
 Les tests dans `tests/test_expansion.c` couvrent :
@@ -265,11 +270,20 @@ cat << "$USER"          -> cat, <<, $USER
 
 ## Commande de test
 
+Ancienne suite expansion : à remettre à jour depuis le merge, car
+`get_status()` n'est plus dans `srcs/utils/get_status.c` mais dans `srcs/main.c`.
+Comme `tests/test_expansion.c` a son propre `main`, il faudra soit ajouter un
+stub local `get_status()` au test, soit déplacer `get_status()` dans un vrai
+fichier utils commun.
+
+Commande locale fiable actuellement :
+
 ```sh
 make -C libft
 cc -Wall -Wextra -Werror \
 -Iinclude -Ilibft/inc \
-tests/test_expansion.c \
+tests/test_loop.c \
+srcs/env/setup_env.c \
 srcs/expansion/expansion.c \
 srcs/expansion/expand_tokens.c \
 srcs/expansion/expansion_vars.c \
@@ -280,13 +294,26 @@ srcs/lexer/lexer_redir.c \
 srcs/lexer/lexer_quotes.c \
 srcs/lexer/lexer_utils.c \
 srcs/builtins/cd.c \
-srcs/utils/get_status.c \
 libft/libft.a \
--o /tmp/test_expansion
-/tmp/test_expansion
+-lreadline -ltermcap \
+-o /tmp/test_loop
+/tmp/test_loop
 ```
 
-Dernier état connu : la compilation passe et tous les tests expansion passent.
+Dernier état connu : la compilation des modules passe. Attention : les tests
+qui lisent `$USER`, `$HOME`, etc. dépendent de `get_env_value`.
+
+Point observé en intégration :
+
+```text
+echo $USER -> mauvaise valeur tant que get_env_value utilise mal ft_strcmp
+```
+
+Cause signalée à Dounia :
+
+```text
+ft_strcmp(...) doit être comparé à 0 pour tester l'égalité
+```
 
 ## Ce qui reste à faire
 
@@ -301,10 +328,34 @@ cat < "$INPUT"
 
 Les noms de fichiers doivent être expandés puis débarrassés de leurs quotes.
 
-### 2. Parser vers `t_cmd` / `cmd_and_args`
+### 2. Mini boucle locale
 
-Prochaine grosse étape côté Chloé : transformer les tokens déjà préparés en
-structure exploitable par l'exec.
+`tests/test_loop.c` teste actuellement :
+
+```text
+readline
+add_history
+tokenizer
+expand_tokens
+print tokens
+```
+
+Prochaine étape :
+
+```text
+ajouter remove_quotes_from_tokens après expand_tokens
+```
+
+Puis :
+
+```text
+parse_tokens
+print cmd_and_args
+```
+
+### 3. Parser vers `t_cmd` / `cmd_and_args`
+
+V1 déjà en place pour une commande simple.
 
 Objectif :
 
@@ -321,7 +372,7 @@ tokens après expansion + remove quotes
 - ownership mémoire des tableaux et strings ;
 - format des redirections.
 
-### 3. Heredoc
+### 4. Heredoc
 
 À traiter séparément.
 
@@ -335,7 +386,7 @@ cat << "EOF"    # contenu heredoc non expandé
 Le delimiter doit perdre ses quotes, mais `had_quotes` doit rester disponible
 pour décider si le contenu du heredoc doit être expandé.
 
-### 4. Brancher réellement `get_status`
+### 5. Brancher réellement `get_status`
 
 `$?` lit déjà `get_status`, mais il faudra que Dounia branche les écritures :
 
@@ -345,7 +396,7 @@ commande introuvable -> *get_status() = 127
 Ctrl-C -> *get_status() = 130
 ```
 
-### 5. Brancher la pipeline dans la boucle globale
+### 6. Brancher la pipeline dans la boucle globale
 
 À faire après accord avec Dounia sur le format envoyé à l'exec.
 
@@ -362,7 +413,7 @@ exec
 cleanup
 ```
 
-### 6. Refacto / Norm
+### 7. Refacto / Norm
 
 `expand_word` est encore un peu longue.
 

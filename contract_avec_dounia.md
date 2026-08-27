@@ -33,6 +33,14 @@ tokenizer avec quotes conservées
 -> exec
 ```
 
+État actuel au 19 août :
+
+```text
+La PR clean de Chloé est mergée dans dev.
+Chloé continue sur chloe avec les docs et tests temporaires.
+Le vrai main.c n'est pas encore modifié pour brancher cette pipeline.
+```
+
 Pourquoi l'expansion vient avant le retrait des quotes :
 
 ```sh
@@ -91,6 +99,22 @@ Ce qu'on peut brancher en local sur `chloe` avant merge :
 - des tests pipeline sans toucher à l'exec de Dounia ;
 - le parser vers `cmd_and_args`, tant que le contrat de sortie est clair.
 
+Test local en cours :
+
+```text
+tests/test_loop.c
+readline -> add_history -> tokenizer -> expand_tokens -> print tokens
+```
+
+Étapes suivantes dans ce test :
+
+```text
+remove_quotes_from_tokens
+parse_tokens
+print cmd_and_args
+launch_exec seulement après validation visuelle
+```
+
 Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
 
 - où `get_status()` est mis à jour après exec / builtins / erreurs / signaux ;
@@ -148,8 +172,26 @@ ${VAR}  # syntaxe braces
 
 ## Point à corriger côté recherche env
 
-À vérifier avec Dounia : `get_env_value` et `set_env_value` ne doivent pas faire
-une comparaison partielle.
+Point observé en test loop : `echo $USER` a retourné une mauvaise valeur
+d'environnement (`code.desktop` chez Chloé) alors que `$USER` vaut bien
+`gpalemo` dans le terminal.
+
+Cause probable dans `srcs/builtins/cd.c` :
+
+```c
+if (ft_strcmp(env->key, key))
+```
+
+`ft_strcmp` retourne `0` quand les strings sont égales. Cette condition matche
+donc les clés différentes.
+
+À corriger avec Dounia dans `get_env_value` et `set_env_value` :
+
+```text
+utiliser ft_strcmp(env->key, key) == 0
+```
+
+Ne pas faire non plus une comparaison partielle.
 
 Version à éviter :
 
@@ -161,12 +203,6 @@ Risque :
 
 ```text
 HOME peut matcher HOME_TEST
-```
-
-Décision souhaitée :
-
-```text
-utiliser une comparaison exacte, probablement ft_strcmp
 ```
 
 La nouvelle Libft contient maintenant `ft_strcmp`.
@@ -213,8 +249,13 @@ Important :
 ne pas mélanger get_status() et shell->last_status
 ```
 
-`get_status()` existe côté Chloé et `$?` le lit déjà dans l'expansion. Il reste
-à brancher les écritures côté exec / builtins / erreurs / signaux.
+Après merge avec `dev`, `get_status()` existe actuellement dans `srcs/main.c`
+côté Dounia, et `$?` le lit déjà dans l'expansion.
+
+Pour les tests locaux qui ont leur propre `main`, utiliser un stub local
+`get_status()` dans le fichier de test plutôt que de compiler `srcs/main.c`.
+
+Il reste à brancher les écritures côté exec / builtins / erreurs / signaux.
 
 ## Heredoc
 

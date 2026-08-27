@@ -1,4 +1,4 @@
-# Tokenizer terminé — 17 août 2026
+# Tokenizer terminé — 19 août 2026
 
 ## Statut
 
@@ -16,6 +16,14 @@ ligne
 ```
 
 Le tokenizer conserve volontairement les quotes dans `token->value`.
+
+État d'intégration :
+
+```text
+La PR clean contenant le lexer/tokenizer a été mergée dans dev.
+La branche chloe garde les docs et tests temporaires.
+tests/test_loop.c utilise maintenant tokenizer dans une mini boucle readline.
+```
 
 ## Tokens reconnus
 
@@ -153,5 +161,11 @@ libft/libft.a \
 ## Conclusion
 
 Le lexer est considéré terminé pour le mandatory. On n'y reviendra que si les
-tests d'intégration révèlent un cas manquant. Le travail actif continue dans
-`srcs/expansion/`.
+tests d'intégration révèlent un cas manquant.
+
+Travail actif actuel :
+
+```text
+tests/test_loop.c
+readline -> tokenizer -> expand_tokens -> prochainement remove_quotes_from_tokens
+```
