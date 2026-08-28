@@ -140,6 +140,13 @@ static void	test_cmd_args(void)
 		"echo $2USER $12USER", digit);
 }
 
+int	*get_status(void)
+{
+	static int	status;
+
+	return (&status);
+}
+
 /**
  * @brief Lance les tests temporaires du parser.
  */
