@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/18 18:54:25 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/01 06:38:56 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ void set_shell(t_shell *shell, t_cmd *cmd, char **env)
 	shell->cmds = cmd;           // pas de parser actif une fois la commande traitée
 	shell->path = NULL;             // cd ne cherche pas de path binaire, c'est un builtin
 }
-void set_cmd(t_cmd *cmd)
+/* void set_cmd(t_cmd *cmd)
 {
 	static char *cd_args[] = {"/bin/ls", NULL};
 	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
@@ -68,11 +68,56 @@ int	main(int ac, char **av, char **env)
 	// exec_single_external(shell.cmds, env);
 	// exec_pipeline(shell.cmds, env);
 
-	launch_exec(shell, cmd);
+	launch_exec(&shell, &cmd);
 	
-	/* printf("oldpwd: %s\n", getcwd(NULL, 0));
+	 printf("oldpwd: %s\n", getcwd(NULL, 0));
 	exec_builtins(&shell, shell.cmds);
-	printf("newpwd: %s\n", getcwd(NULL, 0)); */
+	printf("newpwd: %s\n", getcwd(NULL, 0)); 
 		
+	//return (0);
+//} */
+
+
+
+static t_cmd	*make_cmd(char **args, int is_builtin, t_cmd *next)
+{
+	t_cmd	*cmd;
+
+	cmd = malloc(sizeof(t_cmd));
+	if (!cmd)
+		return (NULL);
+	cmd->cmd_and_args = args;
+	cmd->path = NULL;
+	cmd->fd_in = 0;
+	cmd->fd_out = 1;
+	cmd->is_builtin = is_builtin;
+	cmd->access_check = 1;
+	cmd->next = next;
+	return (cmd);
+}
+
+int	main(int ac, char **av, char **env)
+{
+	t_shell	shell;
+	t_cmd	*pipeline;
+	static char	*args_ls[] = {"ls", NULL};
+	static char	*args_grep[] = {"grep", ".c", NULL};
+	static char	*args_wc[] = {"wc", "-l", NULL};
+
+	(void)ac;
+	(void)av;
+	setup_env(&shell, env);
+	shell.token = NULL;
+	shell.path = NULL;
+
+	/* construit la pipeline en partant de la fin : ls | grep .c | wc -l */
+	pipeline = make_cmd(args_wc, 0, NULL);
+	pipeline = make_cmd(args_grep, 0, pipeline);
+	pipeline = make_cmd(args_ls, 0, pipeline);
+
+	shell.cmds = pipeline;
+	launch_exec(&shell, pipeline);
+
+	printf("exit status: %d\n", *get_status());
 	return (0);
 }
