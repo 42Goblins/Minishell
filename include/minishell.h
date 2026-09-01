@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/17 22:12:11 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/01 06:36:54 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -182,7 +182,7 @@ t_cmd	*parse_tokens(t_token *tokens);
 
 /* exec.c */
 int		count_cmds(t_cmd *cmds);
-void	launch_exec(t_shell shell, t_cmd cmds);
+void	launch_exec(t_shell *shell, t_cmd *cmds);
 
 /* exec_external.c */
 char	*try_path(char *dir, char *cmd);

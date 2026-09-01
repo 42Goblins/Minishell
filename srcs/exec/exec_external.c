@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/19 18:35:58 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/08/28 03:17:26 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,7 @@ char	*try_path(char *dir, char *cmd)
 	return (NULL);
 }
 
-char	*get_path(t_env  *env)
+char	*get_path(t_env *env)
 {
 	while (env)
 	{
@@ -111,9 +111,9 @@ char	*find_path(char *cmd, t_env *env)
 	return (free_tab(dirs), NULL);
 }
 
-void exec_external(t_cmd *cmd, t_env *env)
+void	exec_external(t_cmd *cmd, t_env *env)
 {
-	char    *path;
+	char	*path;
 	char	**env_tab;
 
 	env_tab = NULL;
@@ -131,9 +131,16 @@ void exec_external(t_cmd *cmd, t_env *env)
 	free(path);
 	free_tab(env_tab);
 	exit(126);
+	// restore_original_signals
+
+	//	if (WIFEXITED(status))
+	//	*get_status() = WEXITSTATUS(status);
+	//else if (WIFSIGNALED(status))
+	//	*get_status() = 128 + WTERMSIG(status);
+
 }
 
-void exec_single_external(t_cmd *cmd, t_env *env)
+void	exec_single_external(t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
 	int		status;
@@ -149,8 +156,11 @@ void exec_single_external(t_cmd *cmd, t_env *env)
 	waitpid(pid, &status, 0);
 	printf("%d\n", status);
 	if (WIFEXITED(status))
-		 *get_status() = WEXITSTATUS(status);
+		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		*get_status() = 128 + WTERMSIG(status);
 	printf("%d\n", *get_status());
+	// exit(126) ??
+	// check mieux les exit pour external, si pas trouvé 127, si pas exécutable 
+	// 126, sinon le status du fils ??
 }
