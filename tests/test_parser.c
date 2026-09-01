@@ -18,7 +18,8 @@
  * Il prend une ligne, passe par tokenizer, expansion, retrait des quotes,
  * validation syntaxique, puis parse_tokens. Le but actuel est de verifier que
  * cmd_and_args contient seulement les vrais arguments de commande, sans les
- * operateurs de redirection ni leurs filenames/delimiters.
+ * operateurs de redirection ni leurs filenames/delimiters. Il teste aussi le
+ * debut du parsing des pipes avec plusieurs t_cmd chainees.
  *
  * Les pipes et le stockage/ouverture des redirections dans t_cmd ne sont pas
  * encore finis.
@@ -76,18 +77,6 @@ static void	print_args(char **args)
 }
 
 /**
- * @brief Libere une commande simple creee par le parser.
- */
-static void	free_test_cmd(t_cmd *cmd)
-{
-	if (!cmd)
-		return ;
-	free_tab(cmd->cmd_and_args);
-	free(cmd->path);
-	free(cmd);
-}
-
-/**
  * @brief Lance le pipeline parser et compare cmd_and_args au resultat attendu.
  */
 static void	test_cmd_args_case(char *label, char *input, char **expected)
@@ -126,8 +115,106 @@ static void	test_cmd_args_case(char *label, char *input, char **expected)
 	printf("\n  expected : ");
 	print_args(expected);
 	printf("\n");
-	free_test_cmd(cmd);
+	free_cmds(cmd);
 	free_tokens(shell.token);
+}
+
+/**
+ * @brief Compare les commandes chainees avec les tableaux attendus.
+ */
+static bool	cmds_match(t_cmd *cmds, char ***expected)
+{
+	int	i;
+
+	i = 0;
+	while (cmds && expected[i])
+	{
+		if (!args_match(cmds->cmd_and_args, expected[i]))
+			return (false);
+		cmds = cmds->next;
+		i++;
+	}
+	return (cmds == NULL && expected[i] == NULL);
+}
+
+/**
+ * @brief Affiche chaque commande chainee avec son resultat attendu.
+ */
+static void	print_cmds_result(t_cmd *cmds, char ***expected)
+{
+	int	i;
+
+	i = 0;
+	while (cmds && expected[i])
+	{
+		printf("  cmd %d    : ", i);
+		print_args(cmds->cmd_and_args);
+		printf("\n  expected : ");
+		print_args(expected[i]);
+		printf("\n");
+		cmds = cmds->next;
+		i++;
+	}
+}
+
+/**
+ * @brief Lance le pipeline parser et verifie une liste de commandes chainees.
+ */
+static void	test_pipe_case(char *label, char *input, char ***expected)
+{
+	t_shell	shell;
+	t_env	user;
+	t_env	home;
+	t_cmd	*cmds;
+
+	init_test_env(&user, &home);
+	shell.token = NULL;
+	shell.env = &user;
+	shell.cmds = NULL;
+	if (tokenizer(input, &shell))
+		return ((void)printf("[FAIL] pipe tokenizer: %s\n", label));
+	if (expand_tokens(shell.token, shell.env))
+		return (free_tokens(shell.token),
+			(void)printf("[FAIL] pipe expansion: %s\n", label));
+	if (remove_quotes_from_tokens(shell.token))
+		return (free_tokens(shell.token),
+			(void)printf("[FAIL] pipe quotes: %s\n", label));
+	if (validate_syntax(shell.token))
+		return (free_tokens(shell.token),
+			(void)printf("[FAIL] pipe syntax: %s\n", label));
+	cmds = parse_tokens(shell.token);
+	if (cmds_match(cmds, expected))
+		printf("[PASS] %s\n", label);
+	else
+		printf("[FAIL] %s\n", label);
+	printf("  input    : %s\n", input);
+	print_cmds_result(cmds, expected);
+	free_cmds(cmds);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Teste les pipes transformes en plusieurs t_cmd chainees.
+ */
+static void	test_pipe_cases(void)
+{
+	char	*pipe_first[] = {"echo", "hello", NULL};
+	char	*pipe_second[] = {"wc", "-c", NULL};
+	char	*triple_first[] = {"echo", "hello", NULL};
+	char	*triple_second[] = {"grep", "h", NULL};
+	char	*triple_third[] = {"wc", "-l", NULL};
+	char	*redir_first[] = {"cat", NULL};
+	char	*redir_second[] = {"grep", "hello", NULL};
+	char	**pipe[] = {pipe_first, pipe_second, NULL};
+	char	**triple[] = {triple_first, triple_second, triple_third, NULL};
+	char	**redir[] = {redir_first, redir_second, NULL};
+
+	test_pipe_case("pipe -> two linked commands",
+		"echo hello | wc -c", pipe);
+	test_pipe_case("pipes -> three linked commands",
+		"echo hello | grep h | wc -l", triple);
+	test_pipe_case("pipe + redirections skipped from args",
+		"cat < infile | grep hello > outfile", redir);
 }
 
 /**
@@ -165,6 +252,7 @@ static void	test_cmd_args(void)
 		"echo hi >> log", append);
 	test_cmd_args_case("heredoc delimiter skipped from args",
 		"cat << EOF", heredoc);
+	test_pipe_cases();
 }
 
 /**

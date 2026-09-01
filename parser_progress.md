@@ -25,6 +25,7 @@ Il reçoit des tokens déjà propres.
 srcs/parser/parser.c
 srcs/parser/syntax.c
 srcs/parser/parser_utils.c
+srcs/utils/free_cmds.c
 tests/test_parser.c
 tests/test_syntax.c
 tests/test_loop.c
@@ -47,16 +48,18 @@ create_cmd_args
 count_cmd_args
 validate_syntax
 is_redirection_token
+free_cmds
 ```
 
 Ce qui marche maintenant :
 
 ```text
-parse_tokens crée une t_cmd pour une commande simple.
+parse_tokens crée une liste de t_cmd pour les commandes séparées par des pipes.
 cmd_and_args est dupliqué avec ft_strdup.
 Les redirections et leur filename/delimiter sont ignorés dans cmd_and_args.
 validate_syntax refuse les erreurs simples avant parse_tokens.
 tests/test_loop.c teste la pipeline locale jusqu'au parser.
+free_cmds libère la liste de commandes déjà créée en cas d'erreur.
 ```
 
 Exemples attendus :
@@ -69,6 +72,7 @@ echo hi > out     -> ["echo", "hi", NULL]
 cat < infile      -> ["cat", NULL]
 echo hi >> log    -> ["echo", "hi", NULL]
 cat << EOF        -> ["cat", NULL]
+echo hi | wc -c   -> cmd1 ["echo", "hi", NULL], cmd2 ["wc", "-c", NULL]
 ```
 
 ## Syntaxe déjà validée
@@ -164,6 +168,7 @@ srcs/lexer/lexer_quotes.c \
 srcs/lexer/lexer_utils.c \
 srcs/builtins/cd.c \
 srcs/exec/exec_external.c \
+srcs/utils/free_cmds.c \
 libft/libft.a \
 -o /tmp/test_parser
 
@@ -174,12 +179,15 @@ Dernier état connu :
 
 ```text
 tests redirections : PASS
+tests pipes : PASS
 tests $USER / $MISSING : FAIL à cause du bug connu dans get_env_value
 ```
 
 ## Reste à faire
 
 ### 1. Parser les pipes
+
+État : V1 faite et testée.
 
 Objectif :
 
@@ -196,15 +204,23 @@ cmd1->next = cmd2
 cmd2->next = NULL
 ```
 
-À faire :
+Déjà fait :
 
 ```text
-faire parcourir parse_tokens sur toute la liste
-créer une t_cmd à chaque début de commande
-s'arrêter au pipe pour une commande
-reprendre après le pipe pour la commande suivante
-relier les t_cmd avec next
-free proprement toute la liste de commandes si malloc échoue
+parse_tokens parcourt maintenant toute la liste de tokens
+create_cmd_node est appelé à chaque début de commande
+le scan s'arrête au pipe pour une commande
+parse_tokens reprend après le pipe pour la commande suivante
+les t_cmd sont reliées avec next
+free_cmds est appelé si une création de commande échoue
+```
+
+Tests ajoutés :
+
+```text
+echo hello | wc -c
+echo hello | grep h | wc -l
+cat < infile | grep hello > outfile
 ```
 
 ### 2. Décider le contrat redirections
@@ -283,7 +299,7 @@ Avant une PR clean :
 ```text
 vérifier la norme
 vérifier les prototypes dans minishell.h
-ajouter/free la liste complète de t_cmd
+vérifier free_cmds avec les futurs fd_in/fd_out
 relancer test_syntax
 relancer test_parser
 ne pas mettre les .md perso ni tests temporaires dans dev

@@ -18,7 +18,7 @@
  *
  * Le but est de verifier ma pipeline avant exec :
  * readline -> tokenizer -> expand_tokens -> remove_quotes_from_tokens
- * -> validate_syntax -> parse_tokens -> affichage de cmd_and_args.
+ * -> validate_syntax -> parse_tokens -> affichage de chaque cmd_and_args.
  *
  * Je fais ca ici pour eviter les conflits avec le main de Dounia, qui est
  * encore en train d'evoluer avec l'exec, les builtins, les fd, les signaux et
@@ -28,8 +28,8 @@
  * voir si ma partie prepare bien les tokens et les commandes.
  */
 
+void	print_cmds(t_cmd *cmds);
 void	print_cmd_args(char **cmd_and_args);
-void	free_test_cmd(t_cmd *cmd);
 
 /**
  * @brief Affiche les tokens produits par la pipeline locale.
@@ -90,7 +90,7 @@ int	main(int ac, char **av, char **env)
 					{
 						shell.cmds = parse_tokens(shell.token);
 						if (shell.cmds)
-							print_cmd_args(shell.cmds->cmd_and_args);
+							print_cmds(shell.cmds);
 						else
 							printf("parser error\n");
 					}
@@ -105,13 +105,30 @@ int	main(int ac, char **av, char **env)
 		}
 		else
 			printf("tokenizer error\n");
-		free_test_cmd(shell.cmds);
+		free_cmds(shell.cmds);
 		shell.cmds = NULL;
 		free_tokens(shell.token);
 		shell.token = NULL;
 		free (line);
 	}
 	return (0);
+}
+
+/**
+ * @brief Affiche toutes les commandes creees par le parser.
+ */
+void	print_cmds(t_cmd *cmds)
+{
+	int	i;
+
+	i = 0;
+	while (cmds)
+	{
+		printf("cmd %d:\n", i);
+		print_cmd_args(cmds->cmd_and_args);
+		cmds = cmds->next;
+		i++;
+	}
 }
 
 /**
@@ -127,16 +144,4 @@ void	print_cmd_args(char **cmd_and_args)
 		printf("index : %d, string : %s\n", i, cmd_and_args[i]);
 		i++;
 	}
-}
-
-/**
- * @brief Libere une commande simple creee par la mini boucle de test.
- */
-void	free_test_cmd(t_cmd *cmd)
-{
-	if (!cmd)
-		return ;
-	free_tab(cmd->cmd_and_args);
-	free(cmd->path);
-	free(cmd);
 }
