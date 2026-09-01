@@ -12,6 +12,14 @@
 
 #include "minishell.h"
 
+/*
+ * Ce fichier teste l'expansion sans passer par le vrai minishell.
+ *
+ * Il verifie les cas importants de $VAR, $?, $digit, variable absente, single
+ * quotes, double quotes, variables collees, et heredoc delimiter non expande.
+ * L'environnement est fake pour garder des resultats previsibles.
+ */
+
 /**
  * @brief Compare deux resultats de test, en gerant aussi le cas NULL.
  */
