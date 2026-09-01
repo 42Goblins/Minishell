@@ -1,12 +1,12 @@
 # Contrat avec Dounia
 
-Ce document fixe les décisions communes entre la partie parsing/expansion de
-Chloé et la partie env/builtins/exec de Dounia.
+Ce document fixe les décisions communes entre ma partie parsing/expansion et la
+partie env/builtins/exec de Dounia.
 
 ## Répartition confirmée
 
 ```text
-Chloé  : lexer, tokenisation, expansion, retrait des quotes, syntaxe, parser.
+Moi    : lexer, tokenisation, expansion, retrait des quotes, syntaxe, parser.
 Dounia : environnement, builtins, exec, wait/status, fd, heredoc, signaux.
 ```
 
@@ -33,12 +33,13 @@ tokenizer avec quotes conservées
 -> exec
 ```
 
-État actuel au 19 août :
+État actuel au 1 septembre :
 
 ```text
-La PR clean de Chloé est mergée dans dev.
-Chloé continue sur chloe avec les docs et tests temporaires.
+La PR clean lexer / expansion / parser est mergée dans dev.
+Je continue sur chloe avec les docs et tests temporaires.
 Le vrai main.c n'est pas encore modifié pour brancher cette pipeline.
+La pipeline locale de test va jusqu'à validate_syntax puis parse_tokens.
 ```
 
 Pourquoi l'expansion vient avant le retrait des quotes :
@@ -52,7 +53,7 @@ $USER     # expansion
 Si les quotes étaient retirées avant l'expansion, on ne pourrait plus
 distinguer single quotes et double quotes.
 
-Contrat actuel côté Chloé :
+Contrat actuel de mon côté :
 
 ```text
 expand_tokens expand tous les tokens WORD sauf le delimiter heredoc.
@@ -62,14 +63,14 @@ remove_quotes_from_tokens passe après expand_tokens.
 Exemples après `expand_tokens`, avant retrait des quotes :
 
 ```text
-echo "$USER" '$USER' $? -> echo, "chloe", '$USER', 127
+echo "$USER" '$USER' $? -> echo, "gpalemo", '$USER', 127
 cat << "$USER"          -> cat, <<, "$USER"
 ```
 
 Exemples après `remove_quotes_from_tokens` :
 
 ```text
-echo "$USER" '$USER' $? -> echo, chloe, $USER, 127
+echo "$USER" '$USER' $? -> echo, gpalemo, $USER, 127
 cat << "$USER"          -> cat, <<, $USER
 ```
 
@@ -103,17 +104,19 @@ Test local en cours :
 
 ```text
 tests/test_loop.c
-readline -> add_history -> tokenizer -> expand_tokens -> print tokens
+readline -> add_history -> tokenizer -> expand_tokens
+-> remove_quotes_from_tokens -> validate_syntax -> parse_tokens
+-> print tokens + cmd_and_args
 ```
 
-Étapes suivantes dans ce test :
+Déjà validé de mon côté :
 
 ```text
-remove_quotes_from_tokens
-parse_tokens
-print cmd_and_args
-launch_exec seulement après validation visuelle
+syntax errors simples refusées avant parser
+redirections retirées de cmd_and_args
 ```
+
+`launch_exec` n'est pas encore branché dans ce test.
 
 Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
 
@@ -121,6 +124,116 @@ Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
 - quel format exact l'exec attend pour les commandes et redirections ;
 - comment le heredoc reçoit le delimiter et l'information `had_quotes` ;
 - qui possède/libère les `t_cmd`, `cmd_and_args` et chemins de redirection.
+- comment centraliser les messages d'erreur et les exit status.
+
+## État parser de mon côté
+
+Déjà fait :
+
+```text
+parse_tokens crée une t_cmd pour une commande simple.
+cmd_and_args est dupliqué avec ft_strdup.
+Les redirections et leur filename/delimiter ne vont plus dans cmd_and_args.
+validate_syntax refuse les pipes/redirections mal placés.
+```
+
+Exemples :
+
+```text
+echo hello        -> ["echo", "hello", NULL]
+echo hi > out     -> ["echo", "hi", NULL]
+cat < infile      -> ["cat", NULL]
+echo hi >> log    -> ["echo", "hi", NULL]
+cat << EOF        -> ["cat", NULL]
+```
+
+Pas encore fait :
+
+```text
+plusieurs t_cmd pour les pipes
+stockage/ouverture réelle des redirections dans t_cmd
+détection builtin côté parser
+messages bash-like exacts + status 2 dans la vraie boucle
+```
+
+## Gestion des erreurs
+
+Les erreurs doivent être séparées par responsabilité.
+
+Règle générale :
+
+```text
+messages d'erreur -> stderr
+status            -> *get_status()
+la boucle continue sauf exit/EOF/erreur fatale
+```
+
+De mon côté :
+
+```text
+lexer
+syntax validation
+parser
+```
+
+À gérer de mon côté :
+
+```text
+quote non fermée
+pipe mal placé
+redirection sans filename
+token inattendu avant parser
+erreur malloc dans parser
+```
+
+Status attendu pour les erreurs de syntaxe :
+
+```text
+2
+```
+
+Exemples de messages proches de bash :
+
+```text
+minishell: syntax error near unexpected token `|'
+minishell: syntax error near unexpected token `newline'
+```
+
+Côté Dounia :
+
+```text
+exec
+builtins
+open des fichiers si l'exec garde cette responsabilité
+waitpid
+signaux
+```
+
+À gérer côté Dounia :
+
+```text
+command not found -> 127
+permission denied -> 126
+redirection open fail -> 1
+builtin fail -> souvent 1
+Ctrl-C -> 130
+Ctrl-\ -> 131
+```
+
+Point à décider ensemble :
+
+```text
+Est-ce que validate_syntax affiche directement l'erreur et met *get_status() = 2,
+ou est-ce qu'elle retourne seulement un code que la boucle principale traduit ?
+```
+
+Décision provisoire de mon côté :
+
+```text
+validate_syntax retourne 0 si OK, 1 si erreur.
+Les vrais messages/stats seront branchés proprement quand la boucle principale
+sera décidée avec Dounia.
+```
 
 ## Environnement et `$VAR`
 
@@ -128,10 +241,10 @@ Contrat :
 
 ```text
 Dounia maintient shell->env.
-Chloé lit shell->env sans le modifier.
+Ma partie lit shell->env sans le modifier.
 ```
 
-Chloé utilise directement :
+J'utilise directement :
 
 ```c
 get_env_value(shell->env, "HOME")
@@ -143,7 +256,7 @@ Contrat mémoire :
 
 ```text
 get_env_value retourne une adresse empruntée.
-Chloé ne free jamais cette adresse.
+Je ne free jamais cette adresse.
 get_var_value retourne une nouvelle string allouée pour l'expansion.
 ```
 
@@ -173,7 +286,7 @@ ${VAR}  # syntaxe braces
 ## Point à corriger côté recherche env
 
 Point observé en test loop : `echo $USER` a retourné une mauvaise valeur
-d'environnement (`code.desktop` chez Chloé) alors que `$USER` vaut bien
+d'environnement (`code.desktop` chez moi) alors que `$USER` vaut bien
 `gpalemo` dans le terminal.
 
 Cause probable dans `srcs/builtins/cd.c` :
@@ -240,7 +353,7 @@ Pourquoi `get_status()` :
 
 - accessible depuis les signaux sans passer `t_shell` ;
 - évite de faire circuler `t_shell` partout ;
-- proche de la logique observée chez Nico ;
+- simple à utiliser depuis l'expansion et les signaux ;
 - une seule source de vérité si tout le monde l'utilise.
 
 Important :
@@ -252,8 +365,9 @@ ne pas mélanger get_status() et shell->last_status
 Après merge avec `dev`, `get_status()` existe actuellement dans `srcs/main.c`
 côté Dounia, et `$?` le lit déjà dans l'expansion.
 
-Pour les tests locaux qui ont leur propre `main`, utiliser un stub local
-`get_status()` dans le fichier de test plutôt que de compiler `srcs/main.c`.
+Pour les tests locaux qui ont leur propre `main`, utiliser une petite version
+locale de `get_status()` dans le fichier de test plutôt que de compiler
+`srcs/main.c`.
 
 Il reste à brancher les écritures côté exec / builtins / erreurs / signaux.
 
@@ -266,8 +380,8 @@ Contrat retenu :
 ```text
 Le token après T_HEREDOC n'est pas expandé par expand_tokens.
 Le délimiteur passe quand même dans remove_quotes_from_tokens.
-Chloé fournit donc le délimiteur sans quotes.
-Chloé conserve had_quotes sur le token.
+Ma partie fournit donc le délimiteur sans quotes.
+Ma partie conserve had_quotes sur le token.
 Dounia utilise had_quotes pour décider si le contenu heredoc doit être expandé.
 ```
 

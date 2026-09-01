@@ -12,9 +12,28 @@
 
 #include "minishell.h"
 
+/*
+ * Ce fichier sert a tester une fausse boucle minishell en local, sans toucher
+ * au vrai main.c.
+ *
+ * Le but est de verifier ma pipeline avant exec :
+ * readline -> tokenizer -> expand_tokens -> remove_quotes_from_tokens
+ * -> validate_syntax -> parse_tokens -> affichage de cmd_and_args.
+ *
+ * Je fais ca ici pour eviter les conflits avec le main de Dounia, qui est
+ * encore en train d'evoluer avec l'exec, les builtins, les fd, les signaux et
+ * le status.
+ *
+ * Pour l'instant cette loop ne lance pas encore l'exec. Elle sert surtout a
+ * voir si ma partie prepare bien les tokens et les commandes.
+ */
+
 void	print_cmd_args(char **cmd_and_args);
 void	free_test_cmd(t_cmd *cmd);
 
+/**
+ * @brief Affiche les tokens produits par la pipeline locale.
+ */
 static void	print_tokens(t_token *tokens)
 {
 	t_token	*current;
@@ -28,6 +47,9 @@ static void	print_tokens(t_token *tokens)
 	}
 }
 
+/**
+ * @brief Version locale de get_status pour tester $? sans le vrai main.
+ */
 int	*get_status(void)
 {
 	static int	status;
@@ -35,6 +57,9 @@ int	*get_status(void)
 	return (&status);
 }
 
+/**
+ * @brief Lance une mini boucle readline pour tester la pipeline avant exec.
+ */
 int	main(int ac, char **av, char **env)
 {
 	(void)ac;
@@ -61,11 +86,16 @@ int	main(int ac, char **av, char **env)
 				if (remove_quotes_from_tokens(shell.token) == 0)
 				{
 					print_tokens(shell.token);
-					shell.cmds = parse_tokens(shell.token);
-					if (shell.cmds)
-						print_cmd_args(shell.cmds->cmd_and_args);
+					if (validate_syntax(shell.token) == 0)
+					{
+						shell.cmds = parse_tokens(shell.token);
+						if (shell.cmds)
+							print_cmd_args(shell.cmds->cmd_and_args);
+						else
+							printf("parser error\n");
+					}
 					else
-						printf("parser error\n");
+						printf("syntax error\n");
 				}
 				else
 					printf("quote error\n");
@@ -84,6 +114,9 @@ int	main(int ac, char **av, char **env)
 	return (0);
 }
 
+/**
+ * @brief Affiche le tableau cmd_and_args cree par le parser.
+ */
 void	print_cmd_args(char **cmd_and_args)
 {
 	int i;
@@ -96,6 +129,9 @@ void	print_cmd_args(char **cmd_and_args)
 	}
 }
 
+/**
+ * @brief Libere une commande simple creee par la mini boucle de test.
+ */
 void	free_test_cmd(t_cmd *cmd)
 {
 	if (!cmd)

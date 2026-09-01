@@ -12,6 +12,18 @@
 
 #include "minishell.h"
 
+/*
+ * Ce fichier teste le debut du parser sans lancer l'exec.
+ *
+ * Il prend une ligne, passe par tokenizer, expansion, retrait des quotes,
+ * validation syntaxique, puis parse_tokens. Le but actuel est de verifier que
+ * cmd_and_args contient seulement les vrais arguments de commande, sans les
+ * operateurs de redirection ni leurs filenames/delimiters.
+ *
+ * Les pipes et le stockage/ouverture des redirections dans t_cmd ne sont pas
+ * encore finis.
+ */
+
 /**
  * @brief Cree un petit environnement fake pour tester le parser.
  */
@@ -97,6 +109,9 @@ static void	test_cmd_args_case(char *label, char *input, char **expected)
 	if (remove_quotes_from_tokens(shell.token))
 		return (free_tokens(shell.token), (void)printf("[FAIL] quotes: %s\n",
 				label));
+	if (validate_syntax(shell.token))
+		return (free_tokens(shell.token), (void)printf("[FAIL] syntax: %s\n",
+				label));
 	cmd = parse_tokens(shell.token);
 	if (!cmd)
 		return (free_tokens(shell.token), (void)printf("[FAIL] parser: %s\n",
@@ -125,6 +140,10 @@ static void	test_cmd_args(void)
 	char	*status[] = {"echo", "127", NULL};
 	char	*missing[] = {"echo", "", "suffix", NULL};
 	char	*digit[] = {"echo", "USER", "2USER", NULL};
+	char	*redir_out[] = {"echo", "hi", NULL};
+	char	*redir_in[] = {"cat", NULL};
+	char	*append[] = {"echo", "hi", NULL};
+	char	*heredoc[] = {"cat", NULL};
 
 	*get_status() = 127;
 	printf("\n=== PARSER CMD_AND_ARGS ===\n");
@@ -138,8 +157,19 @@ static void	test_cmd_args(void)
 		"echo $MISSING suffix", missing);
 	test_cmd_args_case("digit expansion -> $2USER / $12USER",
 		"echo $2USER $12USER", digit);
+	test_cmd_args_case("redir out skipped from args",
+		"echo hi > out", redir_out);
+	test_cmd_args_case("redir in skipped from args",
+		"cat < infile", redir_in);
+	test_cmd_args_case("append skipped from args",
+		"echo hi >> log", append);
+	test_cmd_args_case("heredoc delimiter skipped from args",
+		"cat << EOF", heredoc);
 }
 
+/**
+ * @brief Version locale de get_status pour tester $? sans le vrai main.
+ */
 int	*get_status(void)
 {
 	static int	status;

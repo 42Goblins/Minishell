@@ -2,7 +2,7 @@
 
 ## Objectif de la journée
 
-Avancer au maximum sur la partie de Chloé pour le mandatory, sans dépendre de
+Avancer au maximum sur ma partie pour le mandatory, sans dépendre de
 l'exec de Dounia.
 
 Ta partie :
@@ -16,7 +16,7 @@ parser vers t_cmd / cmd_and_args
 préparation de la pipeline avant exec
 ```
 
-Objectif concret de demain :
+Objectif concret initial :
 
 ```text
 Avoir une pipeline locale solide :
@@ -32,6 +32,16 @@ commencer parser redirections
 commencer parser pipes
 ```
 
+État au 1 septembre :
+
+```text
+Pipeline locale jusqu'à parse_tokens : faite dans tests/test_loop.c.
+Syntax validation : faite + test_syntax.
+Parser cmd_and_args : ignore maintenant les redirections et leur filename.
+Prochain gros morceau : parser les pipes vers plusieurs t_cmd.
+Ensuite : décider/faire le stockage ou l'ouverture des redirections.
+```
+
 Ne pas perdre du temps à brancher le vrai `main.c` si l'exec est encore WIP.
 Pour demain, le terrain de jeu principal reste :
 
@@ -45,7 +55,7 @@ srcs/parser/parser.c
 
 La PR clean lexer / expansion / parser a été mergée dans `dev`.
 
-La branche `chloe` reste la branche atelier :
+La branche `chloe` reste ma branche atelier :
 
 ```text
 .md perso
@@ -126,9 +136,10 @@ Règle importante :
 expand_tokens avant remove_quotes_from_tokens
 ```
 
-### Parser V1
+### Parser actuel
 
-Le parser actuel sait faire une commande simple :
+Le parser actuel sait faire une commande simple et ne met plus les filenames de
+redirection dans `cmd_and_args`.
 
 ```text
 tokens WORD -> t_cmd -> cmd_and_args
@@ -138,18 +149,20 @@ Exemple :
 
 ```text
 echo hello -> ["echo", "hello", NULL]
+echo hello > out -> ["echo", "hello", NULL]
+cat << EOF -> ["cat", NULL]
 ```
 
 Limite actuelle :
 
 ```text
-redirections pas encore séparées
+redirections pas encore stockées/ouvertes dans t_cmd
 pipes pas encore transformés en plusieurs t_cmd
-pas encore de syntax validation
 pas encore de détection builtin
+messages/status syntax pas encore centralisés
 ```
 
-Exemple pas encore correct :
+Exemple maintenant corrigé côté `cmd_and_args` :
 
 ```sh
 echo hello > out
@@ -161,8 +174,8 @@ Le lexer tokenise bien :
 echo / hello / > / out
 ```
 
-Mais le parser risque encore de mettre `out` dans `cmd_and_args`, alors que plus
-tard il faudra avoir :
+Le parser ne met plus `out` dans `cmd_and_args`. Plus tard il faudra encore
+stocker/ouvrir la redirection :
 
 ```text
 cmd_and_args = ["echo", "hello", NULL]
@@ -237,6 +250,8 @@ plan_attaque_28_aout.md
 
 ### Bloc 1 — Finir la mini boucle locale jusqu'aux quotes
 
+Statut : fait.
+
 Fichier :
 
 ```text
@@ -296,6 +311,8 @@ Ctrl-D quitte proprement.
 
 ### Bloc 2 — Brancher parse_tokens dans test_loop
 
+Statut : fait.
+
 Fichier :
 
 ```text
@@ -354,6 +371,21 @@ La boucle interactive affiche cmd_and_args correctement pour les commandes simpl
 
 ### Bloc 3 — Consolider les tests parser
 
+Statut : partiellement fait.
+
+Déjà ajouté :
+
+```text
+tests redirections qui vérifient que les filenames ne vont plus dans cmd_and_args
+test parser synchronisé avec validate_syntax
+```
+
+À garder en tête :
+
+```text
+les cas $USER / $MISSING échouent tant que get_env_value est faux côté env
+```
+
 Fichier :
 
 ```text
@@ -392,7 +424,13 @@ les résultats attendus sont affichés clairement
 
 ### Bloc 4 — Syntax validation V1
 
+Statut : fait pour les erreurs simples robustes.
+
 But : refuser les erreurs évidentes avant parser/exec.
+
+Important : cette étape n'est pas jetable. `syntax.c` fait partie du vrai
+minishell final. Ce qui peut rester temporaire, ce sont seulement les messages
+debug dans `tests/test_loop.c`.
 
 Nouveau fichier conseillé :
 
@@ -450,10 +488,43 @@ Elle ne modifie pas les tokens.
 Elle affiche peut-être un message temporaire dans les tests.
 ```
 
+Gestion d'erreur finale à prévoir :
+
+```text
+syntax error -> *get_status() = 2
+message -> stderr
+ne pas appeler parser
+ne pas appeler exec
+retourner à readline
+```
+
+Messages bash-like visés plus tard :
+
+```text
+minishell: syntax error near unexpected token `|'
+minishell: syntax error near unexpected token `newline'
+```
+
+Pour avancer vite maintenant :
+
+```text
+1. validate_syntax détecte correctement et retourne 1
+2. test_loop affiche temporairement "syntax error"
+3. plus tard, centraliser les vrais messages et status avec Dounia
+```
+
 Critère de fin :
 
 ```text
 La mini boucle refuse les erreurs de syntaxe avant parse_tokens.
+```
+
+État atteint :
+
+```text
+test_syntax.c ajouté
+validate_syntax branché dans test_loop
+validate_syntax branché dans test_parser
 ```
 
 Si ce bloc devient trop long :
@@ -464,6 +535,8 @@ laisser les cas plus fins pour le lendemain
 ```
 
 ### Bloc 5 — Parser redirections V1
+
+Statut : skip dans `cmd_and_args` fait.
 
 But : arrêter de mettre les filenames de redirection dans `cmd_and_args`.
 
@@ -518,6 +591,22 @@ Critère de fin :
 Les redirections ne polluent plus cmd_and_args.
 ```
 
+État atteint :
+
+```text
+echo hi > out      -> ["echo", "hi", NULL]
+cat < infile       -> ["cat", NULL]
+echo hi >> log     -> ["echo", "hi", NULL]
+cat << EOF         -> ["cat", NULL]
+```
+
+Reste à faire pour les redirections :
+
+```text
+décider avec Dounia si parser ouvre les fd ou stocke seulement les infos
+puis remplir fd_in/fd_out ou une structure de redirections
+```
+
 ### Bloc 6 — Parser pipes V1
 
 But : transformer plusieurs commandes séparées par `|` en plusieurs `t_cmd`.
@@ -556,32 +645,36 @@ test_loop affiche plusieurs cmd_and_args quand il y a un pipe.
 Ce bloc peut être gardé pour un autre jour si syntax + redirections prennent
 déjà beaucoup de temps.
 
-## Priorité réelle de demain
+## Priorité réelle maintenant
 
-À faire absolument :
+Déjà fait :
 
 ```text
 1. test_loop avec remove_quotes_from_tokens
 2. test_loop avec parse_tokens + print cmd_and_args
 3. tests parser propres pour commandes simples
-```
-
-Très important si tu as encore de l'énergie :
-
-```text
 4. syntax validation V1
-```
-
-Bonus fort :
-
-```text
 5. skip redirections dans cmd_and_args
 ```
 
-Bonus si grosse journée :
+Prochaine priorité :
 
 ```text
-6. parse pipes vers plusieurs t_cmd
+1. parser pipes vers plusieurs t_cmd
+2. tester cmd1/cmd2 dans test_parser ou test_loop
+```
+
+Ensuite :
+
+```text
+3. contrat redirections avec Dounia
+4. stockage/ouverture redirections
+```
+
+Gros morceau partagé restant :
+
+```text
+5. heredoc complet
 ```
 
 À ne pas faire demain sauf si tout le reste est vraiment propre :
@@ -593,6 +686,51 @@ norminette complète de tout
 gestion complète heredoc
 exec finale
 signaux
+centralisation finale de tous les messages d'erreur
+```
+
+## Erreurs : qui gère quoi
+
+Répartition pour ne pas se marcher dessus avec Dounia :
+
+```text
+Ma partie :
+- quote non fermée
+- erreurs de syntaxe avant parser
+- parser impossible / malloc fail
+
+Dounia :
+- command not found
+- permission denied
+- erreurs builtins
+- erreurs open/dup/fork/execve/waitpid
+- signaux
+```
+
+Codes importants à garder en tête :
+
+```text
+syntax error        -> 2
+command not found   -> 127
+permission denied   -> 126
+redirection open KO -> 1
+Ctrl-C              -> 130
+Ctrl-\              -> 131
+```
+
+Point à discuter avec Dounia :
+
+```text
+Est-ce que les fonctions de validation print/set status directement,
+ou est-ce que la boucle principale centralise ça ?
+```
+
+Décision provisoire :
+
+```text
+Mes fonctions retournent 0/1.
+Le branchement final des messages exacts et de *get_status() se fera quand la
+boucle principale sera décidée.
 ```
 
 ## Commandes utiles
@@ -615,7 +753,10 @@ srcs/expansion/expand_tokens.c \
 srcs/expansion/expansion_vars.c \
 srcs/expansion/expansion_utils.c \
 srcs/parser/parser.c \
+srcs/parser/syntax.c \
+srcs/parser/parser_utils.c \
 srcs/builtins/cd.c \
+srcs/exec/exec_external.c \
 libft/libft.a \
 -lreadline -ltermcap \
 -o /tmp/test_loop
@@ -697,5 +838,5 @@ après parser
 ```
 
 Le but de demain n'est pas d'avoir le minishell final. Le but est d'avoir une
-pipeline côté Chloé claire, testable, et assez solide pour être branchée avec
+pipeline de mon côté claire, testable, et assez solide pour être branchée avec
 Dounia dès que l'exec est prêt.

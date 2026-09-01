@@ -1,4 +1,4 @@
-# Tokenizer terminé — 19 août 2026
+# Tokenizer terminé — 1 septembre 2026
 
 ## Statut
 
@@ -21,7 +21,7 @@ Le tokenizer conserve volontairement les quotes dans `token->value`.
 
 ```text
 La PR clean contenant le lexer/tokenizer a été mergée dans dev.
-La branche chloe garde les docs et tests temporaires.
+La branche chloe garde mes docs et tests temporaires.
 tests/test_loop.c utilise maintenant tokenizer dans une mini boucle readline.
 ```
 
@@ -167,5 +167,6 @@ Travail actif actuel :
 
 ```text
 tests/test_loop.c
-readline -> tokenizer -> expand_tokens -> prochainement remove_quotes_from_tokens
+readline -> tokenizer -> expand_tokens -> remove_quotes_from_tokens
+-> validate_syntax -> parse_tokens
 ```

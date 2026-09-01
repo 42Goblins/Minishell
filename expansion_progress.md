@@ -1,4 +1,4 @@
-# Avancement de l'expansion — 19 août 2026
+# Avancement de l'expansion — 1 septembre 2026
 
 ## Objectif
 
@@ -88,12 +88,12 @@ Contient les helpers techniques :
 - `append_expansion_part`
 
 `get_status()` est actuellement défini côté Dounia dans `srcs/main.c`.
-Les tests locaux avec leur propre `main` peuvent définir un stub `get_status`
-dans le fichier de test.
+Les tests locaux avec leur propre `main` peuvent définir une petite version
+locale de `get_status` dans le fichier de test.
 
 ## Décision importante
 
-La logique suit l'esprit de Nico sans être un copier-coller :
+Logique actuelle :
 
 ```text
 result = ft_strdup(word)
@@ -137,10 +137,10 @@ Exemple :
 result = "hello $USER!"
 
 before = "hello "
-value  = "chloe"
+value  = "gpalemo"
 after  = "!"
 
-new_result = "hello chloe!"
+new_result = "hello gpalemo!"
 ```
 
 `new_i` indique où `expand_word` doit reprendre après remplacement.
@@ -217,7 +217,8 @@ Valeur initiale : `0`.
 
 ```text
 srcs/main.c contient get_status()
-tests/test_loop.c contient un stub local pour éviter un double main
+tests/test_loop.c contient une version locale de get_status pour éviter un
+double main
 ```
 
 ## Cas testés actuellement
@@ -225,24 +226,24 @@ tests/test_loop.c contient un stub local pour éviter un double main
 Les tests dans `tests/test_expansion.c` couvrent :
 
 ```text
-$USER              -> chloe
+$USER              -> gpalemo
 '$USER'            -> '$USER'
-"$USER"            -> "chloe"
-abc$USER           -> abcchloe
-"it's $USER"       -> "it's chloe"
+"$USER"            -> "gpalemo"
+abc$USER           -> abcgpalemo
+"it's $USER"       -> "it's gpalemo"
 '"$USER"'          -> '"$USER"'
 $?                 -> 127
 status:$?          -> status:127
 "$?"               -> "127"
 '$?'               -> '$?'
-$?$USER            -> 127chloe
+$?$USER            -> 127gpalemo
 $MISSING           -> ""
 a$MISSINGb         -> a
-$USER$HOME         -> chloe/home/chloe
+$USER$HOME         -> gpalemo/home/gpalemo
 $?abc              -> 127abc
-$USER?             -> chloe?
-"$USER$?"          -> "chloe127"
-'$USER'$HOME       -> '$USER'/home/chloe
+$USER?             -> gpalemo?
+"$USER$?"          -> "gpalemo127"
+'$USER'$HOME       -> '$USER'/home/gpalemo
 $2USER             -> USER
 $12USER            -> 2USER
 $9abc              -> abc
@@ -259,12 +260,12 @@ tokenizer -> expand_tokens -> remove_quotes_from_tokens
 Cas validés :
 
 ```text
-echo "$USER" '$USER' $? -> echo, "chloe", '$USER', 127
+echo "$USER" '$USER' $? -> echo, "gpalemo", '$USER', 127
 cat << "$USER"          -> cat, <<, "$USER"
 
 après remove quotes :
-echo "$USER" '$USER' $? -> echo, chloe, $USER, 127
-echo '$USER'$HOME       -> echo, $USER/home/chloe
+echo "$USER" '$USER' $? -> echo, gpalemo, $USER, 127
+echo '$USER'$HOME       -> echo, $USER/home/gpalemo
 cat << "$USER"          -> cat, <<, $USER
 ```
 
@@ -273,8 +274,8 @@ cat << "$USER"          -> cat, <<, $USER
 Ancienne suite expansion : à remettre à jour depuis le merge, car
 `get_status()` n'est plus dans `srcs/utils/get_status.c` mais dans `srcs/main.c`.
 Comme `tests/test_expansion.c` a son propre `main`, il faudra soit ajouter un
-stub local `get_status()` au test, soit déplacer `get_status()` dans un vrai
-fichier utils commun.
+version locale de `get_status()` au test, soit déplacer `get_status()` dans un
+vrai fichier utils commun.
 
 Commande locale fiable actuellement :
 
@@ -293,7 +294,11 @@ srcs/lexer/lexer_nodes.c \
 srcs/lexer/lexer_redir.c \
 srcs/lexer/lexer_quotes.c \
 srcs/lexer/lexer_utils.c \
+srcs/parser/parser.c \
+srcs/parser/syntax.c \
+srcs/parser/parser_utils.c \
 srcs/builtins/cd.c \
+srcs/exec/exec_external.c \
 libft/libft.a \
 -lreadline -ltermcap \
 -o /tmp/test_loop
@@ -337,25 +342,28 @@ readline
 add_history
 tokenizer
 expand_tokens
-print tokens
-```
-
-Prochaine étape :
-
-```text
-ajouter remove_quotes_from_tokens après expand_tokens
-```
-
-Puis :
-
-```text
+remove_quotes_from_tokens
+validate_syntax
 parse_tokens
-print cmd_and_args
+print tokens + cmd_and_args
+```
+
+État actuel :
+
+```text
+la pipeline locale est branchée jusqu'au parser
+```
+
+Prochaine étape côté parser :
+
+```text
+parser les pipes vers plusieurs t_cmd
 ```
 
 ### 3. Parser vers `t_cmd` / `cmd_and_args`
 
-V1 déjà en place pour une commande simple.
+En place pour une commande simple, avec skip des redirections dans
+`cmd_and_args`.
 
 Objectif :
 
@@ -364,6 +372,15 @@ tokens après expansion + remove quotes
 -> t_cmd
 -> cmd_and_args
 -> redirections attachées à la bonne commande
+```
+
+Déjà validé :
+
+```text
+echo hi > out      -> ["echo", "hi", NULL]
+cat < infile       -> ["cat", NULL]
+echo hi >> log     -> ["echo", "hi", NULL]
+cat << EOF         -> ["cat", NULL]
 ```
 
 À clarifier avec Dounia :

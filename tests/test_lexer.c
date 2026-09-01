@@ -12,10 +12,19 @@
 
 #include "minishell.h"
 
-// !!!!!!!!!!!!!!!!! FICHIER TEMPO DE TEST POUR EVITER DE TOUCHER MAIN !!!!!!!!!!!!!
+/*
+ * Ce fichier teste le lexer/tokenizer seul.
+ *
+ * Il sert a verifier que la ligne est decoupee en bons tokens, que les quotes
+ * restent dans token->value au bon moment, que had_quotes est pose, et que les
+ * erreurs de quotes non fermees sont bien detectees.
+ *
+ * Le retrait des quotes est aussi teste ici, mais dans la vraie pipeline il
+ * doit rester appele apres l'expansion, pas directement dans tokenizer.
+ */
 
 /**
- * @brief Prints the token list for debugging.
+ * @brief Affiche la liste de tokens pour verifier le tokenizer.
  */
 static void	print_tokens(t_token *head)
 {
@@ -35,6 +44,9 @@ static void	print_tokens(t_token *head)
 	}
 }
 
+/**
+ * @brief Teste une ligne valide et affiche les tokens obtenus.
+ */
 static int	test_input(char *input)
 {
 	t_shell	shell;
@@ -48,6 +60,9 @@ static int	test_input(char *input)
 	return (0);
 }
 
+/**
+ * @brief Verifie qu'une ligne invalide fait bien echouer le tokenizer.
+ */
 static int	test_invalid_input(char *input)
 {
 	t_shell	shell;
@@ -67,6 +82,9 @@ static int	test_invalid_input(char *input)
 	}
 }
 
+/**
+ * @brief Teste le retrait des quotes sur une seule string.
+ */
 static int	test_remove_quotes(char *input)
 {
 	char	*stripped;
@@ -80,6 +98,9 @@ static int	test_remove_quotes(char *input)
 	return (0);
 }
 
+/**
+ * @brief Teste le retrait des quotes sur une liste de tokens.
+ */
 static int	test_remove_quotes_from_tokens(char *input)
 {
 	t_shell	shell;
@@ -101,7 +122,7 @@ static int	test_remove_quotes_from_tokens(char *input)
 }
 
 /**
- * @brief Temporarily tests the first tokenizer version in isolation (to not modify main.c)
+ * @brief Lance les tests temporaires du tokenizer sans toucher au vrai main.
  */
 int	main(int ac, char **av, char **env)
 {

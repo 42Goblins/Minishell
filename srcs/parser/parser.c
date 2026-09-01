@@ -6,12 +6,15 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/18 02:50:05 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/01 03:25:57 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Converts a prepared token list into a command list.
+ */
 t_cmd	*parse_tokens(t_token *tokens)
 {
 	if (!tokens)
@@ -19,6 +22,12 @@ t_cmd	*parse_tokens(t_token *tokens)
 	return (create_cmd_node(tokens));
 }
 
+/**
+ * @brief Counts command arguments before the next pipe.
+ *
+ * Redirection operators and their target word are skipped because they must not
+ * appear in cmd_and_args.
+ */
 int	count_cmd_args(t_token *tokens)
 {
 	t_token	*current;
@@ -30,13 +39,24 @@ int	count_cmd_args(t_token *tokens)
 	{
 		if (current->type == T_PIPE)
 			return (count);
-		if (current->type == T_WORD)
+		if (is_redirection_token(current->type))
+		{
+			if (current->next)
+				current = current->next;
+		}
+		else if (current->type == T_WORD)
 			count++;
 		current = current->next;
 	}
 	return (count);
 }
 
+/**
+ * @brief Duplicates command arguments before the next pipe.
+ *
+ * Redirection operators and their target word are skipped. The returned array
+ * is NULL-terminated and must be freed by the caller.
+ */
 char	**create_cmd_args(t_token *tokens)
 {
 	t_token	*current;
@@ -50,7 +70,12 @@ char	**create_cmd_args(t_token *tokens)
 	i = 0;
 	while (current && current->type != T_PIPE)
 	{
-		if (current->type == T_WORD)
+		if (is_redirection_token(current->type))
+		{
+			if (current->next)
+				current = current->next;
+		}
+		else if (current->type == T_WORD)
 		{
 			cmd_and_args[i] = ft_strdup(current->value);
 			if (cmd_and_args[i] == NULL)
@@ -66,6 +91,9 @@ char	**create_cmd_args(t_token *tokens)
 	return (cmd_and_args);
 }
 
+/**
+ * @brief Allocates and initializes one command node from prepared tokens.
+ */
 t_cmd	*create_cmd_node(t_token *tokens)
 {
 	t_cmd	*cmd;
