@@ -23,6 +23,7 @@ Il reçoit des tokens déjà propres.
 
 ```text
 srcs/parser/parser.c
+srcs/parser/parser_redir.c
 srcs/parser/syntax.c
 srcs/parser/parser_utils.c
 srcs/utils/free_cmds.c
@@ -44,7 +45,7 @@ Déjà en place :
 ```text
 parse_tokens
 create_cmd_node
-create_cmd_args
+create_cmd_and_args
 count_cmd_args
 validate_syntax
 is_redirection_token
@@ -155,6 +156,7 @@ cc -Wall -Wextra -Werror \
 -Iinclude -Ilibft/inc \
 tests/test_parser.c \
 srcs/parser/parser.c \
+srcs/parser/parser_redir.c \
 srcs/parser/parser_utils.c \
 srcs/parser/syntax.c \
 srcs/expansion/expansion.c \

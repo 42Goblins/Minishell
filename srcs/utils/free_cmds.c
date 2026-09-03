@@ -13,7 +13,10 @@
 #include "minishell.h"
 
 /**
- * @brief Frees a full command list and its allocated fields.
+ * @brief Frees a full command list and closes remaining redirection fds.
+ *
+ * The exec part may close duplicated fds in child processes, but the parent
+ * still owns the fds stored in t_cmd until this cleanup runs.
  */
 void	free_cmds(t_cmd *cmds)
 {
@@ -22,9 +25,12 @@ void	free_cmds(t_cmd *cmds)
 	while (cmds)
 	{
 		tmp = cmds->next;
+		if (cmds->fd_in != 0)
+			close(cmds->fd_in);
+		if (cmds->fd_out != 1)
+			close(cmds->fd_out);
 		free_tab(cmds->cmd_and_args);
 		free(cmds->path);
-		/* TODO: close fd_in/fd_out ici quand les redir seront implementees. */
 		free(cmds);
 		cmds = tmp;
 	}

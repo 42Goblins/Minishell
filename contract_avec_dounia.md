@@ -106,7 +106,7 @@ Test local en cours :
 tests/test_loop.c
 readline -> add_history -> tokenizer -> expand_tokens
 -> remove_quotes_from_tokens -> validate_syntax -> parse_tokens
--> print tokens + cmd_and_args
+-> print tokens + toutes les cmd_and_args
 ```
 
 Déjà validé de mon côté :
@@ -114,6 +114,7 @@ Déjà validé de mon côté :
 ```text
 syntax errors simples refusées avant parser
 redirections retirées de cmd_and_args
+pipes transformés en plusieurs t_cmd chaînés
 ```
 
 `launch_exec` n'est pas encore branché dans ce test.
@@ -131,10 +132,11 @@ Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
 Déjà fait :
 
 ```text
-parse_tokens crée une t_cmd pour une commande simple.
+parse_tokens crée une liste de t_cmd.
 cmd_and_args est dupliqué avec ft_strdup.
 Les redirections et leur filename/delimiter ne vont plus dans cmd_and_args.
 validate_syntax refuse les pipes/redirections mal placés.
+Les pipes séparent les commandes avec cmd->next.
 ```
 
 Exemples :
@@ -145,15 +147,125 @@ echo hi > out     -> ["echo", "hi", NULL]
 cat < infile      -> ["cat", NULL]
 echo hi >> log    -> ["echo", "hi", NULL]
 cat << EOF        -> ["cat", NULL]
+echo hi | wc -c   -> cmd1 ["echo", "hi"], cmd2 ["wc", "-c"]
 ```
 
 Pas encore fait :
 
 ```text
-plusieurs t_cmd pour les pipes
-stockage/ouverture réelle des redirections dans t_cmd
+ouverture réelle des redirections dans t_cmd
 détection builtin côté parser
 messages bash-like exacts + status 2 dans la vraie boucle
+```
+
+## Redirections : décision avec Dounia
+
+Décision prise : ma partie ouvre les redirections classiques et prépare les fd
+dans `t_cmd`.
+
+État actuel de ma partie :
+
+```text
+Le lexer crée déjà les tokens T_REDIR_IN, T_REDIR_OUT, T_APPEND, T_HEREDOC.
+La syntax validation refuse une redirection sans word après.
+L'expansion et le retrait des quotes passent déjà sur les filenames.
+Le delimiter heredoc n'est pas expandé, mais ses quotes sont retirées.
+cmd_and_args ne contient plus les redirections ni leurs targets.
+```
+
+Exemples déjà propres côté `cmd_and_args` :
+
+```text
+echo hi > out                   -> ["echo", "hi", NULL]
+cat < infile                    -> ["cat", NULL]
+echo hi >> log                  -> ["echo", "hi", NULL]
+cat << EOF                      -> ["cat", NULL]
+cat < infile | grep hi > out    -> cmd1 ["cat"], cmd2 ["grep", "hi"]
+```
+
+Contrat retenu pour `<`, `>` et `>>` :
+
+```text
+parser lit les tokens de redirection
+parser prend le token suivant comme filename
+parser appelle open()
+parser remplit cmd->fd_in ou cmd->fd_out
+exec utilise les fd déjà préparés dans t_cmd
+```
+
+Comportement attendu :
+
+```text
+<  ouvre en lecture et remplit fd_in
+>  ouvre en écriture, crée/tronque le fichier, et remplit fd_out
+>> ouvre en écriture, crée/append le fichier, et remplit fd_out
+```
+
+Si plusieurs redirections du même côté existent :
+
+```text
+la dernière gagne
+l'ancien fd ouvert doit être fermé avant d'être remplacé
+```
+
+Exemples :
+
+```text
+echo hi > out        -> cmd->fd_out = fd vers out
+cat < infile         -> cmd->fd_in = fd depuis infile
+echo hi > a > b      -> fd_out final vers b
+cat < a < b          -> fd_in final depuis b
+```
+
+À gérer de mon côté :
+
+```text
+ouvrir les fichiers dans le parser
+gérer les erreurs d'open
+mettre *get_status() = 1 si open fail
+ne pas lancer l'exec de la commande concernée si redirection KO
+fermer dans open_redirections les anciens fd remplacés par une nouvelle redir
+fermer dans free_cmds les fd encore stockés dans t_cmd au cleanup
+tester les redirections seules et avec pipes
+```
+
+À valider avec Dounia pendant l'intégration :
+
+```text
+exec doit utiliser cmd->fd_in et cmd->fd_out s'ils ne valent pas 0/1
+exec ne doit pas rouvrir les fichiers depuis les tokens
+la boucle ne doit pas appeler exec si le parser signale une erreur de redirection
+```
+
+Contrat précis pour les `close` :
+
+```text
+open_redirections ferme seulement les fd remplacés dans la même commande.
+free_cmds ferme les fd encore stockés dans t_cmd quand la commande est nettoyée.
+Dans un pipeline, close dans le child après dup2 ne ferme pas le fd du parent.
+Le parent doit donc encore passer par free_cmds / cleanup après l'exec.
+Si un builtin ferme fd_in/fd_out dans le process parent, il doit remettre :
+fd_in = 0
+fd_out = 1
+sinon free_cmds risque de fermer une deuxième fois un fd déjà fermé.
+```
+
+Heredoc :
+
+```text
+<< reste un cas à part
+le delimiter n'est pas expandé
+les quotes du delimiter sont retirées
+had_quotes reste disponible pour savoir si le contenu doit être expandé
+```
+
+Questions qui restent ouvertes pour heredoc :
+
+```text
+qui lit le contenu du heredoc
+qui crée le fd heredoc
+qui gère Ctrl-C dans heredoc
+comment transmettre had_quotes à la fonction heredoc finale
 ```
 
 ## Gestion des erreurs
@@ -182,6 +294,7 @@ parser
 quote non fermée
 pipe mal placé
 redirection sans filename
+redirection open fail -> 1
 token inattendu avant parser
 erreur malloc dans parser
 ```
@@ -204,7 +317,6 @@ Côté Dounia :
 ```text
 exec
 builtins
-open des fichiers si l'exec garde cette responsabilité
 waitpid
 signaux
 ```
@@ -214,7 +326,6 @@ signaux
 ```text
 command not found -> 127
 permission denied -> 126
-redirection open fail -> 1
 builtin fail -> souvent 1
 Ctrl-C -> 130
 Ctrl-\ -> 131

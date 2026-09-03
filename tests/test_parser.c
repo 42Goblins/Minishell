@@ -77,6 +77,20 @@ static void	print_args(char **args)
 }
 
 /**
+ * @brief Cree un petit fichier temporaire pour tester les redirections input.
+ */
+static void	create_test_file(char *path)
+{
+	int	fd;
+
+	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd == -1)
+		return ;
+	write(fd, "hello\n", 6);
+	close(fd);
+}
+
+/**
  * @brief Lance le pipeline parser et compare cmd_and_args au resultat attendu.
  */
 static void	test_cmd_args_case(char *label, char *input, char **expected)
@@ -209,12 +223,97 @@ static void	test_pipe_cases(void)
 	char	**triple[] = {triple_first, triple_second, triple_third, NULL};
 	char	**redir[] = {redir_first, redir_second, NULL};
 
+	create_test_file("/tmp/minishell_parser_infile");
 	test_pipe_case("pipe -> two linked commands",
 		"echo hello | wc -c", pipe);
 	test_pipe_case("pipes -> three linked commands",
 		"echo hello | grep h | wc -l", triple);
 	test_pipe_case("pipe + redirections skipped from args",
-		"cat < infile | grep hello > outfile", redir);
+		"cat < /tmp/minishell_parser_infile | grep hello > /tmp/minishell_parser_out",
+		redir);
+}
+
+/**
+ * @brief Lance le pipeline parser et retourne la liste de commandes creee.
+ */
+static t_cmd	*parse_test_line(char *input, t_shell *shell, t_env *user,
+	t_env *home)
+{
+	init_test_env(user, home);
+	shell->token = NULL;
+	shell->env = user;
+	shell->cmds = NULL;
+	if (tokenizer(input, shell))
+		return (NULL);
+	if (expand_tokens(shell->token, shell->env))
+		return (free_tokens(shell->token), shell->token = NULL, NULL);
+	if (remove_quotes_from_tokens(shell->token))
+		return (free_tokens(shell->token), shell->token = NULL, NULL);
+	if (validate_syntax(shell->token))
+		return (free_tokens(shell->token), shell->token = NULL, NULL);
+	return (parse_tokens(shell->token));
+}
+
+/**
+ * @brief Verifie que les redirections ouvrent bien fd_in ou fd_out.
+ */
+static void	test_redir_fd_case(char *label, char *input, bool has_in,
+	bool has_out)
+{
+	t_shell	shell;
+	t_env	user;
+	t_env	home;
+	t_cmd	*cmds;
+
+	cmds = parse_test_line(input, &shell, &user, &home);
+	if (cmds && (cmds->fd_in != 0) == has_in
+		&& (cmds->fd_out != 1) == has_out)
+		printf("[PASS] %s\n", label);
+	else
+		printf("[FAIL] %s\n", label);
+	printf("  input  : %s\n", input);
+	if (cmds)
+		printf("  fd_in  : %d\n  fd_out : %d\n", cmds->fd_in, cmds->fd_out);
+	free_cmds(cmds);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Verifie qu'une redirection input invalide fait echouer le parser.
+ */
+static void	test_redir_error_case(void)
+{
+	t_shell	shell;
+	t_env	user;
+	t_env	home;
+	t_cmd	*cmds;
+
+	cmds = parse_test_line("cat < /tmp/minishell_missing_input", &shell,
+			&user, &home);
+	if (!cmds)
+		printf("[PASS] missing input redir -> parser error\n");
+	else
+		printf("[FAIL] missing input redir -> parser error\n");
+	free_cmds(cmds);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Teste les fd ouverts par les redirections du parser.
+ */
+static void	test_redir_fds(void)
+{
+	create_test_file("/tmp/minishell_parser_infile");
+	test_redir_fd_case("input redir opens fd_in",
+		"cat < /tmp/minishell_parser_infile", true, false);
+	test_redir_fd_case("output redir opens fd_out",
+		"echo hi > /tmp/minishell_parser_out", false, true);
+	test_redir_fd_case("append redir opens fd_out",
+		"echo hi >> /tmp/minishell_parser_log", false, true);
+	test_redir_fd_case("last output redir wins",
+		"echo hi > /tmp/minishell_parser_a > /tmp/minishell_parser_b",
+		false, true);
+	test_redir_error_case();
 }
 
 /**
@@ -234,6 +333,7 @@ static void	test_cmd_args(void)
 
 	*get_status() = 127;
 	printf("\n=== PARSER CMD_AND_ARGS ===\n");
+	create_test_file("/tmp/minishell_parser_infile");
 	test_cmd_args_case("plain words -> echo hello",
 		"echo hello", plain);
 	test_cmd_args_case("quotes + expansion -> echo chloe $USER",
@@ -245,14 +345,15 @@ static void	test_cmd_args(void)
 	test_cmd_args_case("digit expansion -> $2USER / $12USER",
 		"echo $2USER $12USER", digit);
 	test_cmd_args_case("redir out skipped from args",
-		"echo hi > out", redir_out);
+		"echo hi > /tmp/minishell_parser_out", redir_out);
 	test_cmd_args_case("redir in skipped from args",
-		"cat < infile", redir_in);
+		"cat < /tmp/minishell_parser_infile", redir_in);
 	test_cmd_args_case("append skipped from args",
-		"echo hi >> log", append);
+		"echo hi >> /tmp/minishell_parser_log", append);
 	test_cmd_args_case("heredoc delimiter skipped from args",
 		"cat << EOF", heredoc);
 	test_pipe_cases();
+	test_redir_fds();
 }
 
 /**

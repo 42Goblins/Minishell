@@ -136,6 +136,7 @@ Fichiers :
 
 ```text
 srcs/parser/parser.c
+srcs/parser/parser_redir.c
 srcs/parser/syntax.c
 srcs/parser/parser_utils.c
 ```
@@ -148,7 +149,7 @@ Fonctions actuelles :
 ```text
 parse_tokens
 create_cmd_node
-create_cmd_args
+create_cmd_and_args
 count_cmd_args
 validate_syntax
 is_redirection_token
@@ -228,6 +229,7 @@ srcs/expansion/expand_tokens.c \
 srcs/expansion/expansion_vars.c \
 srcs/expansion/expansion_utils.c \
 srcs/parser/parser.c \
+srcs/parser/parser_redir.c \
 srcs/parser/syntax.c \
 srcs/parser/parser_utils.c \
 srcs/builtins/cd.c \

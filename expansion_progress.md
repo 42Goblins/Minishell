@@ -295,6 +295,7 @@ srcs/lexer/lexer_redir.c \
 srcs/lexer/lexer_quotes.c \
 srcs/lexer/lexer_utils.c \
 srcs/parser/parser.c \
+srcs/parser/parser_redir.c \
 srcs/parser/syntax.c \
 srcs/parser/parser_utils.c \
 srcs/builtins/cd.c \

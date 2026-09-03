@@ -71,6 +71,7 @@ Fichiers importants :
 srcs/lexer/...
 srcs/expansion/...
 srcs/parser/parser.c
+srcs/parser/parser_redir.c
 tests/test_loop.c
 tests/test_parser.c
 HANDOFF.md
@@ -568,7 +569,7 @@ Petite étape autonome safe :
 
 ```text
 Modifier count_cmd_args pour ne pas compter le WORD qui suit une redirection.
-Modifier create_cmd_args pour ne pas copier le WORD qui suit une redirection.
+Modifier create_cmd_and_args pour ne pas copier le WORD qui suit une redirection.
 ```
 
 Exemple :
@@ -753,6 +754,7 @@ srcs/expansion/expand_tokens.c \
 srcs/expansion/expansion_vars.c \
 srcs/expansion/expansion_utils.c \
 srcs/parser/parser.c \
+srcs/parser/parser_redir.c \
 srcs/parser/syntax.c \
 srcs/parser/parser_utils.c \
 srcs/builtins/cd.c \
@@ -781,7 +783,7 @@ git diff --stat
 Chercher un symbole :
 
 ```sh
-rg -n "parse_tokens|create_cmd_args|remove_quotes_from_tokens|validate_syntax"
+rg -n "parse_tokens|create_cmd_and_args|remove_quotes_from_tokens|validate_syntax"
 ```
 
 ## Checklist de fin de journée

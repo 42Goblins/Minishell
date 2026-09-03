@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/01 16:34:33 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/03 01:58:32 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,12 +76,12 @@ int	count_cmd_args(t_token *tokens)
 }
 
 /**
- * @brief Duplicates command arguments before the next pipe.
+ * @brief Creates the cmd_and_args array before the next pipe.
  *
  * Redirection operators and their target word are skipped. The returned array
  * is NULL-terminated and must be freed by the caller.
  */
-char	**create_cmd_args(t_token *tokens)
+char	**create_cmd_and_args(t_token *tokens)
 {
 	t_token	*current;
 	int		i;
@@ -132,8 +132,10 @@ t_cmd	*create_cmd_node(t_token *tokens)
 	cmd->is_builtin = false;
 	cmd->access_check = false;
 	cmd->next = NULL;
-	cmd->cmd_and_args = create_cmd_args(tokens);
+	cmd->cmd_and_args = create_cmd_and_args(tokens);
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
+	if (open_redirections(cmd, tokens))
+		return (free_cmds(cmd), NULL);
 	return (cmd);
 }
