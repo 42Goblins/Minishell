@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/28 03:17:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/04 03:39:24 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,7 +118,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 
 	env_tab = NULL;
 	path = find_path(cmd->cmd_and_args[0], env);
-	if (!path)
+	if (!path) // NOPE problème si psq doit continuer la pipeline enft :(((
 	{
 		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
@@ -154,12 +154,10 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 	if (pid == 0)
 		exec_external(cmd, env);
 	waitpid(pid, &status, 0);
-	printf("%d\n", status);
 	if (WIFEXITED(status))
 		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		*get_status() = 128 + WTERMSIG(status);
-	printf("%d\n", *get_status());
 	// exit(126) ??
 	// check mieux les exit pour external, si pas trouvé 127, si pas exécutable 
 	// 126, sinon le status du fils ??
