@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/19 01:34:01 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/03 16:45:57 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,4 +102,5 @@ void	setup_env(t_shell *shell, char **env)
 		last = node;
 		i++;
 	}
+	//update_shlvl(shell->env); !!todo
 }

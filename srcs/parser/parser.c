@@ -3,22 +3,55 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/17 22:01:23 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/04 03:28:11 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Converts a prepared token list into a command list.
+ */
 t_cmd	*parse_tokens(t_token *tokens)
 {
+	t_token	*current;
+	t_cmd	*cmds;
+	t_cmd	*new_cmd;
+	t_cmd	*last_cmd;
+
 	if (!tokens)
 		return (NULL);
-	return (create_cmd_node(tokens));
+	current = tokens;
+	cmds = NULL;
+	new_cmd = NULL;
+	last_cmd = NULL;
+	while (current)
+	{
+		new_cmd = create_cmd_node(current);
+		if (!new_cmd)
+			return (free_cmds(cmds), NULL);
+		if (cmds == NULL)
+			cmds = new_cmd;
+		else
+			last_cmd->next = new_cmd;
+		last_cmd = new_cmd;
+		while (current && current->type != T_PIPE)
+			current = current->next;
+		if (current)
+			current = current->next;
+	}
+	return (cmds);
 }
 
+/**
+ * @brief Counts command arguments before the next pipe.
+ *
+ * Redirection operators and their target word are skipped because they must not
+ * appear in cmd_and_args.
+ */
 int	count_cmd_args(t_token *tokens)
 {
 	t_token	*current;
@@ -30,14 +63,25 @@ int	count_cmd_args(t_token *tokens)
 	{
 		if (current->type == T_PIPE)
 			return (count);
-		if (current->type == T_WORD)
+		if (is_redirection_token(current->type))
+		{
+			if (current->next)
+				current = current->next;
+		}
+		else if (current->type == T_WORD)
 			count++;
 		current = current->next;
 	}
 	return (count);
 }
 
-char	**create_cmd_args(t_token *tokens)
+/**
+ * @brief Creates the cmd_and_args array before the next pipe.
+ *
+ * Redirection operators and their target word are skipped. The returned array
+ * is NULL-terminated and must be freed by the caller.
+ */
+char	**create_cmd_and_args(t_token *tokens)
 {
 	t_token	*current;
 	int		i;
@@ -50,14 +94,18 @@ char	**create_cmd_args(t_token *tokens)
 	i = 0;
 	while (current && current->type != T_PIPE)
 	{
-		if (current->type == T_WORD)
+		if (is_redirection_token(current->type))
+		{
+			if (current->next)
+				current = current->next;
+		}
+		else if (current->type == T_WORD)
 		{
 			cmd_and_args[i] = ft_strdup(current->value);
 			if (cmd_and_args[i] == NULL)
 			{
 				cmd_and_args[i] = NULL;
-				free_tab(cmd_and_args);
-				return (NULL);
+				return (free_tab(cmd_and_args), NULL);
 			}
 			i++;
 		}
@@ -67,6 +115,9 @@ char	**create_cmd_args(t_token *tokens)
 	return (cmd_and_args);
 }
 
+/**
+ * @brief Allocates and initializes one command node from prepared tokens.
+ */
 t_cmd	*create_cmd_node(t_token *tokens)
 {
 	t_cmd	*cmd;
@@ -78,11 +129,13 @@ t_cmd	*create_cmd_node(t_token *tokens)
 	cmd->path = NULL;
 	cmd->fd_in = 0;
 	cmd->fd_out = 1;
-	cmd->is_builtin = false;
 	cmd->access_check = false;
 	cmd->next = NULL;
-	cmd->cmd_and_args = create_cmd_args(tokens);
+	cmd->cmd_and_args = create_cmd_and_args(tokens);
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
+	cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
+	if (open_redirections(cmd, tokens))
+		return (free_cmds(cmd), NULL);
 	return (cmd);
 }

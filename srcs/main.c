@@ -6,23 +6,11 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/01 06:38:56 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/04 01:45:29 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-/* int	main(int ac, char **av, char **env)
-{
-	if (ac != 1 || av[0] == NULL)
-		return (1);
-	if(env)
-		setup_env(env);
-	else
-		create_env(env);
-	
-	return (0);
-} */
 
 int	*get_status(void)
 {
@@ -31,93 +19,86 @@ int	*get_status(void)
 	return (&status);
 }
 
-void set_shell(t_shell *shell, t_cmd *cmd, char **env)
+void	free_lst_env(t_env *env)
 {
-	//shell->sig = (t_sig){0};       		 // init des signaux à zéro/valeurs par défaut
-	setup_env(shell, env);     // conversion char** -> t_env* (ta fonction de parsing d'env)
-	shell->token = NULL;            // pas de tokens résiduels après exécution de cd
-	//shell->env_for_exec = env;      // tableau d'env brut pour un futur execve (pas utilisé par cd, builtin)
-	shell->cmds = cmd;           // pas de parser actif une fois la commande traitée
-	shell->path = NULL;             // cd ne cherche pas de path binaire, c'est un builtin
-}
-/* void set_cmd(t_cmd *cmd)
-{
-	static char *cd_args[] = {"/bin/ls", NULL};
-	cmd->cmd_and_args = cd_args;   	// ou {"cd", NULL} si c'est un char **
-	cmd->path = NULL;               // cd est un builtin, pas de path binaire à chercher
-	cmd->fd_in = 0;                 // STDIN_FILENO (pas de redirection)
-	cmd->fd_out = 1;                // STDOUT_FILENO (pas de redirection)
-	cmd->is_builtin = 0;            // true, cd est bien un builtin
-	cmd->access_check = 1;          // true, on considère l'accès valide (rien à checker sur un builtin)
-	cmd->next = NULL;               // pas de pipe, donc pas de commande suivante
+	t_env	*next;
+
+	while (env)
+	{
+		next = env->next;
+		free_t_env(env);
+		env = next;
+	}
 }
 
-
-
-
-int	main(int ac, char **av, char **env)
+void	free_lst_cmds(t_cmd *cmds)
 {
-	(void)ac;
-	(void)av;
-	t_cmd cmd;
-	t_shell shell;
+	t_cmd	*next;
 
-	set_cmd(&cmd);
-	set_shell(&shell, &cmd, env);
+	while (cmds)
+	{
+		next = cmds->next;
+		free_tab(cmds->cmd_and_args);
+		free(cmds->path);
+		free(cmds);
+		cmds = next;
+	}
+}
 
-	// exec_single_external(shell.cmds, env);
-	// exec_pipeline(shell.cmds, env);
-
-	launch_exec(&shell, &cmd);
-	
-	 printf("oldpwd: %s\n", getcwd(NULL, 0));
-	exec_builtins(&shell, shell.cmds);
-	printf("newpwd: %s\n", getcwd(NULL, 0)); 
-		
-	//return (0);
-//} */
-
-
-
-static t_cmd	*make_cmd(char **args, int is_builtin, t_cmd *next)
+void	reset_shell_state(t_shell *shell)
 {
-	t_cmd	*cmd;
+	free_lst_cmds(shell->cmds);
+	free_tokens(shell->token);
+	shell->cmds = NULL;
+	shell->token = NULL;
+}
 
-	cmd = malloc(sizeof(t_cmd));
-	if (!cmd)
-		return (NULL);
-	cmd->cmd_and_args = args;
-	cmd->path = NULL;
-	cmd->fd_in = 0;
-	cmd->fd_out = 1;
-	cmd->is_builtin = is_builtin;
-	cmd->access_check = 1;
-	cmd->next = next;
-	return (cmd);
+void	process_line(t_shell *shell, char *line)
+{
+	tokenizer(line, shell);
+	expand_tokens(shell->token, shell->env);
+	remove_quotes_from_tokens(shell->token);
+	validate_syntax(shell->token);
+	shell->cmds = parse_tokens(shell->token);
+	launch_exec(shell, shell->cmds);
+}
+
+int	launch_loop(t_shell *shell)
+{
+	char	*line;
+
+	line = readline("minishell$ ");
+	if (!line)
+	{
+		ft_putstr_fd("exit\n", STDOUT_FILENO);
+		return (1); // clean_exit(shell, *get_status());
+	}
+	if (line[0] != '\0')
+	{
+		add_history(line);
+		process_line(shell, line);
+		reset_shell_state(shell);
+	}
+	free(line);
+	return (0); //or return get_status ??
 }
 
 int	main(int ac, char **av, char **env)
 {
 	t_shell	shell;
-	t_cmd	*pipeline;
-	static char	*args_ls[] = {"ls", NULL};
-	static char	*args_grep[] = {"grep", ".c", NULL};
-	static char	*args_wc[] = {"wc", "-l", NULL};
 
-	(void)ac;
-	(void)av;
+	if (ac != 1 || av[0] == NULL)
+		return (1);
+	// setup
 	setup_env(&shell, env);
 	shell.token = NULL;
-	shell.path = NULL;
-
-	/* construit la pipeline en partant de la fin : ls | grep .c | wc -l */
-	pipeline = make_cmd(args_wc, 0, NULL);
-	pipeline = make_cmd(args_grep, 0, pipeline);
-	pipeline = make_cmd(args_ls, 0, pipeline);
-
-	shell.cmds = pipeline;
-	launch_exec(&shell, pipeline);
-
-	printf("exit status: %d\n", *get_status());
-	return (0);
+	shell.cmds = NULL;
+	// setup_signals(&shell);
+	while (launch_loop(&shell) == 0)
+		;
+	//clean_exit (free_env, free_cmds, free_tokens, etc)
+	free_lst_env(shell.env);
+	clear_history();
+	return (*get_status());
 }
+
