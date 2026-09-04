@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/01 06:36:54 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/04 03:19:08 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ typedef struct	s_shell
 	t_token		*token;
 	// char		**env_for_exec;
 	t_cmd		*cmds;
-	char		*path;
+	//char		*path;
 }				t_shell;
 
 
@@ -172,9 +172,12 @@ int		expand_tokens(t_token *tokens, t_env *env);
 /* ========================================================================== */
 
 int		count_cmd_args(t_token *tokens);
-char	**create_cmd_args(t_token *tokens);
+char	**create_cmd_and_args(t_token *tokens);
 t_cmd	*create_cmd_node(t_token *tokens);
 t_cmd	*parse_tokens(t_token *tokens);
+int		validate_syntax(t_token *tokens);
+int		is_redirection_token(t_token_type type);
+int		open_redirections(t_cmd *cmd, t_token *tokens);
 
 /* ========================================================================== */
 /*                                    EXEC                                    */
@@ -192,6 +195,7 @@ void	exec_external(t_cmd *cmd, t_env *env);
 void	exec_single_external(t_cmd *cmd, t_env *env);
 
 /* exec_builtins.c */
+int		check_is_builtins(char *cmd);
 void	exec_builtins(t_shell *shell, t_cmd *cmd);
 
 /* exec_pipeline.c */
@@ -203,5 +207,6 @@ int		exec_pipeline(t_shell *shell, t_cmd *cmds);
 
 int		*get_status(void);
 void	free_tab(char **tab);
+void	free_cmds(t_cmd *cmds);
 
 #endif
