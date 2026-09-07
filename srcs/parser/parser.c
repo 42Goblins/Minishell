@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/03 01:58:32 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/04 03:28:11 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,12 +129,12 @@ t_cmd	*create_cmd_node(t_token *tokens)
 	cmd->path = NULL;
 	cmd->fd_in = 0;
 	cmd->fd_out = 1;
-	cmd->is_builtin = false;
 	cmd->access_check = false;
 	cmd->next = NULL;
 	cmd->cmd_and_args = create_cmd_and_args(tokens);
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
+	cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
 	if (open_redirections(cmd, tokens))
 		return (free_cmds(cmd), NULL);
 	return (cmd);

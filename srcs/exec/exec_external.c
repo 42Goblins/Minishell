@@ -6,32 +6,40 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/10 17:12:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/04 03:39:24 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-char	**t_env_to_tab(t_env *env, char **env_tab)
+int	env_len(t_env *env)
 {
-	int		i;
-	t_env	*tmp;
+	int	i;
 
 	i = 0;
-	tmp = env;
-	while (tmp)
+	while (env)
 	{
 		i++;
-		tmp = tmp->next;
+		env = env->next;
 	}
-	env_tab = malloc(sizeof(char *) * (i + 1));
+	return (i);
+}
+
+char	**t_env_to_tab(t_env *env)
+{
+	int		i;
+	char	*tmp_env_tab;
+	char	**env_tab;
+
+	env_tab = malloc(sizeof(char *) * (env_len(env) + 1));
 	if (!env_tab)
 		return (NULL);
 	i = 0;
 	while (env)
 	{
-		env_tab[i] = ft_strjoin(env->key, "=");
-		env_tab[i] = ft_strjoin(env_tab[i], env->value);
+		tmp_env_tab = ft_strjoin(env->key, "=");
+		env_tab[i] = ft_strjoin(tmp_env_tab, env->value);
+		free(tmp_env_tab);
 		env = env->next;
 		i++;
 	}
@@ -63,7 +71,7 @@ char	*try_path(char *dir, char *cmd)
 	return (NULL);
 }
 
-char	*get_path(t_env  *env)
+char	*get_path(t_env *env)
 {
 	while (env)
 	{
@@ -84,7 +92,7 @@ char	*find_path(char *cmd, t_env *env)
 	if (cmd[0] == '/' || (cmd[0] == '.' && cmd[1] == '/'))
 	{
 		if (access(cmd, X_OK) == 0)
-			return (cmd);
+			return (ft_strdup(cmd));
 		return (NULL);
 	}
 	path = get_path(env);
@@ -103,28 +111,36 @@ char	*find_path(char *cmd, t_env *env)
 	return (free_tab(dirs), NULL);
 }
 
-void exec_external(t_cmd *cmd, t_env *env)
+void	exec_external(t_cmd *cmd, t_env *env)
 {
-	char    *path;
+	char	*path;
 	char	**env_tab;
 
 	env_tab = NULL;
 	path = find_path(cmd->cmd_and_args[0], env);
-	if (!path)
+	if (!path) // NOPE problème si psq doit continuer la pipeline enft :(((
 	{
 		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
 		ft_putstr_fd(": command not found\n", STDERR_FILENO);
 		exit(127);
 	}
-	t_env_to_tab(env, env_tab);
+	env_tab = t_env_to_tab(env);
 	execve(path, cmd->cmd_and_args, env_tab);
 	perror("execve");
 	free(path);
 	free_tab(env_tab);
+	exit(126);
+	// restore_original_signals
+
+	//	if (WIFEXITED(status))
+	//	*get_status() = WEXITSTATUS(status);
+	//else if (WIFSIGNALED(status))
+	//	*get_status() = 128 + WTERMSIG(status);
+
 }
 
-void exec_single_external(t_cmd *cmd, t_env *env)
+void	exec_single_external(t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
 	int		status;
@@ -138,10 +154,11 @@ void exec_single_external(t_cmd *cmd, t_env *env)
 	if (pid == 0)
 		exec_external(cmd, env);
 	waitpid(pid, &status, 0);
-	printf("%d\n", status);
 	if (WIFEXITED(status))
-		 *get_status() = WEXITSTATUS(status);
+		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		*get_status() = 128 + WTERMSIG(status);
-	printf("%d\n", *get_status());
+	// exit(126) ??
+	// check mieux les exit pour external, si pas trouvé 127, si pas exécutable 
+	// 126, sinon le status du fils ??
 }
