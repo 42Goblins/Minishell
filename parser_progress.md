@@ -50,6 +50,10 @@ count_cmd_args
 validate_syntax
 is_redirection_token
 free_cmds
+open_redirections
+open_current_redirection
+open_input_redirection
+open_output_redirection
 ```
 
 Ce qui marche maintenant :
@@ -58,9 +62,11 @@ Ce qui marche maintenant :
 parse_tokens crée une liste de t_cmd pour les commandes séparées par des pipes.
 cmd_and_args est dupliqué avec ft_strdup.
 Les redirections et leur filename/delimiter sont ignorés dans cmd_and_args.
+Les redirections classiques ouvrent fd_in ou fd_out dans t_cmd.
 validate_syntax refuse les erreurs simples avant parse_tokens.
 tests/test_loop.c teste la pipeline locale jusqu'au parser.
 free_cmds libère la liste de commandes déjà créée en cas d'erreur.
+free_cmds ferme aussi les fd de redirection encore ouverts au cleanup.
 ```
 
 Exemples attendus :
@@ -74,6 +80,9 @@ cat < infile      -> ["cat", NULL]
 echo hi >> log    -> ["echo", "hi", NULL]
 cat << EOF        -> ["cat", NULL]
 echo hi | wc -c   -> cmd1 ["echo", "hi", NULL], cmd2 ["wc", "-c", NULL]
+cat < in          -> cmd->fd_in ouvert
+echo hi > out     -> cmd->fd_out ouvert
+echo hi >> log    -> cmd->fd_out ouvert en append
 ```
 
 ## Syntaxe déjà validée
@@ -182,6 +191,7 @@ Dernier état connu :
 ```text
 tests redirections : PASS
 tests pipes : PASS
+tests fd redirections : PASS
 tests $USER / $MISSING : FAIL à cause du bug connu dans get_env_value
 ```
 
@@ -225,43 +235,56 @@ echo hello | grep h | wc -l
 cat < infile | grep hello > outfile
 ```
 
-### 2. Décider le contrat redirections
+### 2. Redirections classiques
 
-Point à voir avec Dounia :
+État : décision prise avec Dounia, V1 commencée et testée.
 
 ```text
-est-ce que le parser ouvre les fichiers et remplit fd_in / fd_out ?
-ou est-ce que le parser stocke seulement type + filename et l'exec ouvre ?
+ma partie ouvre les redirections classiques
+ma partie remplit cmd->fd_in / cmd->fd_out
+l'exec utilise les fd déjà prêts
 ```
 
-Tant que ce n'est pas décidé, le comportement actuel est volontaire :
+Déjà fait :
 
 ```text
-les redirections ne vont pas dans cmd_and_args
-mais elles ne sont pas encore stockées dans t_cmd
+<  ouvre le fichier en O_RDONLY et remplit fd_in
+>  ouvre le fichier en O_WRONLY | O_CREAT | O_TRUNC et remplit fd_out
+>> ouvre le fichier en O_WRONLY | O_CREAT | O_APPEND et remplit fd_out
+si plusieurs redirections du même côté existent, la dernière gagne
+l'ancien fd est fermé avant d'être remplacé
+open fail affiche une erreur avec perror
+open fail met *get_status() = 1
+open fail fait échouer parse_tokens
 ```
 
-### 3. Gérer les redirections dans t_cmd
-
-À faire après décision :
+Tests ajoutés :
 
 ```text
-redir input <
-redir output >
-append >>
-heredoc << à part
-plusieurs redirections dans la même commande
-erreur si open fail
+cat < /tmp/minishell_parser_infile
+echo hi > /tmp/minishell_parser_out
+echo hi >> /tmp/minishell_parser_log
+echo hi > /tmp/minishell_parser_a > /tmp/minishell_parser_b
+cat < /tmp/minishell_missing_input
+cat < infile | grep hello > outfile
 ```
 
-Exemples importants :
+À garder en tête :
 
 ```text
-echo hi > out
-cat < infile
-echo hi > a > b
-cat < missing
-echo hi >> log
+free_cmds ferme les fd encore stockés dans t_cmd.
+Dans un pipeline, un close dans le child après dup2 ne ferme pas le fd du parent.
+Si l'exec ferme un fd dans le process parent, il doit remettre fd_in/fd_out à 0/1.
+```
+
+### 3. Redirections : reste à solidifier
+
+```text
+tester fd_in + fd_out dans la même commande
+tester plusieurs redirections input : cat < a < b
+tester redirection dans chaque segment d'un pipe
+brancher proprement l'erreur redirection dans la vraie boucle
+vérifier que l'exec ne lance pas la commande si parse_tokens retourne NULL
 ```
 
 ### 4. Heredoc
