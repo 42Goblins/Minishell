@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/03 01:54:36 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/04 03:19:08 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ typedef struct	s_shell
 	t_token		*token;
 	// char		**env_for_exec;
 	t_cmd		*cmds;
-	char		*path;
+	//char		*path;
 }				t_shell;
 
 
@@ -185,7 +185,7 @@ int		open_redirections(t_cmd *cmd, t_token *tokens);
 
 /* exec.c */
 int		count_cmds(t_cmd *cmds);
-void	launch_exec(t_shell shell, t_cmd cmds);
+void	launch_exec(t_shell *shell, t_cmd *cmds);
 
 /* exec_external.c */
 char	*try_path(char *dir, char *cmd);
@@ -195,6 +195,7 @@ void	exec_external(t_cmd *cmd, t_env *env);
 void	exec_single_external(t_cmd *cmd, t_env *env);
 
 /* exec_builtins.c */
+int		check_is_builtins(char *cmd);
 void	exec_builtins(t_shell *shell, t_cmd *cmd);
 
 /* exec_pipeline.c */
