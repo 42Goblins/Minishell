@@ -6,27 +6,13 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/09 17:28:12 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 03:34:02 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	set_env_value(t_env *env, const char *key, const char *value)
-{
-	while (env)
-	{
-		if (ft_strcmp(env->key, key))
-		{
-			free(env->value);
-			env->value = ft_strdup(value);
-			return ;
-		}
-		env = env->next;
-	}
-}
-
-void	update_env(t_env *env)
+void	update_env_pwd(t_env *env)
 {
 	char	*cwd;
 	char	*oldpwd;
@@ -40,17 +26,6 @@ void	update_env(t_env *env)
 	}
 	if (oldpwd)
 		set_env_value(env, "OLDPWD", oldpwd);
-}
-
-char	*get_env_value(t_env *env, const char *key)
-{
-	while (env)
-	{
-		if (ft_strcmp(env->key, key))
-			return (env->value);
-		env = env->next;
-	}
-	return (NULL);
 }
 
 void	go_to_oldpwd(t_env *env)
@@ -89,6 +64,6 @@ int	exec_cd(t_shell *shell, char **cmd)
 		ft_putstr_fd("minishell: cd:", 2);
 		perror(cmd[1]);
 	}
-	update_env(shell->env);
+	update_env_pwd(shell->env);
 	return (0);
 }

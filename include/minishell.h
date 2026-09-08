@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/04 03:19:08 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 03:59:26 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,16 +62,16 @@ typedef struct s_env
 
 typedef struct s_cmd
 {
-	char	**cmd_and_args;
-	char	*path;
-	int		fd_in;
-	int		fd_out;
-	bool	is_builtin;
-	bool	access_check;
+	char			**cmd_and_args;
+	char			*path;
+	int				fd_in;
+	int				fd_out;
+	bool			is_builtin;
+	bool			access_check;
 	struct s_cmd	*next;
 }	t_cmd;
 
-typedef struct	s_shell
+typedef struct s_shell
 {
 	// t_sig		sig;
 	t_env		*env;
@@ -80,7 +80,6 @@ typedef struct	s_shell
 	t_cmd		*cmds;
 	//char		*path;
 }				t_shell;
-
 
 /* ========================================================================== */
 /*                                  MAIN                                      */
@@ -97,14 +96,17 @@ char	*cpy_value(char *env);
 void	setup_env(t_shell *shell, char **env);
 t_env	*new_env_node(char *env_line);
 
+/* env_utils.c */
+char	*get_env_value(t_env *env, const char *key);
+void	set_env_value(t_env *env, const char *key, const char *value);
+void	update_env_vars(t_env **env, char *key, char *value);
+
 /* ========================================================================== */
 /*                                BUILTINS                                    */
 /* ========================================================================== */
 /*cd.c */
 int		exec_cd(t_shell *shell, char **cmd);
-void	update_env(t_env *env);
-char	*get_env_value(t_env *env, const char *key);
-void	set_env_value(t_env *env, const char *key, const char *value);
+void	update_env_pwd(t_env *env);
 void	go_to_oldpwd(t_env *env);
 void	go_to_home_dir(t_env *env);
 
@@ -116,27 +118,25 @@ int		exec_echo(char **cmd);
 int		exec_env(t_env *env, char **cmd);
 
 /* pwd.c */
-int	exec_pwd();
+int		exec_pwd(void);
 
 /* unset.c */
-void	free_t_env(t_env *env);
 void	del_env_variable(t_env **first, t_env *prev, t_env *current);
 int		exec_unset(t_env **env, char **cmd);
 
 /* exit.c */
-int	is_num(char *str);
-int	exec_exit(char **cmd);
+int		is_num(char *str);
+int		exec_exit(char **cmd);
 
 /* export_print.c */
-t_env **lst_cpy(t_env *env);
-t_env **sort_export(t_env *env);
-int print_export(t_env *env);
+t_env	**lst_cpy(t_env *env);
+t_env	**sort_export(t_env *env);
+int		print_export(t_env *env);
 
 /* export.c */
 int		export_error(char *str);
 void	add_new_var(t_env **env, char *key, char *value);
 int		parse_export(char *str, char **key, char **value);
-void	update_env_vars(t_env **env, char *key, char *value);
 int		exec_export(t_env **env, char **cmd);
 
 /* ========================================================================== */
@@ -187,10 +187,14 @@ int		open_redirections(t_cmd *cmd, t_token *tokens);
 int		count_cmds(t_cmd *cmds);
 void	launch_exec(t_shell *shell, t_cmd *cmds);
 
-/* exec_external.c */
+/* exec_external_path.c */
 char	*try_path(char *dir, char *cmd);
 char	*get_path(t_env *env);
 char	*find_path(char *cmd, t_env *env);
+
+/* exec_external.c */
+int		env_len(t_env *env);
+char	**t_env_to_tab(t_env *env);
 void	exec_external(t_cmd *cmd, t_env *env);
 void	exec_single_external(t_cmd *cmd, t_env *env);
 
@@ -205,8 +209,20 @@ int		exec_pipeline(t_shell *shell, t_cmd *cmds);
 /*                                  UTILS                                     */
 /* ========================================================================== */
 
-int		*get_status(void);
-void	free_tab(char **tab);
+/* close_fds.c */
+int		safe_close_fd(int *fd);
+void	safe_close_all_fd(int *fd, int *pipefd);
+
+/* free_cmds.c */
 void	free_cmds(t_cmd *cmds);
+
+/* free_stuff.c */
+void	free_t_env(t_env *env);
+void	free_lst_env(t_env *env);
+void	free_lst_cmds(t_cmd *cmds);
+void	free_tab(char **tab);
+
+/* get_status.c */
+int		*get_status(void);
 
 #endif

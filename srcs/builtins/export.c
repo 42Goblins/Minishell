@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/09 19:47:05 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 03:46:06 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,28 +63,6 @@ int	parse_export(char *str, char **key, char **value)
 	if (!*key || (str[i] == '=' && !*value))
 		return (export_error(str));
 	return (1);
-}
-
-void	update_env_vars(t_env **env, char *key, char *value)
-{
-	t_env	*current;
-
-	current = *env;
-	while (current)
-	{
-		if (ft_strcmp(current->key, key) == 0)
-		{
-			free(key);
-			if (value)
-			{
-				free(current->value);
-				current->value = value;
-			}
-			return ;
-		}
-		current = current->next;
-	}
-	add_new_var(env, key, value);
 }
 
 int	exec_export(t_env **env, char **cmd)
