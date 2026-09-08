@@ -12,6 +12,11 @@
 
 #include "minishell.h"
 
+/*
+ * This file opens redirection files for one command.
+ * Heredoc is skipped here for now.
+ */
+
 static int	open_current_redirection(t_cmd *cmd, t_token *current);
 static int	open_input_redirection(t_cmd *cmd, char *filename);
 static int	open_output_redirection(t_cmd *cmd, char *filename, int flags);

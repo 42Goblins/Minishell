@@ -12,17 +12,19 @@
 
 #include "minishell.h"
 
+/*
+ * This file expands dollar expressions inside one word.
+ * Quotes are kept here to know when $ must be expanded or ignored.
+ */
+
 static char	*join_three_parts(char *first, char *second, char *third);
 static char	*replace_current_var(char *result, int i, t_env *env, int *new_i);
 static bool	update_quote_state(char c, bool *in_single, bool *in_double);
 
 /**
- * @brief Expands variables in a word while respecting quote rules.
+ * @brief Expands the variables in one word.
  *
- * The loop does three things:
- * - updates quote states when it reads a quote character
- * - replaces an expandable dollar expression when allowed
- * - otherwise moves to the next character
+ * The loop keeps track of quotes, expands the right `$`, and skips the rest.
  */
 char	*expand_word(char *word, t_env *env)
 {
@@ -59,7 +61,7 @@ char	*expand_word(char *word, t_env *env)
 }
 
 /**
- * @brief Updates single and double quote states for the current character.
+ * @brief Updates whether we are inside single or double quotes.
  */
 static bool	update_quote_state(char c, bool *in_single, bool *in_double)
 {
@@ -77,15 +79,10 @@ static bool	update_quote_state(char c, bool *in_single, bool *in_double)
 }
 
 /**
- * @brief Replaces one expansion found at index i in result.
+ * @brief Replaces the variable found at index i.
  *
- * Splits result into three parts:
- * - before: everything before the dollar sign
- * - value: the expanded value of $VAR, $? or $digit
- * - after: everything after the consumed variable name
- *
- * The function joins those parts into a new string, frees the old result,
- * and stores in new_i the index where expand_word should resume scanning.
+ * It cuts the word in three parts: before the `$`, the expanded value,
+ * and what comes after the variable. new_i tells where the scan should restart.
  */
 static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
 {
@@ -114,7 +111,7 @@ static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
 }
 
 /**
- * @brief Joins three allocated strings and frees them.
+ * @brief Joins three strings and frees them.
  */
 static char	*join_three_parts(char *first, char *second, char *third)
 {

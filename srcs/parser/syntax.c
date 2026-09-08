@@ -12,6 +12,11 @@
 
 #include "minishell.h"
 
+/*
+ * This file checks syntax before the parser builds commands.
+ * It stops simple pipe and redirection errors before exec.
+ */
+
 static int	validate_pipe(t_token *current);
 static int	validate_redirection(t_token *current);
 static int	print_syntax_error(char *token);

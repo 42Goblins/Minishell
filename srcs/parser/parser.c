@@ -3,17 +3,24 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/04 03:28:11 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 20:39:37 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/*
+ * This file converts a validated token list into t_cmd nodes.
+ * Redirections are skipped from cmd_and_args and opened separately.
+ */
+
+static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
+
 /**
- * @brief Converts a prepared token list into a command list.
+ * @brief Converts prepared tokens into a linked command list split by pipes.
  */
 t_cmd	*parse_tokens(t_token *tokens)
 {
@@ -22,8 +29,6 @@ t_cmd	*parse_tokens(t_token *tokens)
 	t_cmd	*new_cmd;
 	t_cmd	*last_cmd;
 
-	if (!tokens)
-		return (NULL);
 	current = tokens;
 	cmds = NULL;
 	new_cmd = NULL;
@@ -101,13 +106,8 @@ char	**create_cmd_and_args(t_token *tokens)
 		}
 		else if (current->type == T_WORD)
 		{
-			cmd_and_args[i] = ft_strdup(current->value);
-			if (cmd_and_args[i] == NULL)
-			{
-				cmd_and_args[i] = NULL;
-				return (free_tab(cmd_and_args), NULL);
-			}
-			i++;
+			if (copy_word_to_args(cmd_and_args, &i, current->value))
+				return (NULL);
 		}
 		current = current->next;
 	}
@@ -116,7 +116,23 @@ char	**create_cmd_and_args(t_token *tokens)
 }
 
 /**
- * @brief Allocates and initializes one command node from prepared tokens.
+ * @brief Copies one word token value into cmd_and_args and advances the index.
+ */
+static int	copy_word_to_args(char **cmd_and_args, int *i, char *value)
+{
+	cmd_and_args[*i] = ft_strdup(value);
+	if (cmd_and_args[*i] == NULL)
+	{
+		cmd_and_args[*i] = NULL;
+		free_tab(cmd_and_args);
+		return (1);
+	}
+	(*i)++;
+	return (0);
+}
+
+/**
+ * @brief Allocates one command node with args, redirections and builtin flag.
  */
 t_cmd	*create_cmd_node(t_token *tokens)
 {

@@ -12,6 +12,11 @@
 
 #include "minishell.h"
 
+/*
+ * This file turns the raw input line into tokens.
+ * Quotes stay in word values so expansion can use them later.
+ */
+
 static int	tokenize_current_char(char *input, int i, t_shell *shell);
 static int	tokenizer_error(t_shell *shell);
 static int	add_word_token(char *input, int start, int len, t_shell *shell);
