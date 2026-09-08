@@ -28,7 +28,16 @@ static void	init_test_shell(t_shell *shell)
 	shell->env = NULL;
 	shell->token = NULL;
 	shell->cmds = NULL;
-	shell->path = NULL;
+}
+
+/**
+ * @brief Version locale de get_status pour tester syntax.c sans le vrai main.
+ */
+int	*get_status(void)
+{
+	static int	status;
+
+	return (&status);
 }
 
 /**

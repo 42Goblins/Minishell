@@ -58,6 +58,28 @@ int	*get_status(void)
 }
 
 /**
+ * @brief Version locale pour que le parser puisse remplir is_builtin.
+ */
+int	check_is_builtins(char *cmd)
+{
+	if (ft_strcmp(cmd, "cd") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "echo") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "env") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "pwd") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "unset") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "exit") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "export") == 0)
+		return (1);
+	return (0);
+}
+
+/**
  * @brief Lance une mini boucle readline pour tester la pipeline avant exec.
  */
 int	main(int ac, char **av, char **env)
@@ -70,7 +92,6 @@ int	main(int ac, char **av, char **env)
 	setup_env(&shell, env);
 	shell.token = NULL;
 	shell.cmds = NULL;
-	shell.path = NULL;
 	while (1)
 	{
 		line = readline("minishell-test> ");
@@ -95,7 +116,8 @@ int	main(int ac, char **av, char **env)
 							printf("parser error\n");
 					}
 					else
-						printf("syntax error\n");
+						printf("syntax error: parse_tokens not called | status: %d\n",
+							*get_status());
 				}
 				else
 					printf("quote error\n");
