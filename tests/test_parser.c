@@ -279,22 +279,40 @@ static void	test_redir_fd_case(char *label, char *input, bool has_in,
 }
 
 /**
- * @brief Verifie qu'une redirection input invalide fait echouer le parser.
+ * @brief Verifie qu'une erreur d'ouverture fait echouer le parser.
  */
-static void	test_redir_error_case(void)
+static void	test_redir_error_case(char *label, char *input)
 {
 	t_shell	shell;
 	t_env	user;
 	t_env	home;
 	t_cmd	*cmds;
 
-	cmds = parse_test_line("cat < /tmp/minishell_missing_input", &shell,
-			&user, &home);
-	if (!cmds)
-		printf("[PASS] missing input redir -> parser error\n");
+	*get_status() = 0;
+	cmds = parse_test_line(input, &shell, &user, &home);
+	if (!cmds && *get_status() == 1)
+		printf("[PASS] %s\n", label);
 	else
-		printf("[FAIL] missing input redir -> parser error\n");
+		printf("[FAIL] %s\n", label);
+	printf("  input  : %s\n", input);
+	printf("  status : %d\n", *get_status());
 	free_cmds(cmds);
+	free_tokens(shell.token);
+}
+
+/**
+ * @brief Verifie qu'une quote non fermee bloque avant le parser.
+ */
+static void	test_tokenizer_error_case(char *label, char *input)
+{
+	t_shell	shell;
+
+	shell.token = NULL;
+	if (tokenizer(input, &shell))
+		printf("[PASS] %s\n", label);
+	else
+		printf("[FAIL] %s\n", label);
+	printf("  input  : %s\n", input);
 	free_tokens(shell.token);
 }
 
@@ -313,7 +331,14 @@ static void	test_redir_fds(void)
 	test_redir_fd_case("last output redir wins",
 		"echo hi > /tmp/minishell_parser_a > /tmp/minishell_parser_b",
 		false, true);
-	test_redir_error_case();
+	test_redir_error_case("missing input redir -> parser error",
+		"cat < /tmp/minishell_missing_input");
+	test_redir_error_case("missing input redir before pipe -> parser error",
+		"cat < /tmp/minishell_missing_input | wc -l");
+	test_redir_error_case("output redir on directory -> parser error",
+		"echo hi > /tmp");
+	test_redir_error_case("second output redir fail -> parser error",
+		"echo hi > /tmp/minishell_parser_ok > /tmp");
 }
 
 /**
@@ -326,10 +351,13 @@ static void	test_cmd_args(void)
 	char	*status[] = {"echo", "127", NULL};
 	char	*missing[] = {"echo", "", "suffix", NULL};
 	char	*digit[] = {"echo", "USER", "2USER", NULL};
+	char	*quoted_pipe_first[] = {"cat", "text.txt", NULL};
+	char	*quoted_pipe_second[] = {"echo patate2 | wc -l", NULL};
 	char	*redir_out[] = {"echo", "hi", NULL};
 	char	*redir_in[] = {"cat", NULL};
 	char	*append[] = {"echo", "hi", NULL};
 	char	*heredoc[] = {"cat", NULL};
+	char	**quoted_pipe[] = {quoted_pipe_first, quoted_pipe_second, NULL};
 
 	*get_status() = 127;
 	printf("\n=== PARSER CMD_AND_ARGS ===\n");
@@ -344,6 +372,10 @@ static void	test_cmd_args(void)
 		"echo $MISSING suffix", missing);
 	test_cmd_args_case("digit expansion -> $2USER / $12USER",
 		"echo $2USER $12USER", digit);
+	test_pipe_case("quoted pipe stays inside word",
+		"cat text.txt | \"echo patate2 | wc -l\"", quoted_pipe);
+	test_tokenizer_error_case("unclosed quote stops before parser",
+		"cat text.txt | \"echo patate2 | wc -l");
 	test_cmd_args_case("redir out skipped from args",
 		"echo hi > /tmp/minishell_parser_out", redir_out);
 	test_cmd_args_case("redir in skipped from args",
@@ -354,6 +386,28 @@ static void	test_cmd_args(void)
 		"cat << EOF", heredoc);
 	test_pipe_cases();
 	test_redir_fds();
+}
+
+/**
+ * @brief Version locale pour que le parser puisse remplir is_builtin.
+ */
+int	check_is_builtins(char *cmd)
+{
+	if (ft_strcmp(cmd, "cd") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "echo") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "env") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "pwd") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "unset") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "exit") == 0)
+		return (1);
+	if (ft_strcmp(cmd, "export") == 0)
+		return (1);
+	return (0);
 }
 
 /**

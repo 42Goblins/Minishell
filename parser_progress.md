@@ -1,9 +1,9 @@
-# Avancement parser — 1 septembre 2026
+# Avancement parser — 8 septembre 2026
 
 ## Objectif
 
-Le parser doit transformer les tokens déjà préparés en structures utilisables par
-l'exec.
+Le parser reçoit des tokens déjà préparés et fabrique une liste de `t_cmd`
+utilisable par l'exec.
 
 Pipeline actuelle :
 
@@ -13,30 +13,10 @@ tokenizer
 -> remove_quotes_from_tokens
 -> validate_syntax
 -> parse_tokens
--> t_cmd / cmd_and_args
+-> t_cmd / cmd_and_args / fd_in / fd_out
 ```
 
-Le parser ne doit pas refaire le lexer, l'expansion ou le retrait des quotes.
-Il reçoit des tokens déjà propres.
-
-## Fichiers concernés
-
-```text
-srcs/parser/parser.c
-srcs/parser/parser_redir.c
-srcs/parser/syntax.c
-srcs/parser/parser_utils.c
-srcs/utils/free_cmds.c
-tests/test_parser.c
-tests/test_syntax.c
-tests/test_loop.c
-```
-
-Prototypes dans :
-
-```text
-include/minishell.h
-```
+Le parser ne relit jamais la ligne brute.
 
 ## État actuel
 
@@ -49,283 +29,181 @@ create_cmd_and_args
 count_cmd_args
 validate_syntax
 is_redirection_token
-free_cmds
 open_redirections
-open_current_redirection
-open_input_redirection
-open_output_redirection
+free_cmds
 ```
 
-Ce qui marche maintenant :
+Ce qui marche :
 
 ```text
-parse_tokens crée une liste de t_cmd pour les commandes séparées par des pipes.
-cmd_and_args est dupliqué avec ft_strdup.
-Les redirections et leur filename/delimiter sont ignorés dans cmd_and_args.
-Les redirections classiques ouvrent fd_in ou fd_out dans t_cmd.
-validate_syntax refuse les erreurs simples avant parse_tokens.
-tests/test_loop.c teste la pipeline locale jusqu'au parser.
-free_cmds libère la liste de commandes déjà créée en cas d'erreur.
-free_cmds ferme aussi les fd de redirection encore ouverts au cleanup.
+les pipes créent plusieurs t_cmd chaînés avec next
+cmd_and_args contient seulement la commande et ses vrais arguments
+les redirections et leurs targets sont retirées de cmd_and_args
+< ouvre fd_in
+> ouvre fd_out en truncate
+>> ouvre fd_out en append
+la dernière redirection du même côté gagne
+les anciens fd remplacés sont fermés
+free_cmds ferme les fd restants au cleanup
+is_builtin est rempli avec check_is_builtins
 ```
 
-Exemples attendus :
+Exemples :
 
 ```text
-echo hello        -> ["echo", "hello", NULL]
-echo "hi there"   -> ["echo", "hi there", NULL]
-echo '$USER'      -> ["echo", "$USER", NULL]
-echo hi > out     -> ["echo", "hi", NULL]
-cat < infile      -> ["cat", NULL]
-echo hi >> log    -> ["echo", "hi", NULL]
-cat << EOF        -> ["cat", NULL]
-echo hi | wc -c   -> cmd1 ["echo", "hi", NULL], cmd2 ["wc", "-c", NULL]
-cat < in          -> cmd->fd_in ouvert
-echo hi > out     -> cmd->fd_out ouvert
-echo hi >> log    -> cmd->fd_out ouvert en append
+echo hello              -> ["echo", "hello", NULL]
+echo hi > out           -> ["echo", "hi", NULL], fd_out vers out
+cat < infile            -> ["cat", NULL], fd_in depuis infile
+echo hi >> log          -> ["echo", "hi", NULL], fd_out append
+echo hi > a > b         -> fd_out final vers b
+echo hi | wc -c         -> cmd1 ["echo", "hi"], cmd2 ["wc", "-c"]
+cat < in | grep h > out -> cmd1 fd_in, cmd2 fd_out
 ```
 
-## Syntaxe déjà validée
+## Syntax errors
 
-`validate_syntax` accepte :
+`validate_syntax` retourne :
 
 ```text
-echo hello
-echo hello | wc
-cat < infile
-echo hi > outfile
-cat << EOF
-echo hi >> outfile
+0 si OK
+1 si erreur
 ```
 
-`validate_syntax` refuse :
+Maintenant elle affiche aussi sur `stderr` et met :
 
 ```text
-|
-| echo
-echo |
-echo || wc
-echo >
-echo <
-echo >>
-echo <<
-echo > |
-echo < >
+*get_status() = 2
 ```
 
-Convention actuelle :
+Format :
 
 ```text
-validate_syntax retourne 0 si OK.
-validate_syntax retourne 1 si erreur.
-Elle ne modifie pas les tokens.
+minishell: syntax error near unexpected token `TOKEN'
 ```
 
-À brancher plus tard dans la vraie boucle :
+Cas validés :
 
 ```text
-syntax error -> message sur stderr
-syntax error -> *get_status() = 2
-ne pas appeler parse_tokens ni exec si validate_syntax échoue
+| echo     -> |
+echo |     -> newline
+echo || wc -> |
+echo >     -> newline
+echo <     -> newline
+echo >>    -> newline
+echo <<    -> newline
+echo > |   -> |
+echo < >   -> >
 ```
 
-## Tests
+La mini loop de test confirme que si `validate_syntax` échoue,
+`parse_tokens` n'est pas appelé.
 
-Test syntax :
+## Redirections classiques
+
+Contrat actuel :
+
+```text
+parser ouvre les fichiers classiques
+parser remplit cmd->fd_in / cmd->fd_out
+exec utilise les fd déjà prêts
+```
+
+Open fail :
+
+```text
+perror("minishell: filename")
+*get_status() = 1
+parse_tokens retourne NULL
+la commande ne doit pas partir à l'exec
+```
+
+Cas testés :
+
+```text
+cat < fichier manquant
+cat < fichier manquant | wc -l
+echo hi > /tmp
+echo hi > ok > /tmp
+```
+
+Tous ces cas stoppent bien le parser avec status `1`.
+
+## Quotes et pipes
+
+Cas important testé :
 
 ```sh
-make -C libft
-cc -Wall -Wextra -Werror \
--Iinclude -Ilibft/inc \
-tests/test_syntax.c \
-srcs/parser/syntax.c \
-srcs/parser/parser_utils.c \
-srcs/lexer/lexer.c \
-srcs/lexer/lexer_nodes.c \
-srcs/lexer/lexer_redir.c \
-srcs/lexer/lexer_quotes.c \
-srcs/lexer/lexer_utils.c \
-libft/libft.a \
--o /tmp/test_syntax
-
-/tmp/test_syntax
-```
-
-Dernier état connu :
-
-```text
-test_syntax : tous les cas PASS
-```
-
-Test parser :
-
-```sh
-make -C libft
-cc -Wall -Wextra -Werror \
--Iinclude -Ilibft/inc \
-tests/test_parser.c \
-srcs/parser/parser.c \
-srcs/parser/parser_redir.c \
-srcs/parser/parser_utils.c \
-srcs/parser/syntax.c \
-srcs/expansion/expansion.c \
-srcs/expansion/expand_tokens.c \
-srcs/expansion/expansion_vars.c \
-srcs/expansion/expansion_utils.c \
-srcs/lexer/lexer.c \
-srcs/lexer/lexer_nodes.c \
-srcs/lexer/lexer_redir.c \
-srcs/lexer/lexer_quotes.c \
-srcs/lexer/lexer_utils.c \
-srcs/builtins/cd.c \
-srcs/exec/exec_external.c \
-srcs/utils/free_cmds.c \
-libft/libft.a \
--o /tmp/test_parser
-
-/tmp/test_parser
-```
-
-Dernier état connu :
-
-```text
-tests redirections : PASS
-tests pipes : PASS
-tests fd redirections : PASS
-tests $USER / $MISSING : FAIL à cause du bug connu dans get_env_value
-```
-
-## Reste à faire
-
-### 1. Parser les pipes
-
-État : V1 faite et testée.
-
-Objectif :
-
-```text
-echo hello | wc -c
+cat text.txt | "echo patate2 | wc -l"
 ```
 
 Résultat attendu :
 
 ```text
-cmd 1: ["echo", "hello", NULL]
-cmd 2: ["wc", "-c", NULL]
-cmd1->next = cmd2
-cmd2->next = NULL
+cmd 0: ["cat", "text.txt", NULL]
+cmd 1: ["echo patate2 | wc -l", NULL]
 ```
 
-Déjà fait :
+Le pipe dans les quotes reste du texte, il ne coupe pas la commande.
+
+Cas avec quote non fermée :
+
+```sh
+cat text.txt | "echo patate2 | wc -l
+```
+
+Le tokenizer bloque avant parser.
+
+## Tests
+
+Dernier résultat :
 
 ```text
-parse_tokens parcourt maintenant toute la liste de tokens
-create_cmd_node est appelé à chaque début de commande
-le scan s'arrête au pipe pour une commande
-parse_tokens reprend après le pipe pour la commande suivante
-les t_cmd sont reliées avec next
-free_cmds est appelé si une création de commande échoue
+test_syntax : valid/invalid PASS, messages syntax sur stderr
+test_parser : parser/pipes/redirs/open fail PASS
+test_loop   : syntax error bloque parse_tokens, status 2
 ```
 
-Tests ajoutés :
+Fails connus dans `test_parser` :
 
 ```text
-echo hello | wc -c
-echo hello | grep h | wc -l
-cat < infile | grep hello > outfile
+quotes + expansion
+missing variable
 ```
 
-### 2. Redirections classiques
+Cause : bug connu dans `get_env_value`, pas parser.
 
-État : décision prise avec Dounia, V1 commencée et testée.
+## Reste à faire sans heredoc
+
+Ordre conseillé :
 
 ```text
-ma partie ouvre les redirections classiques
-ma partie remplit cmd->fd_in / cmd->fd_out
-l'exec utilise les fd déjà prêts
+1. intégrer et tester avec le vrai main/exec de Dounia
+2. vérifier que validate_syntax bloque bien exec dans la vraie boucle
+3. vérifier que parse_tokens NULL bloque bien exec après open fail
+4. vérifier fd_in/fd_out avec exec externe simple
+5. vérifier fd_in/fd_out avec builtins seuls
+6. vérifier fd_in/fd_out avec pipelines
+7. norme + cleanup des fonctions longues/prototypes/comments
 ```
 
-Déjà fait :
+## Heredoc
+
+Pas fini.
+
+Ce qui est prêt côté lexer/expansion :
 
 ```text
-<  ouvre le fichier en O_RDONLY et remplit fd_in
->  ouvre le fichier en O_WRONLY | O_CREAT | O_TRUNC et remplit fd_out
->> ouvre le fichier en O_WRONLY | O_CREAT | O_APPEND et remplit fd_out
-si plusieurs redirections du même côté existent, la dernière gagne
-l'ancien fd est fermé avant d'être remplacé
-open fail affiche une erreur avec perror
-open fail met *get_status() = 1
-open fail fait échouer parse_tokens
+T_HEREDOC existe
+le delimiter n'est pas expandé
+les quotes du delimiter sont retirées après expansion
+had_quotes reste disponible
 ```
 
-Tests ajoutés :
-
-```text
-cat < /tmp/minishell_parser_infile
-echo hi > /tmp/minishell_parser_out
-echo hi >> /tmp/minishell_parser_log
-echo hi > /tmp/minishell_parser_a > /tmp/minishell_parser_b
-cat < /tmp/minishell_missing_input
-cat < infile | grep hello > outfile
-```
-
-À garder en tête :
-
-```text
-free_cmds ferme les fd encore stockés dans t_cmd.
-Dans un pipeline, un close dans le child après dup2 ne ferme pas le fd du parent.
-Si l'exec ferme un fd dans le process parent, il doit remettre fd_in/fd_out à 0/1.
-```
-
-### 3. Redirections : reste à solidifier
-
-```text
-tester fd_in + fd_out dans la même commande
-tester plusieurs redirections input : cat < a < b
-tester redirection dans chaque segment d'un pipe
-brancher proprement l'erreur redirection dans la vraie boucle
-vérifier que l'exec ne lance pas la commande si parse_tokens retourne NULL
-```
-
-### 4. Heredoc
-
-Le lexer/expansion gardent déjà les infos nécessaires :
-
-```text
-token après T_HEREDOC non expandé
-quotes retirées après expansion
-had_quotes conservé sur le delimiter
-```
-
-À faire avec Dounia :
+À décider/faire avec Dounia :
 
 ```text
 qui lit le heredoc
-qui expand le contenu du heredoc
-comment transmettre had_quotes à l'exec
+qui crée le fd heredoc
+qui expand ou non le contenu selon had_quotes
 comment gérer Ctrl-C dans heredoc
-```
-
-### 5. Erreurs et status
-
-À brancher dans la vraie boucle :
-
-```text
-messages sur stderr
-syntax error -> *get_status() = 2
-malloc fail -> cleanup propre
-la boucle continue après une syntax error
-```
-
-### 6. Nettoyage final
-
-Avant une PR clean :
-
-```text
-vérifier la norme
-vérifier les prototypes dans minishell.h
-vérifier free_cmds avec les futurs fd_in/fd_out
-relancer test_syntax
-relancer test_parser
-ne pas mettre les .md perso ni tests temporaires dans dev
 ```

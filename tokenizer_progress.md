@@ -1,4 +1,4 @@
-# Tokenizer terminé — 1 septembre 2026
+# Tokenizer terminé — 8 septembre 2026
 
 ## Statut
 
@@ -20,7 +20,7 @@ Le tokenizer conserve volontairement les quotes dans `token->value`.
 État d'intégration :
 
 ```text
-La PR clean contenant le lexer/tokenizer a été mergée dans dev.
+La PR clean contenant lexer/expansion/parser redirections a été mergée dans dev.
 La branche chloe garde mes docs et tests temporaires.
 tests/test_loop.c utilise maintenant tokenizer dans une mini boucle readline.
 ```
@@ -169,4 +169,14 @@ Travail actif actuel :
 tests/test_loop.c
 readline -> tokenizer -> expand_tokens -> remove_quotes_from_tokens
 -> validate_syntax -> parse_tokens
+```
+
+État actuel de la suite :
+
+```text
+validate_syntax affiche les erreurs et met status 2
+parse_tokens crée plusieurs t_cmd avec pipes
+les redirections classiques sont ouvertes dans fd_in/fd_out
+le pipe dans les quotes reste bien dans un T_WORD
+une quote non fermée bloque toujours au tokenizer
 ```

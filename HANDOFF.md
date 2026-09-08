@@ -1,54 +1,61 @@
 # HANDOFF — Minishell
 
-Dernière mise à jour : 1 septembre 2026, branche `chloe`.
+Dernière mise à jour : 8 septembre 2026, branche `chloe`.
 
-## Contexte
+## Situation Git
 
-Projet 42 minishell, mandatory uniquement.
+```text
+origin/dev contient la PR clean chloe-clean-pr-v2.
+chloe reste ma branche atelier avec tests temporaires et docs.
+Ne pas ouvrir une PR directement depuis chloe.
+```
 
-Répartition actuelle :
+La PR clean récente a ajouté au `dev` :
+
+```text
+parser_redir.c
+parser_utils.c
+syntax.c
+free_cmds.c
+prototypes nécessaires dans minishell.h
+petites mises à jour lexer/expansion
+```
+
+## Répartition
 
 ```text
 Moi    : lexer, tokenisation, expansion, retrait des quotes, syntaxe, parser.
-Dounia : env, builtins, exec, fd, heredoc, signaux, status.
+Dounia : env, builtins, exec, wait/status, fd côté exec, heredoc, signaux.
 ```
 
-## Pipeline proposée
+Contrat : l'exec ne relit pas la ligne brute. Elle reçoit une liste de `t_cmd`
+déjà préparée.
+
+## Pipeline retenue
 
 ```text
 readline
 -> tokenizer
 -> expand_tokens
 -> remove_quotes_from_tokens
--> syntax validation
--> parser vers t_cmd / cmd_and_args
--> exec
--> cleanup commande courante
+-> validate_syntax
+-> parse_tokens
+-> launch_exec
+-> cleanup de la commande courante
 ```
 
-Ne pas appeler `remove_quotes_from_tokens` avant `expand_tokens`.
-
-État d'intégration actuel :
+Important :
 
 ```text
-dev contient maintenant la PR clean lexer / expansion / parser.
-chloe reste ma branche atelier avec les .md et tests temporaires.
-tests/test_loop.c teste une mini boucle readline locale.
+expand_tokens avant remove_quotes_from_tokens
+validate_syntax avant parse_tokens
+si validate_syntax échoue, ne pas appeler parse_tokens
+si parse_tokens retourne NULL, ne pas appeler exec
 ```
 
 ## Lexer
 
-État : V1 mandatory considérée bonne.
-
-Fichiers :
-
-```text
-srcs/lexer/lexer.c
-srcs/lexer/lexer_utils.c
-srcs/lexer/lexer_nodes.c
-srcs/lexer/lexer_redir.c
-srcs/lexer/lexer_quotes.c
-```
+État : considéré bon pour le mandatory.
 
 Tokens :
 
@@ -61,47 +68,28 @@ T_APPEND
 T_HEREDOC
 ```
 
-La liste est doublement chaînée :
+La liste est doublement chaînée avec `prev` et `next`.
 
-```text
-token->prev
-token->next
-```
-
-`prev` sert notamment à reconnaître le delimiter heredoc dans `expand_tokens`.
-
-`had_quotes` reste vrai même après retrait des quotes, parce que le heredoc a
-besoin de savoir si son delimiter était quoté.
+Les quotes sont conservées jusqu'à l'expansion, puis retirées après. `had_quotes`
+reste disponible après retrait des quotes, surtout pour heredoc.
 
 ## Expansion
 
-État : cœur de l'expansion terminé et testé en isolation + début de boucle
-interactive locale.
+État : cœur mandatory fait.
 
-Fichiers :
-
-```text
-srcs/expansion/expansion.c
-srcs/expansion/expand_tokens.c
-srcs/expansion/expansion_vars.c
-srcs/expansion/expansion_utils.c
-tests/test_expansion.c
-tests/test_loop.c
-```
-
-Cas gérés :
+Géré :
 
 ```text
 $VAR
 $?
 $digit
-variables absentes
-single quotes : pas d'expansion
-double quotes : expansion
+variable absente -> chaîne vide
+single quotes -> pas d'expansion
+double quotes -> expansion
 variables collées
 ```
 
-Cas volontairement non gérés pour l'instant :
+Pas géré volontairement pour l'instant :
 
 ```text
 $$
@@ -109,116 +97,82 @@ $-
 ${VAR}
 ```
 
-`expand_tokens` :
+Attention bug connu côté env :
 
 ```text
-expand les T_WORD
-skip le T_WORD juste après T_HEREDOC
+get_env_value / set_env_value doivent comparer avec ft_strcmp(...) == 0
 ```
 
-Le delimiter heredoc n'est pas expandé, mais il passe ensuite dans
-`remove_quotes_from_tokens`.
-
-Attention : après merge avec `dev`, `get_status()` est actuellement défini côté
-Dounia dans `srcs/main.c`. Les tests locaux peuvent définir une petite version
-locale de `get_status()` dans leur propre fichier pour éviter de compiler deux
-`main`.
-
-Point signalé à Dounia : `get_env_value` / `set_env_value` doivent comparer les
-clés avec `ft_strcmp(...) == 0`. Sinon `$USER` peut récupérer la mauvaise valeur
-d'environnement.
+Tant que ce bug existe, `$USER`, `$HOME` ou `$MISSING` peuvent sortir faux dans
+les tests d'intégration.
 
 ## Parser
 
-État : parser commande simple + validation syntaxique de base en place.
+État : parser/pipes/redirections classiques en place.
 
-Fichiers :
-
-```text
-srcs/parser/parser.c
-srcs/parser/parser_redir.c
-srcs/parser/syntax.c
-srcs/parser/parser_utils.c
-```
-
-Voir aussi `parser_progress.md` pour le détail de ce qui est fait et de ce qui
-reste.
-
-Fonctions actuelles :
+Fonctions principales :
 
 ```text
+validate_syntax
 parse_tokens
 create_cmd_node
 create_cmd_and_args
 count_cmd_args
-validate_syntax
+open_redirections
 is_redirection_token
+free_cmds
 ```
 
 Ce qui marche :
 
 ```text
-tokens WORD préparés
--> t_cmd
--> cmd_and_args dupliqué
-redirections et leur filename/delimiter ignorés dans cmd_and_args
-syntax errors évidentes refusées avant parse_tokens
+cmd_and_args ne contient pas les redirections ni leurs filenames
+les pipes créent plusieurs t_cmd chaînés
+is_builtin est rempli avec check_is_builtins
+< ouvre fd_in
+> ouvre fd_out truncate
+>> ouvre fd_out append
+open fail -> perror, status 1, parse_tokens NULL
+syntax error -> stderr, status 2, pas de parse_tokens
 ```
 
-Exemple :
+Exemples :
 
 ```text
-echo hello -> ["echo", "hello", NULL]
-echo hi > out -> ["echo", "hi", NULL]
-cat << EOF -> ["cat", NULL]
+echo hi > out          -> ["echo", "hi", NULL], fd_out vers out
+cat < infile           -> ["cat", NULL], fd_in depuis infile
+echo hi | wc -c        -> deux t_cmd
+cat text | "a | b"     -> le pipe dans quotes reste dans le WORD
 ```
 
-Limites actuelles :
+## Tests locaux
+
+Les tests locaux restent surtout pour bosser sur `chloe`.
+
+Derniers résultats connus :
 
 ```text
-pas encore de parsing complet des pipes
-pas encore de redirections stockées dans t_cmd
-pas encore de détection builtin
-pas encore de messages bash-like/status 2 centralisés pour syntax errors
+test_syntax : PASS
+test_parser : parser/pipes/redirs/open fail PASS
+test_loop   : syntax error bloque parse_tokens, status 2
 ```
 
-## Tests
+Fails connus dans `test_parser` :
 
-Commande expansion historique :
-
-```sh
-make -C libft
-cc -Wall -Wextra -Werror \
--Iinclude -Ilibft/inc \
-tests/test_expansion.c \
-srcs/expansion/expansion.c \
-srcs/expansion/expand_tokens.c \
-srcs/expansion/expansion_vars.c \
-srcs/expansion/expansion_utils.c \
-srcs/lexer/lexer.c \
-srcs/lexer/lexer_nodes.c \
-srcs/lexer/lexer_redir.c \
-srcs/lexer/lexer_quotes.c \
-srcs/lexer/lexer_utils.c \
-srcs/builtins/cd.c \
-libft/libft.a \
--o /tmp/test_expansion
-
-/tmp/test_expansion
+```text
+quotes + expansion
+missing variable
 ```
 
-Note : depuis le merge avec `dev`, `get_status()` est dans `srcs/main.c`. Pour
-compiler un test sans le vrai `main`, ajouter une petite version locale de
-`get_status()` dans le fichier de test, comme dans `tests/test_loop.c`.
+Cause : bug env connu, pas parser.
 
-Mini boucle locale actuelle :
+## Commande test_loop
 
 ```sh
 make -C libft
 cc -Wall -Wextra -Werror \
 -Iinclude -Ilibft/inc \
 tests/test_loop.c \
-srcs/env/setup_env.c \
 srcs/lexer/lexer.c \
 srcs/lexer/lexer_nodes.c \
 srcs/lexer/lexer_redir.c \
@@ -230,10 +184,12 @@ srcs/expansion/expansion_vars.c \
 srcs/expansion/expansion_utils.c \
 srcs/parser/parser.c \
 srcs/parser/parser_redir.c \
-srcs/parser/syntax.c \
 srcs/parser/parser_utils.c \
+srcs/parser/syntax.c \
+srcs/env/setup_env.c \
 srcs/builtins/cd.c \
 srcs/exec/exec_external.c \
+srcs/utils/free_cmds.c \
 libft/libft.a \
 -lreadline -ltermcap \
 -o /tmp/test_loop
@@ -241,116 +197,24 @@ libft/libft.a \
 /tmp/test_loop
 ```
 
-Ce test couvre actuellement :
+## Reste à faire
+
+Sans heredoc, il reste surtout :
 
 ```text
-readline
--> add_history
--> tokenizer
--> expand_tokens
--> remove_quotes_from_tokens
--> validate_syntax
--> parse_tokens
--> print tokens + cmd_and_args
--> free cmd / tokens / line
+tester avec le vrai main/exec de Dounia
+vérifier que l'exec utilise fd_in/fd_out pour external simple
+vérifier que les builtins seuls sauvent/restaurent les fd
+vérifier redirections + pipelines dans le vrai minishell
+faire norme/cleanup final
 ```
 
-Pas encore branché dans ce test :
+Heredoc reste le gros morceau obligatoire pas terminé :
 
 ```text
-launch_exec
+lecture heredoc
+fd heredoc
+expansion du contenu selon had_quotes
+Ctrl-C heredoc
+intégration avec exec
 ```
-
-Test syntax :
-
-```sh
-make -C libft
-cc -Wall -Wextra -Werror \
--Iinclude -Ilibft/inc \
-tests/test_syntax.c \
-srcs/parser/syntax.c \
-srcs/parser/parser_utils.c \
-srcs/lexer/lexer.c \
-srcs/lexer/lexer_nodes.c \
-srcs/lexer/lexer_redir.c \
-srcs/lexer/lexer_quotes.c \
-srcs/lexer/lexer_utils.c \
-libft/libft.a \
--o /tmp/test_syntax
-
-/tmp/test_syntax
-```
-
-Dernier état connu :
-
-```text
-test_syntax : tous les cas PASS
-test_parser : redirections PASS, $USER/$MISSING encore FAIL à cause de get_env_value
-```
-
-## Contrat avec Dounia
-
-Voir `contract_avec_dounia.md`.
-
-Points à valider ensemble :
-
-- structure exacte attendue par l'exec ;
-- format de `t_cmd` / `cmd_and_args` ;
-- gestion des redirections ;
-- qui ouvre les fichiers ;
-- qui lit le heredoc ;
-- où écrire `*get_status()` ;
-- qui centralise les messages d'erreur.
-
-## Erreurs
-
-Répartition décidée provisoirement :
-
-```text
-Ma partie détecte les erreurs avant exec :
-- quote non fermée
-- pipe mal placé
-- redirection sans filename
-- token inattendu
-
-Dounia détecte les erreurs d'exec :
-- command not found
-- permission denied
-- open / dup / fork / execve / waitpid
-- builtins
-- signaux
-```
-
-Codes à garder :
-
-```text
-syntax error -> 2
-command not found -> 127
-permission denied -> 126
-redirection open fail -> 1
-Ctrl-C -> 130
-Ctrl-\ -> 131
-```
-
-Décision temporaire pour avancer :
-
-```text
-validate_syntax retourne 0 si OK, 1 si erreur.
-Les messages exacts et *get_status() seront centralisés quand la vraie boucle
-principale sera décidée avec Dounia.
-```
-
-## Prochaine étape
-
-Continuer dans `tests/test_loop.c`, pas dans le vrai `main.c`.
-
-Ordre conseillé maintenant :
-
-```text
-1. parser les pipes vers plusieurs t_cmd chaînés
-2. décider avec Dounia comment stocker/ouvrir les redirections dans t_cmd
-3. gérer heredoc avec Dounia
-4. centraliser messages d'erreur + *get_status()
-```
-
-Ne pas brancher définitivement dans le main loop sans accord avec Dounia.

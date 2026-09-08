@@ -1,85 +1,19 @@
 # Contrat avec Dounia
 
-Ce document fixe les décisions communes entre ma partie parsing/expansion et la
-partie env/builtins/exec de Dounia.
+Dernière mise à jour : 8 septembre 2026.
 
-## Répartition confirmée
+## Répartition
 
 ```text
 Moi    : lexer, tokenisation, expansion, retrait des quotes, syntaxe, parser.
-Dounia : environnement, builtins, exec, wait/status, fd, heredoc, signaux.
+Dounia : env, builtins, exec, wait/status, signaux, heredoc.
 ```
 
-L'exec ne doit pas relire la ligne brute. Elle doit recevoir une structure déjà
-préparée :
+Ma partie prépare les données. L'exec consomme une structure déjà prête.
 
-```text
-arguments expandés
-quotes syntaxiques retirées
-redirections séparées
-pipes structurés
-```
+## Pipeline commune
 
-## Pipeline validée
-
-Ordre retenu :
-
-```text
-tokenizer avec quotes conservées
--> expand_tokens(tokens, env)
--> remove_quotes_from_tokens(tokens)
--> validation syntaxique
--> parser vers t_cmd
--> exec
-```
-
-État actuel au 1 septembre :
-
-```text
-La PR clean lexer / expansion / parser est mergée dans dev.
-Je continue sur chloe avec les docs et tests temporaires.
-Le vrai main.c n'est pas encore modifié pour brancher cette pipeline.
-La pipeline locale de test va jusqu'à validate_syntax puis parse_tokens.
-```
-
-Pourquoi l'expansion vient avant le retrait des quotes :
-
-```sh
-'$USER'   # pas d'expansion
-"$USER"   # expansion
-$USER     # expansion
-```
-
-Si les quotes étaient retirées avant l'expansion, on ne pourrait plus
-distinguer single quotes et double quotes.
-
-Contrat actuel de mon côté :
-
-```text
-expand_tokens expand tous les tokens WORD sauf le delimiter heredoc.
-remove_quotes_from_tokens passe après expand_tokens.
-```
-
-Exemples après `expand_tokens`, avant retrait des quotes :
-
-```text
-echo "$USER" '$USER' $? -> echo, "gpalemo", '$USER', 127
-cat << "$USER"          -> cat, <<, "$USER"
-```
-
-Exemples après `remove_quotes_from_tokens` :
-
-```text
-echo "$USER" '$USER' $? -> echo, gpalemo, $USER, 127
-cat << "$USER"          -> cat, <<, $USER
-```
-
-## À décider / faire ensemble maintenant
-
-Objectif court terme : pouvoir donner à l'exec une structure claire, sans que
-Dounia ait besoin de relire la ligne brute.
-
-Ordre proposé pour la boucle globale :
+Ordre à garder :
 
 ```text
 line = readline(prompt)
@@ -88,355 +22,157 @@ si line non vide -> add_history
 tokenizer(line, shell)
 expand_tokens(shell->token, shell->env)
 remove_quotes_from_tokens(shell->token)
-validation syntaxique
-parser tokens -> t_cmd / cmd_and_args / redirections
-exec
-cleanup de la commande courante
+validate_syntax(shell->token)
+parse_tokens(shell->token)
+launch_exec(shell, shell->cmds)
+cleanup tokens/cmds/line
 ```
 
-Ce qu'on peut brancher en local sur `chloe` avant merge :
-
-- un wrapper de pipeline qui appelle tokenizer, expansion et retrait des quotes ;
-- des tests pipeline sans toucher à l'exec de Dounia ;
-- le parser vers `cmd_and_args`, tant que le contrat de sortie est clair.
-
-Test local en cours :
+Règles importantes :
 
 ```text
-tests/test_loop.c
-readline -> add_history -> tokenizer -> expand_tokens
--> remove_quotes_from_tokens -> validate_syntax -> parse_tokens
--> print tokens + toutes les cmd_and_args
+ne pas remove quotes avant expansion
+ne pas parser si syntax error
+ne pas exec si parse_tokens retourne NULL
+ne pas relire la ligne brute dans l'exec
 ```
 
-Déjà validé de mon côté :
+## Sortie du parser
+
+Le parser donne à l'exec une liste de `t_cmd`.
+
+Chaque node contient :
 
 ```text
-syntax errors simples refusées avant parser
-redirections retirées de cmd_and_args
-pipes transformés en plusieurs t_cmd chaînés
+cmd_and_args
+fd_in
+fd_out
+is_builtin
+access_check
+path
+next
 ```
 
-`launch_exec` n'est pas encore branché dans ce test.
-
-Ce qu'il vaut mieux valider avec Dounia avant merge vers `dev` :
-
-- où `get_status()` est mis à jour après exec / builtins / erreurs / signaux ;
-- quel format exact l'exec attend pour les commandes et redirections ;
-- comment le heredoc reçoit le delimiter et l'information `had_quotes` ;
-- qui possède/libère les `t_cmd`, `cmd_and_args` et chemins de redirection.
-- comment centraliser les messages d'erreur et les exit status.
-
-## État parser de mon côté
-
-Déjà fait :
+Contrat :
 
 ```text
-parse_tokens crée une liste de t_cmd.
-cmd_and_args est dupliqué avec ft_strdup.
-Les redirections et leur filename/delimiter ne vont plus dans cmd_and_args.
-validate_syntax refuse les pipes/redirections mal placés.
-Les pipes séparent les commandes avec cmd->next.
+cmd_and_args = commande + arguments seulement
+les redirections ne sont pas dans cmd_and_args
+les filenames de redirection ne sont pas dans cmd_and_args
+les pipes sont représentés avec cmd->next
 ```
 
-Exemples :
+## Redirections classiques
+
+Décision confirmée : ma partie ouvre les redirections classiques.
 
 ```text
-echo hello        -> ["echo", "hello", NULL]
-echo hi > out     -> ["echo", "hi", NULL]
-cat < infile      -> ["cat", NULL]
-echo hi >> log    -> ["echo", "hi", NULL]
-cat << EOF        -> ["cat", NULL]
-echo hi | wc -c   -> cmd1 ["echo", "hi"], cmd2 ["wc", "-c"]
-```
-
-Pas encore fait :
-
-```text
-ouverture réelle des redirections dans t_cmd
-détection builtin côté parser
-messages bash-like exacts + status 2 dans la vraie boucle
-```
-
-## Redirections : décision avec Dounia
-
-Décision prise : ma partie ouvre les redirections classiques et prépare les fd
-dans `t_cmd`.
-
-État actuel de ma partie :
-
-```text
-Le lexer crée déjà les tokens T_REDIR_IN, T_REDIR_OUT, T_APPEND, T_HEREDOC.
-La syntax validation refuse une redirection sans word après.
-L'expansion et le retrait des quotes passent déjà sur les filenames.
-Le delimiter heredoc n'est pas expandé, mais ses quotes sont retirées.
-cmd_and_args ne contient plus les redirections ni leurs targets.
-```
-
-Exemples déjà propres côté `cmd_and_args` :
-
-```text
-echo hi > out                   -> ["echo", "hi", NULL]
-cat < infile                    -> ["cat", NULL]
-echo hi >> log                  -> ["echo", "hi", NULL]
-cat << EOF                      -> ["cat", NULL]
-cat < infile | grep hi > out    -> cmd1 ["cat"], cmd2 ["grep", "hi"]
-```
-
-Contrat retenu pour `<`, `>` et `>>` :
-
-```text
-parser lit les tokens de redirection
-parser prend le token suivant comme filename
-parser appelle open()
-parser remplit cmd->fd_in ou cmd->fd_out
-exec utilise les fd déjà préparés dans t_cmd
-```
-
-Comportement attendu :
-
-```text
-<  ouvre en lecture et remplit fd_in
->  ouvre en écriture, crée/tronque le fichier, et remplit fd_out
->> ouvre en écriture, crée/append le fichier, et remplit fd_out
+<  -> open O_RDONLY, remplit fd_in
+>  -> open O_WRONLY | O_CREAT | O_TRUNC, remplit fd_out
+>> -> open O_WRONLY | O_CREAT | O_APPEND, remplit fd_out
 ```
 
 Si plusieurs redirections du même côté existent :
 
 ```text
 la dernière gagne
-l'ancien fd ouvert doit être fermé avant d'être remplacé
+l'ancien fd est fermé avant remplacement
 ```
 
-Exemples :
+Open fail :
 
 ```text
-echo hi > out        -> cmd->fd_out = fd vers out
-cat < infile         -> cmd->fd_in = fd depuis infile
-echo hi > a > b      -> fd_out final vers b
-cat < a < b          -> fd_in final depuis b
+perror avec préfixe minishell
+*get_status() = 1
+parse_tokens retourne NULL
+exec ne doit pas être appelé
 ```
 
-À gérer de mon côté :
+À vérifier côté exec :
 
 ```text
-ouvrir les fichiers dans le parser
-gérer les erreurs d'open
-mettre *get_status() = 1 si open fail
-ne pas lancer l'exec de la commande concernée si redirection KO
-fermer dans open_redirections les anciens fd remplacés par une nouvelle redir
-fermer dans free_cmds les fd encore stockés dans t_cmd au cleanup
-tester les redirections seules et avec pipes
-```
-
-À valider avec Dounia pendant l'intégration :
-
-```text
-exec doit utiliser cmd->fd_in et cmd->fd_out s'ils ne valent pas 0/1
+exec doit utiliser cmd->fd_in et cmd->fd_out
 exec ne doit pas rouvrir les fichiers depuis les tokens
-la boucle ne doit pas appeler exec si le parser signale une erreur de redirection
+single external doit appliquer fd_in/fd_out
+builtin seul doit sauver/restaurer stdin/stdout si fd_in/fd_out != 0/1
+pipeline doit appliquer fd_in/fd_out dans chaque child
 ```
 
-Contrat précis pour les `close` :
+## Close / ownership
+
+Contrat actuel :
 
 ```text
-open_redirections ferme seulement les fd remplacés dans la même commande.
-free_cmds ferme les fd encore stockés dans t_cmd quand la commande est nettoyée.
+open_redirections ferme seulement les fd remplacés pendant le parsing.
+free_cmds ferme les fd encore stockés dans t_cmd au cleanup.
 Dans un pipeline, close dans le child après dup2 ne ferme pas le fd du parent.
-Le parent doit donc encore passer par free_cmds / cleanup après l'exec.
-Si un builtin ferme fd_in/fd_out dans le process parent, il doit remettre :
-fd_in = 0
-fd_out = 1
-sinon free_cmds risque de fermer une deuxième fois un fd déjà fermé.
+Le parent doit donc encore cleanup les fd restants.
 ```
 
-Heredoc :
+Attention builtin dans le parent :
 
 ```text
-<< reste un cas à part
-le delimiter n'est pas expandé
-les quotes du delimiter sont retirées
-had_quotes reste disponible pour savoir si le contenu doit être expandé
+si l'exec ferme cmd->fd_in ou cmd->fd_out dans le parent,
+elle doit remettre fd_in = 0 ou fd_out = 1
+sinon free_cmds peut retenter de close le même fd.
 ```
 
-Questions qui restent ouvertes pour heredoc :
+## Syntax errors
+
+Ma partie gère maintenant les erreurs syntax avant parser.
 
 ```text
-qui lit le contenu du heredoc
-qui crée le fd heredoc
-qui gère Ctrl-C dans heredoc
-comment transmettre had_quotes à la fonction heredoc finale
+validate_syntax retourne 1
+message sur stderr
+*get_status() = 2
+parse_tokens ne doit pas être appelé
+exec ne doit pas être appelé
 ```
 
-## Gestion des erreurs
-
-Les erreurs doivent être séparées par responsabilité.
-
-Règle générale :
+Format actuel :
 
 ```text
-messages d'erreur -> stderr
-status            -> *get_status()
-la boucle continue sauf exit/EOF/erreur fatale
+minishell: syntax error near unexpected token `TOKEN'
 ```
 
-De mon côté :
+Cas gérés :
 
 ```text
-lexer
-syntax validation
-parser
+| echo
+echo |
+echo || wc
+echo >
+echo > |
+echo < >
 ```
 
-À gérer de mon côté :
+## Expansion / env
 
-```text
-quote non fermée
-pipe mal placé
-redirection sans filename
-redirection open fail -> 1
-token inattendu avant parser
-erreur malloc dans parser
-```
-
-Status attendu pour les erreurs de syntaxe :
-
-```text
-2
-```
-
-Exemples de messages proches de bash :
-
-```text
-minishell: syntax error near unexpected token `|'
-minishell: syntax error near unexpected token `newline'
-```
-
-Côté Dounia :
-
-```text
-exec
-builtins
-waitpid
-signaux
-```
-
-À gérer côté Dounia :
-
-```text
-command not found -> 127
-permission denied -> 126
-builtin fail -> souvent 1
-Ctrl-C -> 130
-Ctrl-\ -> 131
-```
-
-Point à décider ensemble :
-
-```text
-Est-ce que validate_syntax affiche directement l'erreur et met *get_status() = 2,
-ou est-ce qu'elle retourne seulement un code que la boucle principale traduit ?
-```
-
-Décision provisoire de mon côté :
-
-```text
-validate_syntax retourne 0 si OK, 1 si erreur.
-Les vrais messages/stats seront branchés proprement quand la boucle principale
-sera décidée avec Dounia.
-```
-
-## Environnement et `$VAR`
-
-Contrat :
-
-```text
-Dounia maintient shell->env.
-Ma partie lit shell->env sans le modifier.
-```
-
-J'utilise directement :
-
-```c
-get_env_value(shell->env, "HOME")
-```
-
-Elle ne crée pas une deuxième fonction de recherche dans l'environnement.
+Ma partie lit `shell->env`, elle ne le modifie pas.
 
 Contrat mémoire :
 
 ```text
-get_env_value retourne une adresse empruntée.
-Je ne free jamais cette adresse.
-get_var_value retourne une nouvelle string allouée pour l'expansion.
+get_env_value retourne une adresse empruntée
+get_var_value retourne une nouvelle string allouée
 ```
 
-Variable absente :
+Bug à corriger côté env :
 
 ```text
-$MISSING -> chaîne vide
+get_env_value / set_env_value doivent tester ft_strcmp(...) == 0
 ```
 
-Cas spéciaux déjà gérés côté expansion :
+Sans ça :
 
 ```text
-$?      -> lit *get_status()
-$2USER  -> USER
-$12USER -> 2USER
-$1      -> chaîne vide
+$USER peut retourner HOME ou une autre variable
+$MISSING peut retourner une valeur au lieu de ""
 ```
 
-On ne gère pas pour l'instant :
+## Status
 
-```text
-$$      # PID shell bash
-$-      # options shell bash
-${VAR}  # syntaxe braces
-```
-
-## Point à corriger côté recherche env
-
-Point observé en test loop : `echo $USER` a retourné une mauvaise valeur
-d'environnement (`code.desktop` chez moi) alors que `$USER` vaut bien
-`gpalemo` dans le terminal.
-
-Cause probable dans `srcs/builtins/cd.c` :
-
-```c
-if (ft_strcmp(env->key, key))
-```
-
-`ft_strcmp` retourne `0` quand les strings sont égales. Cette condition matche
-donc les clés différentes.
-
-À corriger avec Dounia dans `get_env_value` et `set_env_value` :
-
-```text
-utiliser ft_strcmp(env->key, key) == 0
-```
-
-Ne pas faire non plus une comparaison partielle.
-
-Version à éviter :
-
-```c
-ft_strncmp(env->key, key, ft_strlen(key))
-```
-
-Risque :
-
-```text
-HOME peut matcher HOME_TEST
-```
-
-La nouvelle Libft contient maintenant `ft_strcmp`.
-
-## Dernier status et `$?`
-
-Décision mise à jour : ne pas ajouter `last_status` dans `t_shell` pour
-l'instant.
-
-On part plutôt sur une source unique :
+Décision :
 
 ```c
 int	*get_status(void)
@@ -450,144 +186,38 @@ int	*get_status(void)
 Contrat :
 
 ```text
-exec / builtins / erreurs / signaux -> écrivent *get_status()
-expansion de $?                    -> lit *get_status()
+expansion de $? lit *get_status()
+exec / builtins / erreurs / signaux écrivent *get_status()
 ```
 
-Valeur initiale souhaitée :
-
-```text
-0
-```
-
-Pourquoi `get_status()` :
-
-- accessible depuis les signaux sans passer `t_shell` ;
-- évite de faire circuler `t_shell` partout ;
-- simple à utiliser depuis l'expansion et les signaux ;
-- une seule source de vérité si tout le monde l'utilise.
-
-Important :
-
-```text
-ne pas mélanger get_status() et shell->last_status
-```
-
-Après merge avec `dev`, `get_status()` existe actuellement dans `srcs/main.c`
-côté Dounia, et `$?` le lit déjà dans l'expansion.
-
-Pour les tests locaux qui ont leur propre `main`, utiliser une petite version
-locale de `get_status()` dans le fichier de test plutôt que de compiler
-`srcs/main.c`.
-
-Il reste à brancher les écritures côté exec / builtins / erreurs / signaux.
+Ne pas ajouter en parallèle un `shell->last_status` sans rediscuter.
 
 ## Heredoc
 
-Le token du délimiteur conserve `had_quotes` même après retrait des quotes.
+Pas encore terminé.
 
-Contrat retenu :
-
-```text
-Le token après T_HEREDOC n'est pas expandé par expand_tokens.
-Le délimiteur passe quand même dans remove_quotes_from_tokens.
-Ma partie fournit donc le délimiteur sans quotes.
-Ma partie conserve had_quotes sur le token.
-Dounia utilise had_quotes pour décider si le contenu heredoc doit être expandé.
-```
-
-Exemples :
-
-```sh
-cat << EOF
-cat << "EOF"
-```
-
-Dans le second cas, les variables dans le contenu du heredoc ne doivent pas être
-expandées.
-
-Exemple :
+Déjà prêt côté lexer/expansion :
 
 ```text
-cat << "$USER"
+T_HEREDOC existe
+le delimiter n'est pas expandé
+les quotes du delimiter sont retirées
+had_quotes reste disponible sur le token
 ```
 
-Après `expand_tokens` :
+À décider ensemble :
 
 ```text
-cat, <<, "$USER"
+qui lit le contenu du heredoc
+qui crée le fd heredoc
+où stocker ce fd
+qui expand le contenu quand delimiter non quoté
+comment gérer Ctrl-C dans heredoc
 ```
 
-Après `remove_quotes_from_tokens` :
+Règle bash à garder :
 
 ```text
-cat, <<, $USER
-```
-
-Le delimiter n'a pas été expandé, mais ses quotes ont été retirées.
-
-## Points à fiabiliser plus tard côté environnement/exec
-
-Ces points ne bloquent pas l'expansion classique `$VAR`, mais doivent être
-gardés en tête :
-
-- `setup_env` retourne actuellement `void` et ne signale pas clairement un
-  échec d'allocation.
-- En cas d'échec au milieu de `setup_env`, la liste partielle doit être libérée.
-- `exec_exit` appelle encore directement `exit()` sans cleanup global.
-- Les retours de `exit`, builtins, erreurs d'exec, `waitpid` et signaux doivent
-  alimenter `get_status()`.
-- Il faudra une fonction de cleanup global du shell.
-- Il faudra une fonction qui libère toute la liste `t_env`, pas seulement un
-  nœud.
-
-## Git et fichiers générés
-
-La nouvelle Libft contient des fichiers `libft/obj/*.o` suivis par Git.
-
-Le `.gitignore` ignore actuellement `libft/objs/`, mais le nouveau Makefile
-utilise `libft/obj/`.
-
-Décision proposée :
-
-- ne pas nettoyer ces fichiers directement sur `chloe` sans coordination ;
-- faire une branche dédiée depuis `dev`.
-
-Plan proposé :
-
-```sh
-git switch dev
-git pull --ff-only
-git switch -c chore/repo-cleanup
-```
-
-Ajouter dans `.gitignore` :
-
-```gitignore
-libft/obj/
-```
-
-Retirer les objets du suivi Git sans supprimer les copies locales :
-
-```sh
-git rm -r --cached libft/obj
-git add .gitignore
-git commit -m "chore: stop tracking generated object files"
-git push -u origin chore/repo-cleanup
-```
-
-Puis ouvrir une PR vers `dev`.
-
-## Résumé des décisions déjà prises
-
-```text
-$VAR lit shell->env via get_env_value.
-get_env_value retourne une adresse empruntée.
-get_var_value retourne une string allouée.
-$? utilisera get_status(), pas shell->last_status.
-$digit vaut vide pour le digit, le reste du mot est conservé.
-expand_tokens précède remove_quotes_from_tokens.
-Le delimiter heredoc n'est pas expandé comme un WORD normal.
-L'exec reçoit des arguments déjà expandés et sans quotes syntaxiques.
-had_quotes reste utile après retrait des quotes, surtout pour heredoc.
+cat << EOF    -> contenu expandé
+cat << "EOF"  -> contenu non expandé
 ```
