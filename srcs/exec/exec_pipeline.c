@@ -6,24 +6,25 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/01 06:31:05 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 03:53:26 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void safe_close_fd(int fd)
+/* void	safe_close_fd(int fd)
 {
 	if (fd != -1)
 		close(fd);
-}
+} */
 
-void wait_all_pids(pid_t last_pid)
+void	wait_all_pids(pid_t last_pid)
 {
-	int status;
-	pid_t pid;
+	int		status;
+	pid_t	pid;
 
-	while ((pid = wait(&status)) > 0)
+	pid = wait(&status);
+	while (pid > 0) // pas legale avec la norminette
 	{
 		if (pid == last_pid)
 		{
@@ -32,7 +33,11 @@ void wait_all_pids(pid_t last_pid)
 			else if (WIFSIGNALED(status))
 				*get_status() = 128 + WTERMSIG(status);
 		}
-	} // gerer le cas ou wait retourne -1 et errno == ECHILD ? et les signaux par ici ??
+		// gerer cas ou wait ret -1 et errno == ECHILD ? et les signx par ici ??
+		//if (WIFSIGNALED(status) && WTERMSIG(status) == SIGQUIT)
+		//	ft_putstr_fd("Quit (core dumped)\n", STDERR_FILENO);
+		pid = wait(&status);
+	}
 }
 
 void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2])
@@ -63,7 +68,6 @@ void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2])
 void	exec_cmd(t_shell *shell, t_cmd *cmds)
 {
 	// int status;
-
 	if (cmds->is_builtin)
 		exec_builtins(shell, cmds);
 	else
@@ -71,38 +75,55 @@ void	exec_cmd(t_shell *shell, t_cmd *cmds)
 	exit(*get_status());
 }
 
+pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2])
+{
+	pid_t	pid;
+
+	pipefd[0] = -1;
+	pipefd[1] = -1;
+	if (cmds->next && pipe(pipefd) == -1)
+		return (perror("minishell: pipe"), -1);
+	pid = fork();
+	if (pid == -1)
+		return (perror("minishell: fork"), -1);
+	if (pid == 0)
+	{
+		set_fds(cmds, *prev_fd, pipefd);
+		exec_cmd(shell, cmds);
+	}
+	else
+	{
+		safe_close_fd(prev_fd);
+		if (cmds->next)
+		{
+			safe_close_fd(&pipefd[1]);
+			*prev_fd = pipefd[0];
+			pipefd[0] = -1;
+		}
+	}
+	return (pid);
+}
+
 int	exec_pipeline(t_shell *shell, t_cmd *cmds)
 {
 	pid_t	pid;
+	pid_t	last_pid;
 	int		pipefd[2];
 	int		prev_fd;
- 
+
 	prev_fd = -1;
+	last_pid = -1;
+	pipefd[0] = -1;
+	pipefd[1] = -1;
 	while (cmds)
 	{
-		if (cmds->next && pipe(pipefd) == -1)
-			return (perror("pipe"), safe_close_fd(prev_fd), 1);
-		pid = fork();
+		pid = spawn_cmd(shell, cmds, &prev_fd, pipefd);
 		if (pid == -1)
-			return (perror("fork"), safe_close_fd(prev_fd), 1); // close otherfds ?
-		if (pid == 0)
-		{
-			set_fds(cmds, prev_fd, pipefd);
-			exec_cmd(shell, cmds);
-		}	
-		else
-		{ // close les fd inutiles dans le parent
-			if (prev_fd != -1)
-				close(prev_fd);
-			if (cmds->next)
-			{
-				close(pipefd[1]);
-				prev_fd = pipefd[0];
-			}	
-		}
+			break ;
+		last_pid = pid;
 		cmds = cmds->next;
 	}
-	safe_close_fd(prev_fd);
-	wait_all_pids(pid);
-	return (*get_status() ); // ou rien ?
+	safe_close_all_fd(&prev_fd, pipefd);
+	wait_all_pids(last_pid);
+	return (*get_status()); // ou rien ?
 }
