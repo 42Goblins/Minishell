@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 23:25:04 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/13 16:05:11 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/09 16:22:46 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
  * Quotes are kept here to know when $ must be expanded or ignored.
  */
 
+static int	handle_expansion_char(char **result, int *i, t_env *env,
+				bool in_single);
 static char	*join_three_parts(char *first, char *second, char *third);
 static char	*replace_current_var(char *result, int i, t_env *env, int *new_i);
 static bool	update_quote_state(char c, bool *in_single, bool *in_double);
@@ -24,12 +26,12 @@ static bool	update_quote_state(char c, bool *in_single, bool *in_double);
 /**
  * @brief Expands the variables in one word.
  *
- * The loop keeps track of quotes, expands the right `$`, and skips the rest.
+ * Quotes are still in the string here. The loop updates the quote state first,
+ * then expands a `$` only if the current context allows it.
  */
 char	*expand_word(char *word, t_env *env)
 {
 	int		i;
-	int		new_i;
 	char	*result;
 	bool	in_single;
 	bool	in_double;
@@ -46,16 +48,8 @@ char	*expand_word(char *word, t_env *env)
 	{
 		if (update_quote_state(result[i], &in_single, &in_double))
 			i++;
-		else if (is_dollar_expand(result, i, in_single))
-		{
-			result = replace_current_var(result, i, env, &new_i);
-			if (!result)
-				return (NULL);
-			i = new_i;
-			continue ;
-		}
-		else
-			i++;
+		else if (handle_expansion_char(&result, &i, env, in_single))
+			return (NULL);
 	}
 	return (result);
 }
@@ -81,8 +75,9 @@ static bool	update_quote_state(char c, bool *in_single, bool *in_double)
 /**
  * @brief Replaces the variable found at index i.
  *
- * It cuts the word in three parts: before the `$`, the expanded value,
- * and what comes after the variable. new_i tells where the scan should restart.
+ * `result` is cut around the `$`: text before it, expanded value, and text
+ * after the variable name. The old string is freed and new_i is set after the
+ * inserted value, so expand_word can keep scanning from the right place.
  */
 static char	*replace_current_var(char *result, int i, t_env *env, int *new_i)
 {
@@ -128,4 +123,27 @@ static char	*join_three_parts(char *first, char *second, char *third)
 	free(tmp);
 	free_three_strings(first, second, third);
 	return (joined);
+}
+
+/**
+ * @brief Handles one character that is not an active quote.
+ *
+ * If the character starts an expansion, it replaces it and updates i.
+ * Otherwise it only moves i to the next character.
+ */
+static int	handle_expansion_char(char **result, int *i, t_env *env,
+	bool in_single)
+{
+	int	new_i;
+
+	if (is_dollar_expand(*result, *i, in_single) == false)
+	{
+		(*i)++;
+		return (0);
+	}
+	*result = replace_current_var(*result, *i, env, &new_i);
+	if (!*result)
+		return (1);
+	*i = new_i;
+	return (0);
 }
