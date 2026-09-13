@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 03:57:56 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/11 23:33:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Counts the number of nodes in an t_env list.
+ */
 int	env_len(t_env *env)
 {
 	int	i;
@@ -25,6 +28,10 @@ int	env_len(t_env *env)
 	return (i);
 }
 
+/**
+ * @brief Converts the t_shell env list into an execve-compatible
+ * "KEY=VALUE" array, terminated by NULL.
+ */
 char	**t_env_to_tab(t_env *env)
 {
 	int		i;
@@ -47,6 +54,14 @@ char	**t_env_to_tab(t_env *env)
 	return (env_tab);
 }
 
+/**
+ * @brief Find cmd's path and replaces the current process
+ * with it via execve.
+ *
+ * Meant to run inside an already-forked child: it always exits the
+ * process, whether the command is not found, not executable, or
+ * successfully launched.
+ */
 void	exec_external(t_cmd *cmd, t_env *env)
 {
 	char	*path;
@@ -72,8 +87,13 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	//	*get_status() = WEXITSTATUS(status);
 	//else if (WIFSIGNALED(status))
 	//	*get_status() = 128 + WTERMSIG(status);
+	// ici ou dans exec single et exec pipeline ? AH WTF
 }
 
+/**
+ * @brief Forks and runs an external command outside of any
+ * pipeline, then waits for it and stores its exit status.
+ */
 void	exec_single_external(t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
@@ -92,7 +112,4 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		*get_status() = 128 + WTERMSIG(status);
-	// exit(126) ??
-	// check mieux les exit pour external, si pas trouvé 127, si pas exécutable 
-	// 126, sinon le status du fils ??
 }
