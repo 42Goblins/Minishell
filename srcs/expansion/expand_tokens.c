@@ -12,6 +12,12 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Expands every expandable word token in place.
+ *
+ * The heredoc delimiter is skipped because it must not be expanded. It will
+ * still go through quote removal later.
+ */
 int	expand_tokens(t_token *tokens, t_env *env)
 {
 	t_token	*current;
