@@ -1,37 +1,60 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   free_cmds.c                                        :+:      :+:    :+:   */
+/*   free_stuff.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/09/01 16:29:06 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/13 18:44:34 by dgeara           ###   ########.fr       */
+/*   Created: 2026/09/08 03:21:34 by dgeara            #+#    #+#             */
+/*   Updated: 2026/09/08 03:44:38 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/**
- * @brief Frees a full command list and closes remaining redirection fds.
- *
- * The exec part may close duplicated fds in child processes, but the parent
- * still owns the fds stored in t_cmd until this cleanup runs.
- */
-void	free_cmds(t_cmd *cmds)
+void	free_t_env(t_env *env)
 {
-	t_cmd	*tmp;
+	if (!env)
+		return ;
+	if (env->key)
+		free(env->key);
+	if (env->value)
+		free(env->value);
+	free(env);
+}
+
+void	free_lst_env(t_env *env)
+{
+	t_env	*next;
+
+	while (env)
+	{
+		next = env->next;
+		free_t_env(env);
+		env = next;
+	}
+}
+
+void	free_lst_cmds(t_cmd *cmds)
+{
+	t_cmd	*next;
 
 	while (cmds)
 	{
-		tmp = cmds->next;
-		if (cmds->fd_in != 0)
-			close(cmds->fd_in);
-		if (cmds->fd_out != 1)
-			close(cmds->fd_out);
+		next = cmds->next;
 		free_tab(cmds->cmd_and_args);
 		free(cmds->path);
 		free(cmds);
-		cmds = tmp;
+		cmds = next;
 	}
+}
+
+void	free_tab(char **tab)
+{
+	int	i;
+
+	i = 0;
+	while (tab[i])
+		free(tab[i++]);
+	free(tab);
 }
