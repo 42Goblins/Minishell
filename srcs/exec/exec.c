@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 02:40:17 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/04 03:34:48 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 19:13:37 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,10 @@ int	count_cmds(t_cmd *cmds)
 	return (count);
 }
 
+/**
+ * @brief Dispatches a parsed command list to the right execution path:
+ * a lone builtin, a lone external command, or a full pipeline.
+ */
 void	launch_exec(t_shell *shell, t_cmd *cmds)
 {
 	int	cmd_count;
