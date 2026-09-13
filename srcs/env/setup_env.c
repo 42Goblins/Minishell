@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/03 16:45:57 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/13 17:13:50 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Extracts KEY from "KEY=VALUE" env string.
+ */
 char	*cpy_key(char *env)
 {
 	int		i;
@@ -27,6 +30,11 @@ char	*cpy_key(char *env)
 	return (key);
 }
 
+/**
+ * @brief Extracts VALUE from "KEY=VALUE" env string.
+ *
+ * Returns an empty string if the variable has no value (e.g. "KEY=").
+ */
 char	*cpy_value(char *env)
 {
 	int		i;
@@ -61,6 +69,9 @@ char	*cpy_value(char *env)
 	}
 } */
 
+/**
+ * @brief Builds an env list node from a "KEY=VALUE" (env_line) string.
+ */
 t_env	*new_env_node(char *env_line)
 {
 	t_env	*node;
@@ -81,6 +92,10 @@ t_env	*new_env_node(char *env_line)
 	return (node);
 }
 
+/**
+ * @brief Converts the environment array received by main into the
+ * t_shell's internal env list.
+ */
 void	setup_env(t_shell *shell, char **env)
 {
 	int		i;

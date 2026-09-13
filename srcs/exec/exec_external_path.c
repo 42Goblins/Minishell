@@ -6,12 +6,17 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:57:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 03:58:06 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 20:00:25 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Checks whether cmd exists and is executable inside dir,
+ * returning its full path if so and null if it doesn't exist or
+ * doesn't have acces.
+ */
 char	*try_path(char *dir, char *cmd)
 {
 	char	*tmp;
@@ -26,6 +31,9 @@ char	*try_path(char *dir, char *cmd)
 	return (NULL);
 }
 
+/**
+ * @brief Retrieves the value of the PATH variable from the env list.
+ */
 char	*get_path(t_env *env)
 {
 	while (env)
@@ -37,6 +45,12 @@ char	*get_path(t_env *env)
 	return (NULL);
 }
 
+/**
+ * @brief Looks up a command name in $PATH and returns its full path.
+ *
+ * Absolute or relative paths (starting with / or ./) are checked
+ * directly instead. The returned string is always allocated.
+ */
 char	*find_path(char *cmd, t_env *env)
 {
 	char	**dirs;

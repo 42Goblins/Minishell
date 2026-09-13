@@ -6,18 +6,16 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 03:53:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 20:00:14 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/* void	safe_close_fd(int fd)
-{
-	if (fd != -1)
-		close(fd);
-} */
-
+/**
+ * @brief Waits for every child process and stores the exit status
+ * of the last command in get_status().
+ */
 void	wait_all_pids(pid_t last_pid)
 {
 	int		status;
@@ -40,31 +38,39 @@ void	wait_all_pids(pid_t last_pid)
 	}
 }
 
+/**
+ * @brief Redirects a cmd stdin/stdout to the pipe or its
+ * own redirection fds, closing the fds no longer needed.
+ */
 void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2])
 {
 	if (prev_fd != -1)
 	{
 		dup2(prev_fd, STDIN_FILENO);
-		close(prev_fd);
+		safe_close_fd(&prev_fd);
 	}
 	if (cmds->next)
 	{
-		close(pipefd[0]);
+		safe_close_fd(&pipefd[0]);
 		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
+		safe_close_fd(&pipefd[1]);
 	}
 	if (cmds->fd_in != 0)
 	{
 		dup2(cmds->fd_in, STDIN_FILENO);
-		close(cmds->fd_in);
+		safe_close_fd(&cmds->fd_in);
 	}
 	if (cmds->fd_out != 1)
 	{
 		dup2(cmds->fd_out, STDOUT_FILENO);
-		close(cmds->fd_out);
+		safe_close_fd(&cmds->fd_out);
 	}
 }
 
+/**
+ * @brief Launch exec_builtins or exec_external 
+ * if they fail, exit with the command's status.
+ */
 void	exec_cmd(t_shell *shell, t_cmd *cmds)
 {
 	// int status;
@@ -75,6 +81,13 @@ void	exec_cmd(t_shell *shell, t_cmd *cmds)
 	exit(*get_status());
 }
 
+/**
+ * @brief Set up pipe and fds, then forks into a builtin or external command.
+ * executes the command in a child process, and returns the child's pid.
+ *
+ * On the last command of the pipeline, no output pipe is created.
+ * Returns the child's pid, or -1 if pipe() or fork() failed.
+ */
 pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2])
 {
 	pid_t	pid;
@@ -104,6 +117,12 @@ pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2])
 	return (pid);
 }
 
+/**
+ * @brief Runs a full command pipeline, forking one child per command.
+ *
+ * Cleans up remaining fds and waits for every child before returning,
+ * even if a pipe() or fork() call failed partway through.
+ */
 int	exec_pipeline(t_shell *shell, t_cmd *cmds)
 {
 	pid_t	pid;
