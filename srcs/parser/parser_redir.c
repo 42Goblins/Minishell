@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/03 01:52:56 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/07 02:11:32 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/15 18:54:13 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,8 @@ static int	open_current_redirection(t_cmd *cmd, t_token *current)
 	if (current->type == T_APPEND)
 		return (open_output_redirection(cmd, current->next->value,
 				O_WRONLY | O_CREAT | O_APPEND));
+	if (current->type == T_HEREDOC)
+		return (open_heredoc_redirection(cmd, current->next->value));
 	return (0);
 }
 
