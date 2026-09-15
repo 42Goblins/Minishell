@@ -6,12 +6,16 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 16:11:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/04 03:22:43 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/08 19:48:45 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Checks whether the command name matches one of the shell's
+ * builtins (cd, echo, env, pwd, unset, exit, export).
+ */
 int	check_is_builtins(char *cmd)
 {
 	if (ft_strcmp(cmd, "cd") == 0)
@@ -31,6 +35,9 @@ int	check_is_builtins(char *cmd)
 	return (0);
 }
 
+/**
+ * @brief Runs the builtin matching cmd's name and stores its exit status.
+ */
 void	exec_builtins(t_shell *shell, t_cmd *cmd)
 {
 	if (ft_strncmp(cmd->cmd_and_args[0], "cd", 3) == 0)

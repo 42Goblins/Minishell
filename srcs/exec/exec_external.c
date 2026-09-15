@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/04 03:39:24 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/11 23:33:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Counts the number of nodes in an t_env list.
+ */
 int	env_len(t_env *env)
 {
 	int	i;
@@ -25,6 +28,10 @@ int	env_len(t_env *env)
 	return (i);
 }
 
+/**
+ * @brief Converts the t_shell env list into an execve-compatible
+ * "KEY=VALUE" array, terminated by NULL.
+ */
 char	**t_env_to_tab(t_env *env)
 {
 	int		i;
@@ -47,70 +54,14 @@ char	**t_env_to_tab(t_env *env)
 	return (env_tab);
 }
 
-void	free_tab(char **tab)
-{
-	int	i;
-
-	i = 0;
-	while (tab[i])
-		free(tab[i++]);
-	free(tab);
-}
-
-char	*try_path(char *dir, char *cmd)
-{
-	char	*tmp;
-	char	*full;
-
-	tmp = ft_strjoin(dir, "/");
-	full = ft_strjoin(tmp, cmd);
-	free(tmp);
-	if (access(full, X_OK) == 0)
-		return (full);
-	free(full);
-	return (NULL);
-}
-
-char	*get_path(t_env *env)
-{
-	while (env)
-	{
-		if (ft_strcmp(env->key, "PATH") == 0)
-			return (env->value);
-		env = env->next;
-	}
-	return (NULL);
-}
-
-char	*find_path(char *cmd, t_env *env)
-{
-	char	**dirs;
-	char	*path;
-	char	*result;
-	int		i;
-
-	if (cmd[0] == '/' || (cmd[0] == '.' && cmd[1] == '/'))
-	{
-		if (access(cmd, X_OK) == 0)
-			return (ft_strdup(cmd));
-		return (NULL);
-	}
-	path = get_path(env);
-	if (!path)
-		return (NULL);
-	dirs = ft_split(path, ':');
-	i = 0;
-	while (dirs[i])
-	{
-		result = try_path(dirs[i], cmd);
-		if (result)
-			return (free_tab(dirs), result);
-		i++;
-	}
-	i = 0;
-	return (free_tab(dirs), NULL);
-}
-
+/**
+ * @brief Find cmd's path and replaces the current process
+ * with it via execve.
+ *
+ * Meant to run inside an already-forked child: it always exits the
+ * process, whether the command is not found, not executable, or
+ * successfully launched.
+ */
 void	exec_external(t_cmd *cmd, t_env *env)
 {
 	char	*path;
@@ -130,16 +81,19 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	perror("execve");
 	free(path);
 	free_tab(env_tab);
-	exit(126);
+	exit(126); // return (getstatus = 126) ??
 	// restore_original_signals
-
 	//	if (WIFEXITED(status))
 	//	*get_status() = WEXITSTATUS(status);
 	//else if (WIFSIGNALED(status))
 	//	*get_status() = 128 + WTERMSIG(status);
-
+	// ici ou dans exec single et exec pipeline ? AH WTF
 }
 
+/**
+ * @brief Forks and runs an external command outside of any
+ * pipeline, then waits for it and stores its exit status.
+ */
 void	exec_single_external(t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
@@ -158,7 +112,4 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
 		*get_status() = 128 + WTERMSIG(status);
-	// exit(126) ??
-	// check mieux les exit pour external, si pas trouvé 127, si pas exécutable 
-	// 126, sinon le status du fils ??
 }
