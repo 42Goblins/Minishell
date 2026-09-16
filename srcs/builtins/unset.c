@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 02:32:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 03:44:28 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/15 23:09:49 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ int	exec_unset(t_env **env, char **cmd)
 		prev = NULL;
 		while (current)
 		{
-			if (ft_strcmp(current->key, cmd[i]))
+			if (ft_strcmp(current->key, cmd[i]) == 0)
 			{
 				del_env_variable(env, prev, current);
 				break ;
