@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 16:11:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 19:48:45 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 02:18:07 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,18 +40,33 @@ int	check_is_builtins(char *cmd)
  */
 void	exec_builtins(t_shell *shell, t_cmd *cmd)
 {
-	if (ft_strncmp(cmd->cmd_and_args[0], "cd", 3) == 0)
+	if (ft_strcmp(cmd->cmd_and_args[0], "cd") == 0)
 		*get_status() = exec_cd(shell, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "echo", 5) == 0)
+	else if (ft_strcmp(cmd->cmd_and_args[0], "echo") == 0)
 		*get_status() = exec_echo(cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "env", 4) == 0)
+	else if (ft_strcmp(cmd->cmd_and_args[0], "env") == 0)
 		*get_status() = exec_env(shell->env, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "pwd", 4) == 0)
+	else if (ft_strcmp(cmd->cmd_and_args[0], "pwd") == 0)
 		*get_status() = exec_pwd();
-	else if (ft_strncmp(cmd->cmd_and_args[0], "unset", 6) == 0)
+	else if (ft_strcmp(cmd->cmd_and_args[0], "unset") == 0)
 		*get_status() = exec_unset(&shell->env, cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "exit", 5) == 0)
-		*get_status() = exec_exit(cmd->cmd_and_args);
-	else if (ft_strncmp(cmd->cmd_and_args[0], "export", 7) == 0)
+	else if (ft_strcmp(cmd->cmd_and_args[0], "exit") == 0)
+		*get_status() = exec_exit(shell, cmd->cmd_and_args);
+	else if (ft_strcmp(cmd->cmd_and_args[0], "export") == 0)
 		*get_status() = exec_export(&shell->env, cmd->cmd_and_args);
+}
+
+void	exec_single_builtins(t_shell *shell, t_cmd *cmd)
+{
+	int	saved_stdin;
+	int	saved_stdout;
+
+	saved_stdin = dup(STDIN_FILENO);
+	saved_stdout = dup(STDOUT_FILENO);
+	set_fds(cmd, -1, NULL);
+	exec_builtins(shell, cmd);
+	dup2(saved_stdin, STDIN_FILENO);
+	safe_close_fd(&saved_stdin);
+	dup2(saved_stdout, STDOUT_FILENO);
+	safe_close_fd(&saved_stdout);
 }

@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 20:00:14 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 02:20:53 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,6 @@ void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2])
  */
 void	exec_cmd(t_shell *shell, t_cmd *cmds)
 {
-	// int status;
 	if (cmds->is_builtin)
 		exec_builtins(shell, cmds);
 	else
@@ -123,7 +122,7 @@ pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2])
  * Cleans up remaining fds and waits for every child before returning,
  * even if a pipe() or fork() call failed partway through.
  */
-int	exec_pipeline(t_shell *shell, t_cmd *cmds)
+void	exec_pipeline(t_shell *shell, t_cmd *cmds)
 {
 	pid_t	pid;
 	pid_t	last_pid;
@@ -144,5 +143,4 @@ int	exec_pipeline(t_shell *shell, t_cmd *cmds)
 	}
 	safe_close_all_fd(&prev_fd, pipefd);
 	wait_all_pids(last_pid);
-	return (*get_status()); // ou rien ?
 }

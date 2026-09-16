@@ -6,11 +6,20 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/30 05:13:46 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 02:17:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+void	clean_exit(t_shell *shell, int status)
+{
+	free_cmds(shell->cmds);
+	free_tokens(shell->token);
+	free_lst_env(shell->env);
+	clear_history();
+	exit(status);
+}
 
 int	is_num(char *str)
 {
@@ -19,6 +28,8 @@ int	is_num(char *str)
 	i = 0;
 	if (str[i] == '+' || str[i] == '-')
 		i++;
+	if (!str[i])
+		return (0);
 	while (str[i])
 	{
 		if (!ft_isdigit(str[i]))
@@ -28,8 +39,11 @@ int	is_num(char *str)
 	return (1);
 }
 
-int	exec_exit(char **cmd)
+int	exec_exit(t_shell *shell, char **cmd)
 {
+	int	status;
+
+	status = *get_status();
 	ft_putstr_fd("exit\n", 2);
 	if (cmd[1])
 	{
@@ -38,16 +52,16 @@ int	exec_exit(char **cmd)
 			ft_putstr_fd("minishell: exit: ", 2);
 			ft_putstr_fd(cmd[1], 2);
 			ft_putstr_fd(": numeric argument required\n", 2);
-			exit (2); // a modif avec clean
+			clean_exit (shell, 2);
 		}
-		else if (cmd[2])
+		if (cmd[2])
 		{
 			ft_putstr_fd("minishell: exit: too many arguments\n", 2);
-			// need add get status ? et return 2 ??
+			return (1);
 		}
 		else
-			exit(ft_atoi(cmd[1])); //ici aussi need clean avant
+			status = ft_atoi(cmd[1]);
 	}
-	exit(0); //remplacer par une fonction exit clean, et add code exit dinamique
+	clean_exit(shell, (status % 256));
 	return (0);
 }

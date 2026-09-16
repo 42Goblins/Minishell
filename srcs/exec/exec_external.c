@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/11 23:33:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 02:36:24 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 
 	env_tab = NULL;
 	path = find_path(cmd->cmd_and_args[0], env);
-	if (!path) // NOPE problème si psq doit continuer la pipeline enft :(((
+	if (!path)
 	{
 		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
@@ -106,7 +106,10 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 		return ;
 	}
 	if (pid == 0)
+	{
+		set_fds(cmd, -1, NULL);
 		exec_external(cmd, env);
+	}
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
 		*get_status() = WEXITSTATUS(status);

@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 02:40:17 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 19:13:37 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/15 18:36:19 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void	launch_exec(t_shell *shell, t_cmd *cmds)
 
 	cmd_count = count_cmds(cmds);
 	if (cmd_count == 1 && cmds->is_builtin)
-		exec_builtins(shell, cmds);
+		exec_single_builtins(shell, cmds);
 	else if (cmd_count == 1)
 		exec_single_external(cmds, shell->env);
 	else
