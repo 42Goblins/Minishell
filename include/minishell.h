@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/08 03:59:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 02:26:18 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,6 @@ typedef struct s_shell
 	t_token		*token;
 	// char		**env_for_exec;
 	t_cmd		*cmds;
-	//char		*path;
 }				t_shell;
 
 /* ========================================================================== */
@@ -125,8 +124,9 @@ void	del_env_variable(t_env **first, t_env *prev, t_env *current);
 int		exec_unset(t_env **env, char **cmd);
 
 /* exit.c */
+void	clean_exit(t_shell *shell, int status);
 int		is_num(char *str);
-int		exec_exit(char **cmd);
+int		exec_exit(t_shell *shell, char **cmd);
 
 /* export_print.c */
 t_env	**lst_cpy(t_env *env);
@@ -201,9 +201,15 @@ void	exec_single_external(t_cmd *cmd, t_env *env);
 /* exec_builtins.c */
 int		check_is_builtins(char *cmd);
 void	exec_builtins(t_shell *shell, t_cmd *cmd);
+void	exec_single_builtins(t_shell *shell, t_cmd *cmd);
 
 /* exec_pipeline.c */
-int		exec_pipeline(t_shell *shell, t_cmd *cmds);
+void	wait_all_pids(pid_t last_pid);
+void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2]);
+void	exec_cmd(t_shell *shell, t_cmd *cmds);
+pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2]);
+void		exec_pipeline(t_shell *shell, t_cmd *cmds);
+
 
 /* ========================================================================== */
 /*                                  UTILS                                     */
@@ -219,7 +225,6 @@ void	free_cmds(t_cmd *cmds);
 /* free_stuff.c */
 void	free_t_env(t_env *env);
 void	free_lst_env(t_env *env);
-void	free_lst_cmds(t_cmd *cmds);
 void	free_tab(char **tab);
 
 /* get_status.c */
