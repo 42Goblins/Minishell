@@ -14,7 +14,7 @@
 
 /*
  * This file opens redirection files for one command.
- * Heredoc is skipped here for now.
+ * Classic redirections are opened here, and heredoc is delegated to its file.
  */
 
 static int	open_current_redirection(t_cmd *cmd, t_token *current, t_env *env);
@@ -26,7 +26,8 @@ static int	print_redirection_error(char *filename);
  * @brief Opens redirection files for one command and stores their fds.
  *
  * The scan stops at the next pipe. If several redirections target the same
- * side, the last one replaces the previous fd.
+ * side, the last one replaces the previous fd. Env is only needed by heredoc
+ * so its content can be expanded when the delimiter is not quoted.
  */
 int	open_redirections(t_cmd *cmd, t_token *tokens, t_env *env)
 {
@@ -52,7 +53,8 @@ int	open_redirections(t_cmd *cmd, t_token *tokens, t_env *env)
 /**
  * @brief Opens the redirection represented by the current token.
  *
- * Heredoc is skipped for now because it will be handled separately.
+ * Classic redirections open files directly. Heredoc is passed to the heredoc
+ * helper because it reads user input before giving an fd to the command.
  */
 static int	open_current_redirection(t_cmd *cmd, t_token *current, t_env *env)
 {

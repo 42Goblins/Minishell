@@ -21,14 +21,8 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
 
 /**
  * @brief Converts prepared tokens into a linked command list split by pipes.
- */
-t_cmd	*parse_tokens(t_token *tokens)
-{
-	return (parse_tokens_with_env(tokens, NULL));
-}
-
-/**
- * @brief Converts prepared tokens into commands and keeps env for heredoc.
+ *
+ * Env is passed down to redirections so heredoc content can expand variables.
  */
 t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env)
 {
@@ -141,6 +135,8 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value)
 
 /**
  * @brief Allocates one command node with args, redirections and builtin flag.
+ *
+ * Redirections may need env when a heredoc expands its content.
  */
 t_cmd	*create_cmd_node(t_token *tokens, t_env *env)
 {
