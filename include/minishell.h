@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/15 18:51:28 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/16 20:27:34 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,12 +173,13 @@ int		expand_tokens(t_token *tokens, t_env *env);
 
 int		count_cmd_args(t_token *tokens);
 char	**create_cmd_and_args(t_token *tokens);
-t_cmd	*create_cmd_node(t_token *tokens);
+t_cmd	*create_cmd_node(t_token *tokens, t_env *env);
 t_cmd	*parse_tokens(t_token *tokens);
+t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
-int		open_redirections(t_cmd *cmd, t_token *tokens);
-int		open_heredoc_redirection(t_cmd *cmd, char *delimiter);
+int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+int		open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env);
 
 /* ========================================================================== */
 /*                                    EXEC                                    */

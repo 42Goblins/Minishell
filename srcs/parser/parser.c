@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/08 20:39:37 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/16 20:30:26 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,14 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
  */
 t_cmd	*parse_tokens(t_token *tokens)
 {
+	return (parse_tokens_with_env(tokens, NULL));
+}
+
+/**
+ * @brief Converts prepared tokens into commands and keeps env for heredoc.
+ */
+t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env)
+{
 	t_token	*current;
 	t_cmd	*cmds;
 	t_cmd	*new_cmd;
@@ -35,7 +43,7 @@ t_cmd	*parse_tokens(t_token *tokens)
 	last_cmd = NULL;
 	while (current)
 	{
-		new_cmd = create_cmd_node(current);
+		new_cmd = create_cmd_node(current, env);
 		if (!new_cmd)
 			return (free_cmds(cmds), NULL);
 		if (cmds == NULL)
@@ -134,7 +142,7 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value)
 /**
  * @brief Allocates one command node with args, redirections and builtin flag.
  */
-t_cmd	*create_cmd_node(t_token *tokens)
+t_cmd	*create_cmd_node(t_token *tokens, t_env *env)
 {
 	t_cmd	*cmd;
 
@@ -151,7 +159,7 @@ t_cmd	*create_cmd_node(t_token *tokens)
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
 	cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
-	if (open_redirections(cmd, tokens))
+	if (open_redirections(cmd, tokens, env))
 		return (free_cmds(cmd), NULL);
 	return (cmd);
 }

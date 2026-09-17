@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/03 01:52:56 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/15 18:54:13 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/16 19:48:57 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
  * Heredoc is skipped here for now.
  */
 
-static int	open_current_redirection(t_cmd *cmd, t_token *current);
+static int	open_current_redirection(t_cmd *cmd, t_token *current, t_env *env);
 static int	open_input_redirection(t_cmd *cmd, char *filename);
 static int	open_output_redirection(t_cmd *cmd, char *filename, int flags);
 static int	print_redirection_error(char *filename);
@@ -28,7 +28,7 @@ static int	print_redirection_error(char *filename);
  * The scan stops at the next pipe. If several redirections target the same
  * side, the last one replaces the previous fd.
  */
-int	open_redirections(t_cmd *cmd, t_token *tokens)
+int	open_redirections(t_cmd *cmd, t_token *tokens, t_env *env)
 {
 	t_token	*current;
 
@@ -39,7 +39,7 @@ int	open_redirections(t_cmd *cmd, t_token *tokens)
 	{
 		if (is_redirection_token(current->type))
 		{
-			if (open_current_redirection(cmd, current))
+			if (open_current_redirection(cmd, current, env))
 				return (1);
 			current = current->next->next;
 		}
@@ -54,7 +54,7 @@ int	open_redirections(t_cmd *cmd, t_token *tokens)
  *
  * Heredoc is skipped for now because it will be handled separately.
  */
-static int	open_current_redirection(t_cmd *cmd, t_token *current)
+static int	open_current_redirection(t_cmd *cmd, t_token *current, t_env *env)
 {
 	if (current->type == T_REDIR_IN)
 		return (open_input_redirection(cmd, current->next->value));
@@ -65,7 +65,7 @@ static int	open_current_redirection(t_cmd *cmd, t_token *current)
 		return (open_output_redirection(cmd, current->next->value,
 				O_WRONLY | O_CREAT | O_APPEND));
 	if (current->type == T_HEREDOC)
-		return (open_heredoc_redirection(cmd, current->next->value));
+		return (open_heredoc_redirection(cmd, current->next, env));
 	return (0);
 }
 

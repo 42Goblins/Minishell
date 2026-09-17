@@ -109,7 +109,7 @@ int	main(int ac, char **av, char **env)
 					print_tokens(shell.token);
 					if (validate_syntax(shell.token) == 0)
 					{
-						shell.cmds = parse_tokens(shell.token);
+						shell.cmds = parse_tokens_with_env(shell.token, shell.env);
 						if (shell.cmds)
 							print_cmds(shell.cmds);
 						else

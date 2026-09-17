@@ -93,7 +93,7 @@ static t_cmd	*parse_test_line(char *input, t_shell *shell, t_env *user,
 		return (free_tokens(shell->token), shell->token = NULL, NULL);
 	if (validate_syntax(shell->token))
 		return (free_tokens(shell->token), shell->token = NULL, NULL);
-	return (parse_tokens(shell->token));
+	return (parse_tokens_with_env(shell->token, shell->env));
 }
 
 /**
@@ -172,7 +172,13 @@ int	main(int ac, char **av, char **env)
 	printf("\nTest 2 attend seulement : END\n");
 	test_heredoc_case("heredoc vide -> fd_in contient une string vide",
 		"cat << END", "");
-	printf("\nTest 3 attend une ligne puis EOF/Ctrl-D sans delimiter STOP\n");
+	printf("\nTest 3 attend expansion de $USER avec delimiter non quote\n");
+	test_heredoc_case("heredoc expands content when delimiter is unquoted",
+		"cat << EOF", "hello chloe\n");
+	printf("\nTest 4 attend $USER litteral avec delimiter quote\n");
+	test_heredoc_case("quoted delimiter keeps heredoc content literal",
+		"cat << 'EOF'", "hello $USER\n");
+	printf("\nTest 5 attend une ligne puis EOF/Ctrl-D sans delimiter STOP\n");
 	test_heredoc_case("heredoc EOF -> garde le contenu deja lu",
 		"cat << STOP", "partial without delimiter\n");
 	return (0);

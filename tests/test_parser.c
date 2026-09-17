@@ -115,7 +115,7 @@ static void	test_cmd_args_case(char *label, char *input, char **expected)
 	if (validate_syntax(shell.token))
 		return (free_tokens(shell.token), (void)printf("[FAIL] syntax: %s\n",
 				label));
-	cmd = parse_tokens(shell.token);
+	cmd = parse_tokens_with_env(shell.token, shell.env);
 	if (!cmd)
 		return (free_tokens(shell.token), (void)printf("[FAIL] parser: %s\n",
 				label));
@@ -196,7 +196,7 @@ static void	test_pipe_case(char *label, char *input, char ***expected)
 	if (validate_syntax(shell.token))
 		return (free_tokens(shell.token),
 			(void)printf("[FAIL] pipe syntax: %s\n", label));
-	cmds = parse_tokens(shell.token);
+	cmds = parse_tokens_with_env(shell.token, shell.env);
 	if (cmds_match(cmds, expected))
 		printf("[PASS] %s\n", label);
 	else
@@ -251,7 +251,7 @@ static t_cmd	*parse_test_line(char *input, t_shell *shell, t_env *user,
 		return (free_tokens(shell->token), shell->token = NULL, NULL);
 	if (validate_syntax(shell->token))
 		return (free_tokens(shell->token), shell->token = NULL, NULL);
-	return (parse_tokens(shell->token));
+	return (parse_tokens_with_env(shell->token, shell->env));
 }
 
 /**
