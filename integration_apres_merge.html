@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Minishell - Integration apres merge</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			line-height: 1.55;
+			margin: 0;
+			background: #0d1117;
+			color: #dce3ea;
+		}
+		main {
+			max-width: 980px;
+			margin: 0 auto;
+			padding: 32px 20px 56px;
+		}
+		h1, h2, h3 {
+			line-height: 1.2;
+			color: #f4f7fb;
+		}
+		h1 {
+			margin-bottom: 8px;
+			font-size: 34px;
+		}
+		h2 {
+			margin-top: 34px;
+			padding-bottom: 6px;
+			border-bottom: 2px solid #30363d;
+		}
+		h3 {
+			margin-top: 24px;
+		}
+		.subtitle {
+			margin-top: 0;
+			color: #9ba7b4;
+		}
+		.box {
+			background: #161b22;
+			border: 1px solid #30363d;
+			border-radius: 8px;
+			padding: 18px;
+			margin: 18px 0;
+		}
+		.ok {
+			border-left: 5px solid #2f8f46;
+		}
+		.warn {
+			border-left: 5px solid #d68622;
+		}
+		.danger {
+			border-left: 5px solid #c0362c;
+		}
+		code {
+			background: #21262d;
+			color: #f0f6fc;
+			padding: 2px 5px;
+			border-radius: 4px;
+			font-size: 0.95em;
+		}
+		pre {
+			background: #010409;
+			color: #f6f8fa;
+			padding: 14px;
+			border-radius: 8px;
+			overflow-x: auto;
+		}
+		ul {
+			padding-left: 22px;
+		}
+		li {
+			margin: 7px 0;
+		}
+		.small {
+			color: #9ba7b4;
+			font-size: 0.95em;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			background: #161b22;
+			margin: 16px 0;
+		}
+		th, td {
+			text-align: left;
+			vertical-align: top;
+			padding: 10px;
+			border: 1px solid #30363d;
+		}
+		th {
+			background: #21262d;
+			color: #f4f7fb;
+		}
+	</style>
+</head>
+<body>
+<main>
+	<h1>Plan d'integration apres merge</h1>
+	<p class="subtitle">
+		Document perso pour reprendre proprement apres la PR lexer / expansion /
+		parser / heredoc preparation mergee dans <code>dev</code>.
+	</p>
+
+	<div class="box ok">
+		<h2>Etat actuel</h2>
+		<ul>
+			<li>La PR clean a ete mergee dans <code>dev</code>.</li>
+			<li>Le code utile de ma partie est maintenant disponible pour Dounia.</li>
+			<li>Les fichiers perso de notes/tests/html ne doivent pas etre merges dans <code>dev</code>.</li>
+			<li>La branche <code>chloe</code> garde les docs perso pour continuer a travailler.</li>
+		</ul>
+	</div>
+
+	<h2>Ce qui est deja en place cote parser</h2>
+	<ul>
+		<li>Le lexer cree les tokens word, pipe, redirections et heredoc.</li>
+		<li>Les quotes sont detectees, puis retirees apres expansion.</li>
+		<li>L'expansion gere les variables classiques, <code>$?</code>, les quotes simples/doubles et les cas type <code>$2USER</code>.</li>
+		<li><code>validate_syntax</code> bloque les erreurs simples avant de parser.</li>
+		<li><code>parse_tokens</code> existe toujours pour ne pas casser la loop actuelle.</li>
+		<li><code>parse_tokens_with_env(tokens, env)</code> existe pour la vraie integration heredoc avec expansion.</li>
+		<li><code>open_redirections</code> ouvre <code>&lt;</code>, <code>&gt;</code>, <code>&gt;&gt;</code> et appelle le heredoc pour <code>&lt;&lt;</code>.</li>
+		<li>Le heredoc lit les lignes avec <code>readline("&gt; ")</code>, ecrit dans un pipe, et met le fd de lecture dans <code>cmd-&gt;fd_in</code>.</li>
+	</ul>
+
+	<h2>Point important sur heredoc</h2>
+	<div class="box warn">
+		<p>
+			Le heredoc peut deja fonctionner dans le parser, mais dans le vrai minishell
+			il faut que la loop donne l'environnement au parser. Sinon un heredoc comme
+			<code>cat &lt;&lt; EOF</code> avec <code>$USER</code> dedans ne pourra pas expanser
+			correctement dans le flux normal.
+		</p>
+	</div>
+
+	<h2>Changements a faire apres le merge</h2>
+
+	<h3>1. Brancher le parser avec l'environnement</h3>
+	<p>
+		Dans la loop principale, remplacer l'appel simple par l'appel qui prend
+		l'environnement.
+	</p>
+	<table>
+		<tr>
+			<th>Fichier</th>
+			<th>A verifier avec Dounia</th>
+			<th>Pourquoi</th>
+		</tr>
+		<tr>
+			<td><code>srcs/main.c</code> ou fichier de loop</td>
+			<td>Passer de <code>parse_tokens(shell-&gt;token)</code> a <code>parse_tokens_with_env(shell-&gt;token, shell-&gt;env)</code>.</td>
+			<td>Necessaire pour expanser le contenu des heredocs non quotes.</td>
+		</tr>
+	</table>
+	<p class="small">
+		Note : garder <code>parse_tokens</code> comme wrapper est utile, parce que ca evite
+		de casser les tests ou les appels temporaires.
+	</p>
+
+	<h3>2. Appliquer les redirections sur une commande externe seule</h3>
+	<p>
+		Actuellement, dans les pipelines, <code>set_fds</code> applique deja
+		<code>cmd-&gt;fd_in</code> et <code>cmd-&gt;fd_out</code>. Par contre, pour une commande
+		externe seule, le child de <code>exec_single_external</code> lance directement
+		<code>exec_external</code>.
+	</p>
+	<div class="box warn">
+		<p>
+			A adapter avec Dounia dans <code>srcs/exec/exec_external.c</code> :
+			dans le child, faire les <code>dup2</code> necessaires avant
+			<code>exec_external</code>.
+		</p>
+	</div>
+	<p>Cas a tester apres adaptation :</p>
+	<pre><code>cat &lt; infile
+cat &lt;&lt; EOF
+wc -l &lt;&lt; EOF
+cat &lt;&lt; EOF &gt; outfile</code></pre>
+
+	<h3>3. Appliquer les redirections sur un builtin seul</h3>
+	<p>
+		Les builtins seuls tournent dans le process parent, donc il faut faire plus
+		attention que pour une commande externe.
+	</p>
+	<table>
+		<tr>
+			<th>Action</th>
+			<th>Pourquoi</th>
+		</tr>
+		<tr>
+			<td>Sauvegarder <code>stdin</code> et <code>stdout</code> avec <code>dup</code>.</td>
+			<td>Un builtin seul ne fork pas forcement, donc il ne doit pas casser le terminal.</td>
+		</tr>
+		<tr>
+			<td>Appliquer <code>cmd-&gt;fd_in</code> / <code>cmd-&gt;fd_out</code> avec <code>dup2</code>.</td>
+			<td>Pour que <code>echo test &gt; file</code>, <code>env &gt; file</code>, etc. marchent.</td>
+		</tr>
+		<tr>
+			<td>Lancer le builtin.</td>
+			<td>Le builtin ecrit/lit sur les bons fd.</td>
+		</tr>
+		<tr>
+			<td>Restaurer <code>stdin</code> et <code>stdout</code>.</td>
+			<td>Pour que le prompt continue a marcher normalement apres.</td>
+		</tr>
+	</table>
+	<p>Cas a tester apres adaptation :</p>
+	<pre><code>echo hello &gt; /tmp/ms_out
+cat /tmp/ms_out
+pwd &gt; /tmp/ms_pwd
+env &gt; /tmp/ms_env
+cd .. &gt; /tmp/ms_cd</code></pre>
+
+	<h3>4. Clarifier la propriete des fd</h3>
+	<p>
+		A voir avec Dounia pour eviter les doubles close ou les fd oublies.
+	</p>
+	<ul>
+		<li>Le parser ouvre les fichiers/redirections et stocke les fd dans <code>t_cmd</code>.</li>
+		<li>L'exec doit utiliser ces fd avec <code>dup2</code>.</li>
+		<li>Apres usage, l'exec ou le cleanup doit fermer les fd restants.</li>
+		<li>Si une redirection remplace une autre, le parser ferme deja l'ancien fd.</li>
+	</ul>
+
+	<h3>5. Verifier la gestion d'erreur</h3>
+	<p>
+		Les erreurs syntaxiques sont cote parser. Les erreurs d'ouverture de fichiers,
+		de pipe, fork, dup2, execve, etc. doivent donner un message clair cote parser/exec.
+	</p>
+	<table>
+		<tr>
+			<th>Cas</th>
+			<th>Message / comportement attendu</th>
+		</tr>
+		<tr>
+			<td><code>cat &lt; missing_file</code></td>
+			<td>Erreur avec <code>perror</code> ou message proche bash, status non-zero, pas d'exec inutile.</td>
+		</tr>
+		<tr>
+			<td><code>| cat</code>, <code>cat |</code>, <code>cat &gt;</code></td>
+			<td>Erreur de syntaxe avant exec.</td>
+		</tr>
+		<tr>
+			<td><code>cat &lt;&lt; EOF</code> puis Ctrl-D</td>
+			<td>Warning heredoc, pas de crash.</td>
+		</tr>
+	</table>
+
+	<h2>Ce qui touche la partie de Dounia</h2>
+	<div class="box danger">
+		<p>
+			Ces points doivent etre discutes avant de modifier directement ses fichiers,
+			surtout si elle travaille deja sur la loop et l'exec.
+		</p>
+		<ul>
+			<li><code>main.c</code> / loop : quand appeler <code>parse_tokens_with_env</code>.</li>
+			<li><code>exec_single_external</code> : appliquer <code>fd_in/fd_out</code> dans le child.</li>
+			<li><code>exec_builtins</code> ou le dispatcher autour : save/restore fd pour les builtins seuls.</li>
+			<li>Cleanup final : qui ferme les fd ouverts dans <code>t_cmd</code>.</li>
+			<li>Signaux heredoc : surtout Ctrl-C pendant le prompt <code>&gt; </code>.</li>
+		</ul>
+	</div>
+
+	<h2>Ordre conseille pour la suite</h2>
+	<ol>
+		<li>Se mettre sur une branche fraiche depuis <code>dev</code> apres le merge de Dounia.</li>
+		<li>Reverifier que <code>dev</code> compile avant de toucher au code.</li>
+		<li>Brancher <code>parse_tokens_with_env</code> dans la loop avec Dounia.</li>
+		<li>Adapter les redirections pour commande externe seule.</li>
+		<li>Adapter les redirections pour builtin seul avec save/restore.</li>
+		<li>Tester heredoc dans le vrai minishell.</li>
+		<li>Faire une passe Norminette sur les fichiers modifies.</li>
+		<li>Seulement apres, attaquer les signaux heredoc si la base est stable.</li>
+	</ol>
+
+	<h2>Tests manuels minimum</h2>
+	<pre><code>echo hello
+echo "$USER"
+echo '$USER'
+cat &lt; Makefile | wc -l
+cat &lt;&lt; EOF
+hello
+EOF
+cat &lt;&lt; EOF | wc -l
+one
+two
+EOF
+cat &lt;&lt; EOF
+$USER
+EOF
+cat &lt;&lt; 'EOF'
+$USER
+EOF
+echo ok &gt; /tmp/ms_out
+cat /tmp/ms_out
+cat &lt;&lt; EOF &gt; /tmp/ms_hd_out
+hello
+EOF
+cat /tmp/ms_hd_out</code></pre>
+
+	<h2>Conclusion</h2>
+	<p>
+		La partie lexer / expansion / parser / heredoc preparation est une bonne base
+		a garder. Ce qui manque surtout maintenant, ce n'est pas de refaire le parser :
+		c'est de brancher proprement ses resultats dans la loop et l'exec.
+	</p>
+</main>
+</body>
+</html>
