@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/08 03:46:06 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 01:52:28 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,26 +20,27 @@ int	export_error(char *str)
 	return (0);
 }
 
-void	add_new_var(t_env **env, char *key, char *value)
+int	add_new_var(t_env **env, char *key, char *value)
 {
 	t_env	*new;
 	t_env	*tmp;
 
 	new = malloc(sizeof(t_env));
 	if (!new)
-		return ;
+		return (0);
 	new->key = key;
 	new->value = value;
 	new->next = NULL;
 	if (!*env)
 	{
 		*env = new;
-		return ;
+		return (1);
 	}
 	tmp = *env;
 	while (tmp->next)
 		tmp = tmp->next;
 	tmp->next = new;
+	return (1);
 }
 
 int	parse_export(char *str, char **key, char **value)

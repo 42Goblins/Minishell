@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/16 02:26:18 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 03:25:09 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@
 # include <termcap.h>			// tgetent, tgetflag, tgetnum, tgetstr, tputs
 # include "../libft/inc/libft.h"	// libft functions
 # include <stdbool.h>			// bool type
+
+#define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 /* enum pour les types de tokens (chloé) */
 typedef enum e_token_type
@@ -87,18 +89,28 @@ typedef struct s_shell
 int		main(int ac, char **av, char **env);
 
 /* ========================================================================== */
+/*                                  SETUP                                     */
+/* ========================================================================== */
+/* setup.c */
+int		update_shlvl(t_env *env);
+char	*safe_getcwd(void);
+int		ensure_pwd(t_shell *shell);
+int		create_minimal_env(t_shell *shell);
+int		setup(t_shell *shell, char **env);
+
+/* ========================================================================== */
 /*                                  ENV                                       */
 /* ========================================================================== */
 /* setup_env.c */
 char	*cpy_key(char *env);
 char	*cpy_value(char *env);
-void	setup_env(t_shell *shell, char **env);
+int		setup_env(t_shell *shell, char **env);
 t_env	*new_env_node(char *env_line);
 
 /* env_utils.c */
-char	*get_env_value(t_env *env, const char *key);
-void	set_env_value(t_env *env, const char *key, const char *value);
-void	update_env_vars(t_env **env, char *key, char *value);
+char	*get_env_value(t_env *env, char *key);
+void	set_env_value(t_env *env, char *key, char *value);
+int		update_env_vars(t_env **env, char *key, char *value);
 
 /* ========================================================================== */
 /*                                BUILTINS                                    */
@@ -135,7 +147,7 @@ int		print_export(t_env *env);
 
 /* export.c */
 int		export_error(char *str);
-void	add_new_var(t_env **env, char *key, char *value);
+int	add_new_var(t_env **env, char *key, char *value);
 int		parse_export(char *str, char **key, char **value);
 int		exec_export(t_env **env, char **cmd);
 
