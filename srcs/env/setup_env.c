@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/13 17:13:50 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 03:16:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,20 +96,19 @@ t_env	*new_env_node(char *env_line)
  * @brief Converts the environment array received by main into the
  * t_shell's internal env list.
  */
-void	setup_env(t_shell *shell, char **env)
+int	setup_env(t_shell *shell, char **env)
 {
 	int		i;
 	t_env	*node;
 	t_env	*last;
 
-	shell->env = NULL;
 	last = NULL;
 	i = 0;
 	while (env[i])
 	{
 		node = new_env_node(env[i]);
 		if (!node)
-			return ;
+			return (1) ;
 		if (!shell->env)
 			shell->env = node;
 		else
@@ -117,5 +116,5 @@ void	setup_env(t_shell *shell, char **env)
 		last = node;
 		i++;
 	}
-	//update_shlvl(shell->env); !!todo
+	return (0);
 }

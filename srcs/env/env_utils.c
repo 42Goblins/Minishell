@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:33:43 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/13 18:00:15 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 01:25:38 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
  *
  * Does nothing if key is not found in the env list.
  */
-void	set_env_value(t_env *env, const char *key, const char *value)
+void	set_env_value(t_env *env, char *key, char *value)
 {
 	while (env)
 	{
@@ -36,7 +36,7 @@ void	set_env_value(t_env *env, const char *key, const char *value)
  * @brief Returns the value of the corresponding key in the env list, or
  * NULL if key is not found.
  */
-char	*get_env_value(t_env *env, const char *key)
+char	*get_env_value(t_env *env, char *key)
 {
 	while (env)
 	{
@@ -52,7 +52,7 @@ char	*get_env_value(t_env *env, const char *key)
  * a new node if key is not found.
  *
  */
-void	update_env_vars(t_env **env, char *key, char *value)
+int	update_env_vars(t_env **env, char *key, char *value)
 {
 	t_env	*current;
 
@@ -67,9 +67,9 @@ void	update_env_vars(t_env **env, char *key, char *value)
 				free(current->value);
 				current->value = value;
 			}
-			return ;
+			return (0) ;
 		}
 		current = current->next;
 	}
-	add_new_var(env, key, value);
+	return (add_new_var(env, key, value));
 }
