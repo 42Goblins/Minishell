@@ -24,7 +24,7 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
  *
  * Env is passed down to redirections so heredoc content can expand variables.
  */
-t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env)
+t_cmd	*parse_tokens(t_token *tokens, t_env *env)
 {
 	t_token	*current;
 	t_cmd	*cmds;

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Integration avec Dounia - Resume</title>
+	<style>
+		body {
+			margin: 0;
+			background: #0d1117;
+			color: #dce3ea;
+			font-family: Arial, sans-serif;
+			line-height: 1.55;
+		}
+		main {
+			max-width: 1000px;
+			margin: 0 auto;
+			padding: 34px 22px 58px;
+		}
+		h1, h2, h3 {
+			color: #f4f7fb;
+			line-height: 1.2;
+		}
+		h1 {
+			margin-bottom: 8px;
+			font-size: 34px;
+		}
+		h2 {
+			margin-top: 34px;
+			padding-bottom: 7px;
+			border-bottom: 2px solid #30363d;
+		}
+		h3 {
+			margin-top: 24px;
+		}
+		.subtitle, .small {
+			color: #9ba7b4;
+		}
+		.box {
+			background: #161b22;
+			border: 1px solid #30363d;
+			border-radius: 8px;
+			padding: 18px;
+			margin: 18px 0;
+		}
+		.ok {
+			border-left: 5px solid #2f8f46;
+		}
+		.warn {
+			border-left: 5px solid #d68622;
+		}
+		.info {
+			border-left: 5px solid #3d7bd9;
+		}
+		code {
+			background: #21262d;
+			color: #f0f6fc;
+			padding: 2px 5px;
+			border-radius: 4px;
+		}
+		pre {
+			background: #010409;
+			color: #f6f8fa;
+			padding: 14px;
+			border-radius: 8px;
+			overflow-x: auto;
+		}
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			background: #161b22;
+			margin: 16px 0;
+		}
+		th, td {
+			border: 1px solid #30363d;
+			padding: 10px;
+			text-align: left;
+			vertical-align: top;
+		}
+		th {
+			background: #21262d;
+			color: #f4f7fb;
+		}
+		li {
+			margin: 7px 0;
+		}
+	</style>
+</head>
+<body>
+<main>
+	<h1>Integration lexer / parser / heredoc avec Dounia</h1>
+	<p class="subtitle">
+		Resume de ce qui a change apres le merge sur <code>dev</code>, pourquoi on l'a
+		change, et ce qu'il faut expliquer a Dounia pour la suite.
+	</p>
+
+	<div class="box ok">
+		<h2>Etat actuel</h2>
+		<ul>
+			<li>On est reparties d'une branche propre depuis le dernier <code>dev</code>.</li>
+			<li>Le projet compile avec <code>make fclean</code> puis <code>make</code>.</li>
+			<li>Les fichiers modifies par cette etape passent Norminette.</li>
+			<li>Les tests heredoc / redirections importants passent dans le vrai minishell.</li>
+		</ul>
+	</div>
+
+	<h2>Changements faits</h2>
+	<table>
+		<tr>
+			<th>Fichier</th>
+			<th>Changement</th>
+			<th>Pourquoi</th>
+		</tr>
+		<tr>
+			<td><code>srcs/main.c</code></td>
+			<td>
+				La loop appelle maintenant
+				<code>parse_tokens(shell-&gt;token, shell-&gt;env)</code>.
+			</td>
+			<td>
+				Le parser doit recevoir l'environnement pour pouvoir ouvrir les heredocs
+				et expanser leur contenu quand le delimiter n'est pas quote.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/parser/parser.c</code></td>
+			<td>
+				<code>parse_tokens_with_env</code> a ete renomme en
+				<code>parse_tokens</code>.
+			</td>
+			<td>
+				C'est maintenant la vraie entree du parser. Garder un nom temporaire
+				avec <code>with_env</code> devenait moins clair.
+			</td>
+		</tr>
+		<tr>
+			<td><code>include/minishell.h</code></td>
+			<td>
+				Le prototype officiel est maintenant
+				<code>t_cmd *parse_tokens(t_token *tokens, t_env *env)</code>.
+			</td>
+			<td>
+				Le header doit refleter la vraie signature utilisee par la loop.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/parser/parser_entry.c</code></td>
+			<td>
+				Le fichier a ete supprime.
+			</td>
+			<td>
+				Il servait seulement de wrapper temporaire
+				<code>parse_tokens(tokens)</code> vers
+				<code>parse_tokens_with_env(tokens, NULL)</code>. Comme la loop passe
+				maintenant l'env, ce wrapper ne sert plus.
+			</td>
+		</tr>
+	</table>
+
+	<h2>Pourquoi c'etait necessaire</h2>
+	<div class="box info">
+		<p>
+			Le heredoc est ouvert pendant le parsing des redirections. Pour un heredoc
+			non quote, son contenu doit etre expanse comme bash :
+		</p>
+		<pre><code>cat &lt;&lt; EOF
+$USER
+EOF</code></pre>
+		<p>
+			Pour transformer <code>$USER</code> en sa valeur, le code heredoc doit avoir
+			acces a <code>shell-&gt;env</code>. Donc l'environnement doit descendre depuis
+			la loop jusqu'au parser, puis jusqu'a <code>open_heredoc_redirection</code>.
+		</p>
+	</div>
+
+	<h2>Ce que Dounia avait deja bien avance</h2>
+	<ul>
+		<li>
+			Pour une commande externe seule, <code>exec_single_external</code> appelle deja
+			<code>set_fds(cmd, -1, NULL)</code> avant <code>exec_external</code>.
+		</li>
+		<li>
+			Pour un builtin seul, <code>exec_single_builtins</code> sauvegarde
+			<code>stdin/stdout</code>, applique <code>set_fds</code>, lance le builtin,
+			puis restaure <code>stdin/stdout</code>.
+		</li>
+		<li>
+			Donc les redirections simples, heredoc, et redirections de builtins sont
+			deja bien connectees avec les fd ouverts par le parser.
+		</li>
+	</ul>
+
+	<h2>Tests valides</h2>
+	<table>
+		<tr>
+			<th>Cas teste</th>
+			<th>Commande</th>
+			<th>Resultat attendu / observe</th>
+		</tr>
+		<tr>
+			<td>Redirection builtin</td>
+			<td><code>echo ok &gt; /tmp/ms_out</code><br><code>cat /tmp/ms_out</code></td>
+			<td><code>ok</code></td>
+		</tr>
+		<tr>
+			<td>Heredoc simple</td>
+			<td><code>cat &lt;&lt; EOF</code></td>
+			<td>Le contenu tape est affiche par <code>cat</code>.</td>
+		</tr>
+		<tr>
+			<td>Expansion heredoc non quote</td>
+			<td><code>cat &lt;&lt; EOF</code> avec <code>$USER</code></td>
+			<td><code>$USER</code> devient <code>gpalemo</code>.</td>
+		</tr>
+		<tr>
+			<td>Delimiter quote</td>
+			<td><code>cat &lt;&lt; 'EOF'</code> avec <code>$USER</code></td>
+			<td><code>$USER</code> reste litteral.</td>
+		</tr>
+		<tr>
+			<td>Heredoc + pipe</td>
+			<td><code>cat &lt;&lt; EOF | wc -l</code></td>
+			<td>Deux lignes donnent <code>2</code>.</td>
+		</tr>
+		<tr>
+			<td>Ordre des redirections</td>
+			<td><code>cat &lt; /tmp/ms_in &lt;&lt; EOF</code></td>
+			<td>Le heredoc gagne car il arrive apres <code>&lt; /tmp/ms_in</code>.</td>
+		</tr>
+		<tr>
+			<td>Ordre inverse</td>
+			<td><code>cat &lt;&lt; EOF &lt; /tmp/ms_in</code></td>
+			<td>Le fichier gagne car <code>&lt; /tmp/ms_in</code> arrive apres.</td>
+		</tr>
+		<tr>
+			<td>Ctrl-D au prompt normal</td>
+			<td>Ctrl-D sur <code>minishell$</code></td>
+			<td>Affiche <code>exit</code> et quitte proprement.</td>
+		</tr>
+		<tr>
+			<td>Ctrl-D pendant heredoc</td>
+			<td>Ctrl-D avant le delimiter</td>
+			<td>Warning heredoc, contenu deja tape envoye a la commande, retour prompt.</td>
+		</tr>
+		<tr>
+			<td>Ctrl-C pendant heredoc</td>
+			<td>Ctrl-C au prompt <code>&gt; </code></td>
+			<td>Retour prompt et <code>$?</code> vaut <code>130</code>.</td>
+		</tr>
+	</table>
+
+	<h2>Points a dire a Dounia</h2>
+	<div class="box warn">
+		<ul>
+			<li>
+				On a modifie <code>main.c</code> pour passer <code>shell-&gt;env</code> au parser.
+				C'etait necessaire pour l'expansion dans heredoc.
+			</li>
+			<li>
+				On a supprime l'ancien wrapper <code>parser_entry.c</code>. Si Dounia avait
+				un appel a <code>parse_tokens(tokens)</code> dans une autre branche, il faudra
+				le remplacer par <code>parse_tokens(tokens, shell-&gt;env)</code>.
+			</li>
+			<li>
+				Sa logique <code>set_fds</code> fonctionne bien avec les fd ouverts par le parser.
+				On l'a valide avec heredoc, redirections et pipes.
+			</li>
+			<li>
+				Les signaux heredoc ont l'air corrects sur Ctrl-C / Ctrl-D, mais il faudra
+				encore tester les signaux globalement avec commandes bloquantes et pipelines.
+			</li>
+			<li>
+				Il faudra verifier avec Valgrind les leaks autour de heredoc/redirections,
+				surtout quand plusieurs redirections remplacent les fd precedents.
+			</li>
+		</ul>
+	</div>
+
+	<h2>Ce qui reste a faire</h2>
+	<ul>
+		<li>Tester erreurs d'ouverture : <code>cat &lt; missing_file</code>, dossier interdit, permissions.</li>
+		<li>Comparer les messages d'erreur importants avec bash.</li>
+		<li>Faire des tests signaux hors heredoc : <code>cat</code>, pipeline, Ctrl-C, Ctrl-\.</li>
+		<li>Faire une passe Valgrind/leaks sur les cas heredoc et redirections.</li>
+		<li>Faire une Norminette plus globale avant PR finale.</li>
+	</ul>
+
+	<h2>Conclusion</h2>
+	<p>
+		La partie heredoc/parser est maintenant bien integree avec la loop et l'exec.
+		Le gros changement a retenir est simple : le parser recoit maintenant l'env,
+		ce qui permet au heredoc d'expanser correctement son contenu. Les fd ouverts
+		par le parser sont bien utilises par l'exec actuelle.
+	</p>
+</main>
+</body>
+</html>

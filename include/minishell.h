@@ -31,7 +31,7 @@
 # include "../libft/inc/libft.h"	// libft functions
 # include <stdbool.h>			// bool type
 
-#define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 /* enum pour les types de tokens (chloé) */
 typedef enum e_token_type
@@ -147,7 +147,7 @@ int		print_export(t_env *env);
 
 /* export.c */
 int		export_error(char *str);
-int	add_new_var(t_env **env, char *key, char *value);
+int		add_new_var(t_env **env, char *key, char *value);
 int		parse_export(char *str, char **key, char **value);
 int		exec_export(t_env **env, char **cmd);
 
@@ -186,8 +186,7 @@ int		expand_tokens(t_token *tokens, t_env *env);
 int		count_cmd_args(t_token *tokens);
 char	**create_cmd_and_args(t_token *tokens);
 t_cmd	*create_cmd_node(t_token *tokens, t_env *env);
-t_cmd	*parse_tokens(t_token *tokens);
-t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env);
+t_cmd	*parse_tokens(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
 int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
@@ -222,8 +221,7 @@ void	wait_all_pids(pid_t last_pid);
 void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2]);
 void	exec_cmd(t_shell *shell, t_cmd *cmds);
 pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2]);
-void		exec_pipeline(t_shell *shell, t_cmd *cmds);
-
+void	exec_pipeline(t_shell *shell, t_cmd *cmds);
 
 /* ========================================================================== */
 /*                                  UTILS                                     */
