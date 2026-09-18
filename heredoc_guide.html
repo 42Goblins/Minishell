@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Comprendre heredoc - Minishell</title>
+	<style>
+		:root {
+			--bg: #0f1115;
+			--panel: #171a21;
+			--panel-2: #20242d;
+			--text: #eceff4;
+			--muted: #a7adbb;
+			--border: #343946;
+			--accent: #7cc7ff;
+			--green: #8bd17c;
+			--orange: #ffbf6b;
+			--red: #ff7f7f;
+			--code: #0b0d11;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			background: var(--bg);
+			color: var(--text);
+			font-family: Arial, Helvetica, sans-serif;
+			line-height: 1.55;
+		}
+
+		main {
+			max-width: 980px;
+			margin: 0 auto;
+			padding: 36px 22px 70px;
+		}
+
+		header {
+			border-bottom: 1px solid var(--border);
+			padding-bottom: 22px;
+			margin-bottom: 28px;
+		}
+
+		h1 {
+			margin: 0 0 8px;
+			font-size: 34px;
+		}
+
+		h2 {
+			margin: 34px 0 14px;
+			padding-bottom: 8px;
+			border-bottom: 1px solid var(--border);
+			font-size: 22px;
+		}
+
+		h3 {
+			margin: 22px 0 8px;
+			font-size: 17px;
+		}
+
+		p {
+			margin: 8px 0;
+		}
+
+		ul, ol {
+			padding-left: 24px;
+		}
+
+		li {
+			margin: 6px 0;
+		}
+
+		code {
+			background: var(--panel-2);
+			border: 1px solid var(--border);
+			border-radius: 4px;
+			padding: 1px 6px;
+			font-family: Consolas, "Liberation Mono", monospace;
+			font-size: 0.95em;
+		}
+
+		pre {
+			overflow-x: auto;
+			background: var(--code);
+			border: 1px solid var(--border);
+			border-radius: 6px;
+			padding: 14px 16px;
+			font-family: Consolas, "Liberation Mono", monospace;
+			font-size: 14px;
+			line-height: 1.45;
+		}
+
+		.card {
+			background: var(--panel);
+			border: 1px solid var(--border);
+			border-radius: 8px;
+			padding: 16px 18px;
+			margin: 14px 0;
+		}
+
+		.note {
+			border-left: 4px solid var(--accent);
+		}
+
+		.ok {
+			border-left: 4px solid var(--green);
+		}
+
+		.warn {
+			border-left: 4px solid var(--orange);
+		}
+
+		.danger {
+			border-left: 4px solid var(--red);
+		}
+
+		.muted {
+			color: var(--muted);
+		}
+
+		.badge {
+			display: inline-block;
+			margin-left: 6px;
+			padding: 1px 8px;
+			border: 1px solid var(--border);
+			border-radius: 999px;
+			color: var(--muted);
+			font-size: 12px;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin: 12px 0;
+		}
+
+		th, td {
+			border: 1px solid var(--border);
+			padding: 9px 10px;
+			text-align: left;
+			vertical-align: top;
+		}
+
+		th {
+			background: var(--panel-2);
+		}
+	</style>
+</head>
+<body>
+<main>
+	<header>
+		<h1>Heredoc dans minishell</h1>
+		<p class="muted">
+			Fiche pour comprendre le principe avant de coder. Le but est de
+			comprendre ce que bash fait, puis comment on peut le traduire dans
+			notre pipeline lexer -> expansion -> parser -> exec.
+		</p>
+	</header>
+
+	<section>
+		<h2>1. L'idée simple</h2>
+		<div class="card note">
+			<p>
+				Un heredoc, c'est une redirection d'entrée. Au lieu de lire depuis
+				un fichier avec <code>&lt; file</code>, la commande lit depuis un
+				texte que l'utilisateur tape directement dans le terminal.
+			</p>
+		</div>
+
+		<p>Exemple :</p>
+		<pre>cat &lt;&lt; EOF
+hello
+world
+EOF</pre>
+
+		<p>Résultat :</p>
+		<pre>hello
+world</pre>
+
+		<p>
+			Le mot <code>EOF</code> est le delimiter. Il sert juste à dire :
+			"j'arrête de lire le heredoc quand je vois exactement cette ligne".
+		</p>
+	</section>
+
+	<section>
+		<h2>2. Différence avec une redirection classique</h2>
+		<table>
+			<tr>
+				<th>Syntaxe</th>
+				<th>Ce que la commande reçoit sur stdin</th>
+			</tr>
+			<tr>
+				<td><code>cat &lt; file.txt</code></td>
+				<td>Le contenu de <code>file.txt</code></td>
+			</tr>
+			<tr>
+				<td><code>cat &lt;&lt; EOF</code></td>
+				<td>Les lignes tapées jusqu'à la ligne <code>EOF</code></td>
+			</tr>
+		</table>
+
+		<div class="card ok">
+			<p>
+				Donc pour l'exec, au final, heredoc doit juste devenir un fd
+				d'entrée dans <code>cmd-&gt;fd_in</code>, comme une redirection
+				<code>&lt;</code>.
+			</p>
+		</div>
+	</section>
+
+	<section>
+		<h2>3. Ce que tu peux tester dans bash</h2>
+
+		<h3>Test basique</h3>
+		<pre>cat &lt;&lt; EOF
+salut
+test
+EOF</pre>
+		<p>Tu dois voir :</p>
+		<pre>salut
+test</pre>
+
+		<h3>Le delimiter doit être seul sur sa ligne</h3>
+		<pre>cat &lt;&lt; STOP
+hello
+STOP ok
+STOP</pre>
+		<p>
+			La ligne <code>STOP ok</code> ne ferme pas le heredoc, parce qu'elle
+			n'est pas exactement égale à <code>STOP</code>.
+		</p>
+
+		<h3>Heredoc avec une autre commande</h3>
+		<pre>wc -l &lt;&lt; END
+a
+b
+c
+END</pre>
+		<p>Résultat attendu : <code>3</code>, parce que <code>wc -l</code> lit 3 lignes.</p>
+
+		<h3>Heredoc dans un pipe</h3>
+		<pre>cat &lt;&lt; EOF | wc -l
+a
+b
+EOF</pre>
+		<p>
+			Bash lit d'abord le heredoc, puis lance le pipeline.
+			<code>wc -l</code> reçoit donc les lignes envoyées par <code>cat</code>.
+		</p>
+	</section>
+
+	<section>
+		<h2>4. Expansion dans heredoc</h2>
+
+		<p>
+			Le heredoc a une règle importante : le delimiter lui-même ne doit pas
+			être expandé.
+		</p>
+
+		<pre>cat &lt;&lt; $USER</pre>
+
+		<p>
+			Ici, le delimiter est littéralement <code>$USER</code>, pas la valeur
+			de la variable <code>USER</code>.
+		</p>
+
+		<h3>Contenu non quoté : expansion oui</h3>
+		<pre>cat &lt;&lt; EOF
+hello $USER
+EOF</pre>
+		<p>
+			Dans bash, <code>$USER</code> est remplacé dans le contenu du heredoc,
+			parce que le delimiter <code>EOF</code> n'est pas quoté.
+		</p>
+
+		<h3>Delimiter quoté : expansion non</h3>
+		<pre>cat &lt;&lt; 'EOF'
+hello $USER
+EOF</pre>
+		<p>
+			Ici, <code>$USER</code> reste écrit comme ça, parce que le delimiter
+			est quoté.
+		</p>
+
+		<div class="card warn">
+			<p>
+				Pour notre minishell, ça veut dire qu'on doit garder l'info
+				<code>had_quotes</code> sur le token delimiter assez longtemps
+				pour savoir si on expand ou pas les lignes du heredoc.
+			</p>
+		</div>
+	</section>
+
+	<section>
+		<h2>5. Où ça se place dans notre minishell</h2>
+
+		<p>Pipeline actuelle visée :</p>
+		<pre>readline
+-> tokenizer
+-> expand_tokens
+-> remove_quotes_from_tokens
+-> validate_syntax
+-> parse_tokens
+-> launch_exec</pre>
+
+		<p>
+			Pour heredoc, le point important est que la lecture du contenu doit
+			se faire avant l'exec, dans le parent.
+		</p>
+
+		<div class="card note">
+			<p>
+				Pourquoi avant l'exec ? Parce que bash prépare les heredocs avant
+				de lancer les commandes, même quand il y a un pipeline.
+			</p>
+		</div>
+
+		<p>Version mentale simple :</p>
+		<ol>
+			<li>Le lexer crée un token <code>T_HEREDOC</code> pour <code>&lt;&lt;</code>.</li>
+			<li>Le token suivant est le delimiter.</li>
+			<li>L'expansion saute ce delimiter.</li>
+			<li>Le retrait des quotes nettoie le delimiter.</li>
+			<li>Le parser voit <code>T_HEREDOC</code>.</li>
+			<li>Il lit les lignes avec <code>readline("&gt; ")</code>.</li>
+			<li>Il écrit ces lignes dans un pipe ou un fichier temporaire.</li>
+			<li>Il met le fd de lecture dans <code>cmd-&gt;fd_in</code>.</li>
+			<li>L'exec utilise <code>cmd-&gt;fd_in</code> comme pour <code>&lt; file</code>.</li>
+		</ol>
+	</section>
+
+	<section>
+		<h2>6. Pipe ou fichier temporaire ?</h2>
+
+		<table>
+			<tr>
+				<th>Option</th>
+				<th>Principe</th>
+				<th>Avantage</th>
+				<th>Attention</th>
+			</tr>
+			<tr>
+				<td>Pipe</td>
+				<td>On écrit le heredoc dans <code>pipefd[1]</code>, puis la commande lit <code>pipefd[0]</code>.</td>
+				<td>Pas de fichier à supprimer.</td>
+				<td>Il faut bien fermer les bons côtés du pipe.</td>
+			</tr>
+			<tr>
+				<td>Fichier temporaire</td>
+				<td>On écrit dans un fichier caché, puis on le rouvre en lecture.</td>
+				<td>Plus facile à visualiser.</td>
+				<td>Il faut gérer les noms uniques et supprimer le fichier.</td>
+			</tr>
+		</table>
+
+		<div class="card ok">
+			<p>
+				Pour notre projet, le pipe est probablement plus propre si on le
+				gère calmement : pas de fichier temporaire, moins de cleanup disque.
+			</p>
+		</div>
+	</section>
+
+	<section>
+		<h2>7. Cas importants à gérer</h2>
+
+		<ul>
+			<li><code>cat &lt;&lt; EOF</code> : cas simple.</li>
+			<li><code>cat &lt;&lt; EOF | wc -l</code> : heredoc dans pipeline.</li>
+			<li><code>cat &lt;&lt; EOF &lt; file</code> : dernière redirection d'entrée gagne.</li>
+			<li><code>cat &lt; file &lt;&lt; EOF</code> : le heredoc final gagne.</li>
+			<li><code>cat &lt;&lt; 'EOF'</code> : pas d'expansion dans le contenu.</li>
+			<li><code>cat &lt;&lt; EOF</code> puis Ctrl-D avant EOF : warning bash-like à prévoir.</li>
+			<li>Ctrl-C pendant heredoc : doit stopper proprement sans tuer le shell parent.</li>
+		</ul>
+	</section>
+
+	<section>
+		<h2>8. Mini modèle mental</h2>
+
+		<pre>Commande :
+cat &lt;&lt; EOF
+hello
+EOF
+
+Tokens :
+[cat] [&lt;&lt;] [EOF]
+
+Parser :
+voit &lt;&lt;
+lit les lignes jusqu'à EOF
+met le contenu dans un fd
+cmd-&gt;fd_in = ce fd
+cmd_and_args = ["cat", NULL]
+
+Exec :
+dup2(cmd-&gt;fd_in, STDIN_FILENO)
+exec cat
+
+cat lit donc :
+hello</pre>
+	</section>
+
+	<section>
+		<h2>9. Avant de coder</h2>
+
+		<div class="card warn">
+			<p>Questions à clarifier avant d'implémenter :</p>
+			<ul>
+				<li>Est-ce qu'on lit heredoc dans <code>parser_redir.c</code> ou dans une passe dédiée avant exec ?</li>
+				<li>Est-ce que Dounia applique déjà correctement <code>cmd-&gt;fd_in</code> pour commande seule ?</li>
+				<li>Qui gère Ctrl-C pendant heredoc ?</li>
+				<li>Est-ce qu'on garde pipe ou fichier temporaire ?</li>
+			</ul>
+		</div>
+
+		<p>
+			Conseil de découpage : d'abord faire marcher le cas simple
+			<code>cat &lt;&lt; EOF</code>, puis ajouter l'expansion du contenu, puis
+			les pipes, puis les signaux.
+		</p>
+	</section>
+</main>
+</body>
+</html>
