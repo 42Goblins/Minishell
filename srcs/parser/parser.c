@@ -3,34 +3,41 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/04 03:28:11 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/16 20:30:26 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/**
- * @brief Converts a prepared token list into a command list.
+/*
+ * This file converts a validated token list into t_cmd nodes.
+ * Redirections are skipped from cmd_and_args and opened separately.
  */
-t_cmd	*parse_tokens(t_token *tokens)
+
+static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
+
+/**
+ * @brief Converts prepared tokens into a linked command list split by pipes.
+ *
+ * Env is passed down to redirections so heredoc content can expand variables.
+ */
+t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env)
 {
 	t_token	*current;
 	t_cmd	*cmds;
 	t_cmd	*new_cmd;
 	t_cmd	*last_cmd;
 
-	if (!tokens)
-		return (NULL);
 	current = tokens;
 	cmds = NULL;
 	new_cmd = NULL;
 	last_cmd = NULL;
 	while (current)
 	{
-		new_cmd = create_cmd_node(current);
+		new_cmd = create_cmd_node(current, env);
 		if (!new_cmd)
 			return (free_cmds(cmds), NULL);
 		if (cmds == NULL)
@@ -101,13 +108,8 @@ char	**create_cmd_and_args(t_token *tokens)
 		}
 		else if (current->type == T_WORD)
 		{
-			cmd_and_args[i] = ft_strdup(current->value);
-			if (cmd_and_args[i] == NULL)
-			{
-				cmd_and_args[i] = NULL;
-				return (free_tab(cmd_and_args), NULL);
-			}
-			i++;
+			if (copy_word_to_args(cmd_and_args, &i, current->value))
+				return (NULL);
 		}
 		current = current->next;
 	}
@@ -116,9 +118,27 @@ char	**create_cmd_and_args(t_token *tokens)
 }
 
 /**
- * @brief Allocates and initializes one command node from prepared tokens.
+ * @brief Copies one word token value into cmd_and_args and advances the index.
  */
-t_cmd	*create_cmd_node(t_token *tokens)
+static int	copy_word_to_args(char **cmd_and_args, int *i, char *value)
+{
+	cmd_and_args[*i] = ft_strdup(value);
+	if (cmd_and_args[*i] == NULL)
+	{
+		cmd_and_args[*i] = NULL;
+		free_tab(cmd_and_args);
+		return (1);
+	}
+	(*i)++;
+	return (0);
+}
+
+/**
+ * @brief Allocates one command node with args, redirections and builtin flag.
+ *
+ * Redirections may need env when a heredoc expands its content.
+ */
+t_cmd	*create_cmd_node(t_token *tokens, t_env *env)
 {
 	t_cmd	*cmd;
 
@@ -135,7 +155,7 @@ t_cmd	*create_cmd_node(t_token *tokens)
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
 	cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
-	if (open_redirections(cmd, tokens))
+	if (open_redirections(cmd, tokens, env))
 		return (free_cmds(cmd), NULL);
 	return (cmd);
 }
