@@ -185,11 +185,13 @@ int		expand_tokens(t_token *tokens, t_env *env);
 
 int		count_cmd_args(t_token *tokens);
 char	**create_cmd_and_args(t_token *tokens);
-t_cmd	*create_cmd_node(t_token *tokens);
+t_cmd	*create_cmd_node(t_token *tokens, t_env *env);
 t_cmd	*parse_tokens(t_token *tokens);
+t_cmd	*parse_tokens_with_env(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
-int		open_redirections(t_cmd *cmd, t_token *tokens);
+int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+int		open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env);
 
 /* ========================================================================== */
 /*                                    EXEC                                    */
