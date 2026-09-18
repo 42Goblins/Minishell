@@ -6,14 +6,20 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/28 04:45:51 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/01 02:47:42 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/08 03:08:37 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/*
+ * This file checks syntax before the parser builds commands.
+ * It stops simple pipe and redirection errors before exec.
+ */
+
 static int	validate_pipe(t_token *current);
 static int	validate_redirection(t_token *current);
+static int	print_syntax_error(char *token);
 
 /**
  * @brief Checks if the token list contains syntax errors.
@@ -44,11 +50,11 @@ static int	validate_pipe(t_token *current)
 	if (current->type != T_PIPE)
 		return (0);
 	if (!current->prev)
-		return (1);
+		return (print_syntax_error(current->value));
 	if (current->next == NULL)
-		return (1);
+		return (print_syntax_error("newline"));
 	if (current->next->type == T_PIPE)
-		return (1);
+		return (print_syntax_error(current->next->value));
 	return (0);
 }
 
@@ -62,8 +68,21 @@ static int	validate_redirection(t_token *current)
 	if (!is_redirection_token(current->type))
 		return (0);
 	if (!current->next)
-		return (1);
+		return (print_syntax_error("newline"));
 	if (current->next->type != T_WORD)
-		return (1);
+		return (print_syntax_error(current->next->value));
 	return (0);
+}
+
+/**
+ * @brief Prints a syntax error message and sets the status to 2.
+ */
+static int	print_syntax_error(char *token)
+{
+	ft_putstr_fd("minishell: syntax error near unexpected token `",
+		STDERR_FILENO);
+	ft_putstr_fd(token, STDERR_FILENO);
+	ft_putstr_fd("'\n", STDERR_FILENO);
+	*get_status() = 2;
+	return (1);
 }
