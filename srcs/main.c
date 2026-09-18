@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 02:54:37 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 06:06:47 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,7 @@ void	process_line(t_shell *shell, char *line)
 	expand_tokens(shell->token, shell->env);
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
-	{
-		*get_status() = 2;
-		ft_putstr_fd("minishell: syntax error\n", STDERR_FILENO);
 		return ;
-	}
 	shell->cmds = parse_tokens(shell->token, shell->env);
 	launch_exec(shell, shell->cmds);
 }
