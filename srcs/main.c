@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/16 02:41:47 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 02:54:37 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,10 +61,11 @@ int	main(int ac, char **av, char **env)
 
 	if (ac != 1 || av[0] == NULL)
 		return (1);
-	setup_env(&shell, env);
-	shell.token = NULL;
-	shell.cmds = NULL;
-	// setup_signals(&shell);
+	if (setup(&shell, env) != 0)
+	{
+		ft_putstr_fd("minishell: setup failed\n", STDERR_FILENO);
+		clean_exit(&shell, 1);
+	}
 	while (launch_loop(&shell) == 0)
 		;
 	clean_exit(&shell, *get_status());
