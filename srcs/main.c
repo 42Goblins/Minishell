@@ -23,7 +23,7 @@ void	reset_shell_state(t_shell *shell)
 void	process_line(t_shell *shell, char *line)
 {
 	tokenizer(line, shell);
-	expand_tokens(shell->token, shell->env); //check se que ça return ?
+	expand_tokens(shell->token, shell->env);
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
 	{
@@ -31,7 +31,7 @@ void	process_line(t_shell *shell, char *line)
 		ft_putstr_fd("minishell: syntax error\n", STDERR_FILENO);
 		return ;
 	}
-	shell->cmds = parse_tokens(shell->token);
+	shell->cmds = parse_tokens(shell->token, shell->env);
 	launch_exec(shell, shell->cmds);
 }
 
