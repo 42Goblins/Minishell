@@ -123,6 +123,18 @@
 			</td>
 		</tr>
 		<tr>
+			<td><code>srcs/main.c</code></td>
+			<td>
+				Quand <code>validate_syntax</code> detecte une erreur, la loop fait
+				maintenant seulement <code>return</code>.
+			</td>
+			<td>
+				<code>validate_syntax</code> affiche deja le message precis et met le
+				status a <code>2</code>. Le message generique dans <code>main.c</code>
+				creait un double affichage d'erreur.
+			</td>
+		</tr>
+		<tr>
 			<td><code>srcs/parser/parser.c</code></td>
 			<td>
 				<code>parse_tokens_with_env</code> a ete renomme en
@@ -247,6 +259,41 @@ EOF</code></pre>
 			<td>Ctrl-C au prompt <code>&gt; </code></td>
 			<td>Retour prompt et <code>$?</code> vaut <code>130</code>.</td>
 		</tr>
+		<tr>
+			<td>Input redirection invalide</td>
+			<td><code>cat &lt; missing_file</code><br><code>echo $?</code></td>
+			<td>Message <code>No such file or directory</code> et status <code>1</code>.</td>
+		</tr>
+		<tr>
+			<td>Output redirection refusee</td>
+			<td><code>echo hi &gt; /root/nope</code><br><code>echo $?</code></td>
+			<td>Message <code>Permission denied</code> et status <code>1</code>.</td>
+		</tr>
+		<tr>
+			<td>Redirection invalide avant output</td>
+			<td><code>cat &lt; missing_file &gt; /tmp/should_not_exist</code></td>
+			<td>La commande s'arrete sur <code>missing_file</code> et ne cree pas le fichier de sortie.</td>
+		</tr>
+		<tr>
+			<td>Syntax errors pipes</td>
+			<td><code>|</code>, <code>cat |</code>, <code>| cat</code>, <code>cat || wc</code>, <code>cat | | wc</code></td>
+			<td>Message syntax error precis et status <code>2</code>.</td>
+		</tr>
+		<tr>
+			<td>Expansion status et quotes</td>
+			<td><code>echo $?</code>, <code>echo "$?"</code>, <code>echo '$?'</code></td>
+			<td><code>$?</code> expand hors single quotes, reste litteral en single quotes.</td>
+		</tr>
+		<tr>
+			<td>Expansion variables</td>
+			<td><code>echo $UNSET</code>, <code>echo a$USER b</code>, <code>echo $2USER</code></td>
+			<td>Variable unset vide, concat avec texte OK, <code>$2USER</code> donne <code>USER</code>.</td>
+		</tr>
+		<tr>
+			<td>Status commande externe en erreur</td>
+			<td><code>cat missing_file</code><br><code>echo $?</code></td>
+			<td>Erreur de <code>cat</code> et status <code>1</code>.</td>
+		</tr>
 	</table>
 
 	<h2>Points a dire a Dounia</h2>
@@ -255,6 +302,11 @@ EOF</code></pre>
 			<li>
 				On a modifie <code>main.c</code> pour passer <code>shell-&gt;env</code> au parser.
 				C'etait necessaire pour l'expansion dans heredoc.
+			</li>
+			<li>
+				On a aussi retire le print generique <code>minishell: syntax error</code>
+				dans <code>main.c</code>, parce que <code>validate_syntax</code> affiche
+				deja l'erreur exacte, par exemple <code>newline</code>.
 			</li>
 			<li>
 				On a supprime l'ancien wrapper <code>parser_entry.c</code>. Si Dounia avait
@@ -278,8 +330,7 @@ EOF</code></pre>
 
 	<h2>Ce qui reste a faire</h2>
 	<ul>
-		<li>Tester erreurs d'ouverture : <code>cat &lt; missing_file</code>, dossier interdit, permissions.</li>
-		<li>Comparer les messages d'erreur importants avec bash.</li>
+		<li>Comparer plus largement les messages d'erreur avec bash.</li>
 		<li>Faire des tests signaux hors heredoc : <code>cat</code>, pipeline, Ctrl-C, Ctrl-\.</li>
 		<li>Faire une passe Valgrind/leaks sur les cas heredoc et redirections.</li>
 		<li>Faire une Norminette plus globale avant PR finale.</li>
