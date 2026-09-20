@@ -322,17 +322,38 @@ EOF</code></pre>
 				encore tester les signaux globalement avec commandes bloquantes et pipelines.
 			</li>
 			<li>
-				Il faudra verifier avec Valgrind les leaks autour de heredoc/redirections,
-				surtout quand plusieurs redirections remplacent les fd precedents.
+				Valgrind cible a ete lance sur heredoc, redirections et expansion :
+				pas de <code>definitely lost</code>, pas de <code>possibly lost</code>,
+				et <code>ERROR SUMMARY: 0</code>.
 			</li>
 		</ul>
 	</div>
+
+	<h2>Valgrind cible valide</h2>
+	<p>
+		Les tests suivants ont ete lances avec
+		<code>valgrind --leak-check=full --show-leak-kinds=all</code>.
+	</p>
+	<ul>
+		<li>Heredoc simple : <code>cat &lt;&lt; EOF</code>.</li>
+		<li>Redirection invalide : <code>cat &lt; missing_file</code>.</li>
+		<li>Expansion et quotes : <code>$USER</code>, <code>"$USER"</code>, <code>'$USER'</code>, <code>$UNSET</code>, <code>$2USER</code>.</li>
+		<li>Heredoc avec expansion et delimiter quote.</li>
+		<li>Ordre des redirections : <code>&lt; file</code> puis <code>&lt;&lt; EOF</code>, et inversement.</li>
+		<li>Heredoc redirige vers fichier : <code>cat &lt;&lt; EOF &gt; /tmp/ms_hd_out</code>.</li>
+	</ul>
+	<p>
+		Resultat pour chaque lot : <code>definitely lost: 0</code>,
+		<code>indirectly lost: 0</code>, <code>possibly lost: 0</code>,
+		<code>ERROR SUMMARY: 0</code>. Le <code>still reachable</code> observe vient
+		de <code>readline</code> / <code>libtinfo</code>.
+	</p>
 
 	<h2>Ce qui reste a faire</h2>
 	<ul>
 		<li>Comparer plus largement les messages d'erreur avec bash.</li>
 		<li>Faire des tests signaux hors heredoc : <code>cat</code>, pipeline, Ctrl-C, Ctrl-\.</li>
-		<li>Faire une passe Valgrind/leaks sur les cas heredoc et redirections.</li>
+		<li>Faire une passe Valgrind/leaks globale sur tout le minishell avec Dounia.</li>
 		<li>Faire une Norminette plus globale avant PR finale.</li>
 	</ul>
 
