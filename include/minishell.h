@@ -118,8 +118,8 @@ int		update_env_vars(t_env **env, char *key, char *value);
 /*cd.c */
 int		exec_cd(t_shell *shell, char **cmd);
 void	update_env_pwd(t_env *env);
-void	go_to_oldpwd(t_env *env);
-void	go_to_home_dir(t_env *env);
+int		go_to_oldpwd(t_env *env);
+int		go_to_home_dir(t_env *env);
 
 /* echo.c */
 int		has_n_flag(char *str);

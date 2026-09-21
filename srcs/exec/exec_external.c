@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec_external.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/16 02:36:24 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/21 02:04:16 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,34 @@ char	**t_env_to_tab(t_env *env)
 	return (env_tab);
 }
 
+int	handle_direct_path_error(char *cmd)
+{
+	struct stat	info;
+
+	if (ft_strchr(cmd, '/') == NULL)
+		return (0);
+	if (stat(cmd, &info) == -1)
+	{
+		ft_putstr_fd("minishell: ", 2);
+		perror(cmd);
+		exit(127);
+	}
+	if (S_ISDIR(info.st_mode))
+	{
+		ft_putstr_fd("minishell: ", 2);
+		ft_putstr_fd(cmd, 2);
+		ft_putstr_fd(": Is a directory\n", 2);
+		exit(126);
+	}
+	if (access(cmd, X_OK) == -1)
+	{
+		ft_putstr_fd("minishell: ", 2);
+		perror(cmd);
+		exit(126);
+	}
+	return (0);
+}
+
 /**
  * @brief Find cmd's path and replaces the current process
  * with it via execve.
@@ -68,6 +96,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	char	**env_tab;
 
 	env_tab = NULL;
+	handle_direct_path_error(cmd->cmd_and_args[0]);
 	path = find_path(cmd->cmd_and_args[0], env);
 	if (!path)
 	{
@@ -81,13 +110,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	perror("execve");
 	free(path);
 	free_tab(env_tab);
-	exit(126); // return (getstatus = 126) ??
-	// restore_original_signals
-	//	if (WIFEXITED(status))
-	//	*get_status() = WEXITSTATUS(status);
-	//else if (WIFSIGNALED(status))
-	//	*get_status() = 128 + WTERMSIG(status);
-	// ici ou dans exec single et exec pipeline ? AH WTF
+	exit(126);
 }
 
 /**
