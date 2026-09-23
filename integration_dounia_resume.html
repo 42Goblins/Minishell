@@ -94,13 +94,30 @@
 		change, et ce qu'il faut expliquer a Dounia pour la suite.
 	</p>
 
+	<div class="box info">
+		<h2>Role des deux fichiers</h2>
+		<ul>
+			<li>
+				<code>audit_status_errors.md</code> est le suivi technique detaille :
+				tests bash/minishell, bugs trouves, causes, corrections et prochains
+				points a verifier.
+			</li>
+			<li>
+				<code>integration_dounia_resume.html</code> est le resume lisible pour
+				Dounia : fichiers touches, pourquoi ils ont change, et ce qu'il faut
+				revoir ensemble avant merge.
+			</li>
+		</ul>
+	</div>
+
 	<div class="box ok">
 		<h2>Etat actuel</h2>
 		<ul>
 			<li>On est reparties d'une branche propre depuis le dernier <code>dev</code>.</li>
 			<li>Le projet compile avec <code>make fclean</code> puis <code>make</code>.</li>
 			<li>Les fichiers modifies par cette etape passent Norminette.</li>
-			<li>Les tests heredoc / redirections importants passent dans le vrai minishell.</li>
+			<li>Les redirections, exec errors, builtins principaux et signaux hors heredoc sont bien avances.</li>
+			<li>Point encore ouvert : Ctrl-C pendant heredoc reste dans le prompt <code>&gt;</code>.</li>
 		</ul>
 	</div>
 
@@ -482,15 +499,20 @@ EOF</code></pre>
 				droits. Les deux sont autorises dans le sujet.
 			</li>
 			<li>
-				Les signaux heredoc ont l'air corrects sur Ctrl-C / Ctrl-D, mais il faudra
-				encore tester les signaux globalement avec commandes bloquantes et pipelines.
-			</li>
-			<li>
 				Les signaux hors heredoc ont commence a etre integres. Le parent a
 				maintenant un mode prompt et un mode execution. Les enfants externes
 				remettent les signaux par defaut avant <code>execve</code>. Les messages
-				post-signal sont centralises dans <code>signals_utils.c</code>. A retester
-				avec Dounia : <code>cat | cat</code> + Ctrl-C, puis Ctrl-\ / SIGQUIT.
+				post-signal sont centralises dans <code>signals_utils.c</code>. Tests OK :
+				Ctrl-C au prompt, <code>cat</code>, <code>sleep</code>,
+				<code>cat | cat</code>; Ctrl-\ sur commande externe et pipeline avec
+				status <code>131</code>.
+			</li>
+			<li>
+				Point ouvert important : Ctrl-C pendant heredoc n'annule pas encore le
+				heredoc. On reste dans le prompt <code>&gt;</code>. Il faudra corriger la
+				boucle de <code>parser_heredoc.c</code> pour detecter
+				<code>g_signal == SIGINT</code>, sortir du heredoc, et garder le status
+				<code>130</code>.
 			</li>
 			<li>
 				Valgrind cible a ete lance sur heredoc, redirections et expansion :
@@ -522,8 +544,9 @@ EOF</code></pre>
 
 	<h2>Ce qui reste a faire</h2>
 	<ul>
-		<li>Comparer plus largement les messages d'erreur avec bash.</li>
-		<li>Faire des tests signaux hors heredoc : <code>cat</code>, pipeline, Ctrl-C, Ctrl-\.</li>
+		<li>Corriger Ctrl-C pendant heredoc dans <code>parser_heredoc.c</code>.</li>
+		<li>Retester Ctrl-\ pendant heredoc : attendu ignore, comme au prompt.</li>
+		<li>Comparer plus largement les messages d'erreur avec bash si besoin.</li>
 		<li>Faire une passe Valgrind/leaks globale sur tout le minishell avec Dounia.</li>
 		<li>Faire une Norminette plus globale avant PR finale.</li>
 	</ul>

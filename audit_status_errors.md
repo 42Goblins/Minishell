@@ -4,6 +4,14 @@ Ce fichier sert a noter les comportements compares avec bash avant de corriger
 le code commun. L'objectif est de savoir quoi discuter avec Dounia, surtout
 quand ca touche l'exec, les signaux ou la loop.
 
+Role de ce fichier : suivi technique detaille pour nous. On y garde les tests,
+les bugs trouves, les causes probables, les corrections faites et les prochains
+points a verifier.
+
+Role du fichier `integration_dounia_resume.html` : resume lisible pour Dounia,
+avec les fichiers touches, pourquoi ils ont change, et ce qu'elle doit savoir
+avant de relire ou merger.
+
 ## Etat branches / base de travail
 
 Verification faite apres `git fetch --prune origin` :
@@ -50,7 +58,7 @@ la plus fiable est `origin/dev`.
 | ordre `< file << EOF` | heredoc gagne | OK |
 | ordre `<< EOF < file` | fichier gagne | OK |
 | Ctrl-D pendant heredoc | warning + contenu deja tape envoye | OK |
-| Ctrl-C pendant heredoc | retour prompt, status `130` | OK |
+| Ctrl-C pendant heredoc | reste dans le prompt `>` | A corriger |
 
 ### Expansion
 
@@ -762,17 +770,20 @@ enfants.
 - `echo $?` apres Ctrl-C au prompt : `130`
 - `cat` puis Ctrl-C : retour prompt, status `130`
 - `sleep 10` puis Ctrl-C : retour prompt, status `130`
-- `cat | cat` puis Ctrl-C : status `130`, prompt a retester apres ajout de la
-  newline post-wait
+- `cat | cat` puis Ctrl-C : retour prompt propre, status `130`
+- Ctrl-\ au prompt : ignore
+- `cat` puis Ctrl-\ : `Quit (core dumped)`, status `131`
+- `sleep 10` puis Ctrl-\ : `Quit (core dumped)`, status `131`
+- `cat | cat` puis Ctrl-\ : un seul `Quit (core dumped)`, status `131`
 - `make` OK apres ajout de `signals_utils.c`
 - `norminette` OK sur les fichiers signaux/exec touches, avec seulement le
   notice attendu sur la globale `g_signal`
 
 ### Reste a tester / finir
 
-- Retester `cat | cat` puis Ctrl-C apres le fix newline.
-- Tester Ctrl-\ / `SIGQUIT` si possible :
-  - au prompt : ignore
-  - dans une commande externe : status `131`, message bash-like
-    `Quit (core dumped)` si on choisit de le faire
+- Corriger Ctrl-C pendant heredoc :
+  - actuellement le shell reste dans le prompt `>`
+  - attendu : annuler le heredoc, revenir au prompt principal, status `130`
+- Retester Ctrl-\ pendant heredoc :
+  - attendu : ignore, comme au prompt readline normal
 - Repasser Valgrind / track-fds quand les signaux sont stabilises.
