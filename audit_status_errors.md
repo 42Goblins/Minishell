@@ -634,8 +634,63 @@ Etat avant pause :
 
 Reprise conseillee :
 
-1. Faire un mini batch builtins rapide : `env` avec args, `pwd` avec args,
-   `export` sans args, valeurs de `exit`.
-2. Ensuite attaquer les signaux hors heredoc : `cat` + Ctrl-C, `cat` + Ctrl-D,
+1. Corriger le segfault critique sur redirection sans commande.
+2. Attaquer les signaux hors heredoc : `cat` + Ctrl-C, `cat` + Ctrl-D,
    pipeline + Ctrl-C, Ctrl-\ si besoin.
-3. Faire Valgrind global plus tard, quand les comportements sont stabilises.
+3. Faire les finitions bash/norme : `exit` sur stdout, `cd -` qui affiche le
+   chemin cible, fuite fd sur `exit`, champ `cmd->path` mort, commentaires `//`
+   dans le header.
+4. Faire Valgrind global plus tard, quand les comportements sont stabilises.
+
+## Audit Nico du 23 septembre
+
+Source lue : `analyse-minishell-complete.html`.
+
+Points importants a garder pour la suite :
+
+- La base utile reste `chloe-common-checks`; les branches `signals` et
+  `signalv2_mdr` sont notees comme des leurres sans vraie gestion de signaux.
+- Beaucoup de points sont confirmes OK : exec via `PATH` / relatif / absolu,
+  redirections simples, heredoc, expansion, builtins principaux, status
+  classiques.
+- Bug critique verifie puis corrige : redirection sans commande.
+  Exemples a tester :
+  - `> /tmp/x`
+  - `< /tmp/in`
+  - `>> /tmp/a`
+  - `<< EOF`
+  - `> a < b`
+- Cause confirmee : commande vide, donc `cmd_and_args[0] == NULL`, puis appel
+  de `check_is_builtins(NULL)` ou lancement exec sans garde.
+- Correction appliquee :
+  - dans le parser, initialiser `cmd->is_builtin = false`
+  - appeler `check_is_builtins(cmd->cmd_and_args[0])` seulement si
+    `cmd->cmd_and_args[0] != NULL`
+  - dans `launch_exec`, ajouter une garde au debut si `cmds->cmd_and_args[0]`
+    est `NULL`, car les redirections ont deja ete ouvertes par le parser et il
+    n'y a rien a executer.
+- Tests OK :
+  - `> /tmp/ms_redir_only` : pas de crash, fichier cree, status `0`
+  - `>> /tmp/ms_redir_append` : pas de crash, fichier cree, status `0`
+  - `< /tmp/ms_missing_input` : pas de crash, status `1`
+  - `> /tmp/ms_a < /tmp/ms_missing_input` : pas de crash, status `1`
+  - `<< EOF` sans commande : pas de crash, status `0`
+- Ensuite seulement : signaux complets.
+  - parent : Ctrl-C doit afficher une nouvelle ligne, vider readline, status
+    `130`
+  - parent : Ctrl-\ ignore
+  - enfant : restaurer SIGINT/SIGQUIT en comportement par defaut avant exec
+  - pipeline/single external : si SIGQUIT tue l'enfant, afficher
+    `Quit (core dumped)` si on veut coller a bash.
+- Finitions non bloquantes mais utiles :
+  - `exit` devrait afficher `exit\n` sur stdout, pas stderr
+  - `cd -` devrait afficher le repertoire cible avant `update_env_pwd`
+  - `exit` peut laisser 2 fd ouverts dans Valgrind parce qu'il quitte avant la
+    restauration de `exec_single_builtins`
+  - `cmd->path` semble etre du code mort
+  - les commentaires `//` dans `include/minishell.h` risquent Norminette
+  - commentaire faux dans `exec_pipeline.c` : `while` est autorise par la norme
+- Notes non bloquantes confirmees :
+  - `PATH` unset : comportement actuel acceptable pour mandatory
+  - `.` : bash le traite comme `source`, hors mandatory
+  - `pwd` avec arguments : OK si ignore les args comme bash

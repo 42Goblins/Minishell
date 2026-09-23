@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/16 20:30:26 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/23 21:58:33 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,7 +154,9 @@ t_cmd	*create_cmd_node(t_token *tokens, t_env *env)
 	cmd->cmd_and_args = create_cmd_and_args(tokens);
 	if (!cmd->cmd_and_args)
 		return (free(cmd), NULL);
-	cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
+	cmd->is_builtin = false;
+	if (cmd->cmd_and_args[0])
+		cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
 	if (open_redirections(cmd, tokens, env))
 		return (free_cmds(cmd), NULL);
 	return (cmd);
