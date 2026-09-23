@@ -19,10 +19,14 @@
 void	wait_all_pids(pid_t last_pid)
 {
 	int		status;
+	int		sigint;
+	int		sigquit;
 	pid_t	pid;
 
+	sigint = 0;
+	sigquit = 0;
 	pid = wait(&status);
-	while (pid > 0) // pas legale avec la norminette
+	while (pid > 0)
 	{
 		if (pid == last_pid)
 		{
@@ -31,11 +35,10 @@ void	wait_all_pids(pid_t last_pid)
 			else if (WIFSIGNALED(status))
 				*get_status() = 128 + WTERMSIG(status);
 		}
-		// gerer cas ou wait ret -1 et errno == ECHILD ? et les signx par ici ??
-		//if (WIFSIGNALED(status) && WTERMSIG(status) == SIGQUIT)
-		//	ft_putstr_fd("Quit (core dumped)\n", STDERR_FILENO);
+		track_child_signal(status, &sigint, &sigquit);
 		pid = wait(&status);
 	}
+	print_pipeline_signal(sigint, sigquit);
 }
 
 /**

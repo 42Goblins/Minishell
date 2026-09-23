@@ -207,6 +207,99 @@
 				<code>stat</code> est bien autorise par le sujet Minishell.
 			</td>
 		</tr>
+		<tr>
+			<td><code>srcs/signals/signals.c</code></td>
+			<td>
+				Ajout de <code>g_signal</code>, <code>setup_signals</code> et
+				<code>ignore_exec_signals</code>.
+			</td>
+			<td>
+				<code>g_signal</code> respecte la contrainte du sujet : une seule globale,
+				qui stocke seulement le numero du signal recu. <code>setup_signals</code>
+				configure le parent au prompt : Ctrl-C nettoie readline et Ctrl-\ est
+				ignore. <code>ignore_exec_signals</code> sert quand le parent attend les
+				enfants, pour eviter que le handler readline se lance pendant une commande.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/signals/signals_utils.c</code></td>
+			<td>
+				Nouveau fichier helper pour les messages et flags apres signaux enfants.
+			</td>
+			<td>
+				<code>print_signal_message</code> centralise l'affichage :
+				Ctrl-C ecrit une newline, Ctrl-\ affiche
+				<code>Quit (core dumped)</code>. <code>track_child_signal</code> et
+				<code>print_pipeline_signal</code> servent aux pipelines pour ne pas
+				afficher plusieurs messages quand plusieurs enfants meurent par le meme
+				signal.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/setup/setup.c</code> + <code>include/minishell.h</code></td>
+			<td>
+				Le setup appelle maintenant <code>setup_signals()</code>, et le header
+				declare <code>extern int g_signal</code> ainsi que les prototypes signaux.
+			</td>
+			<td>
+				Le shell doit installer son comportement signal des le demarrage. Le
+				<code>extern</code> ne cree pas une deuxieme globale : il permet juste a
+				<code>main.c</code> de lire la variable definie dans
+				<code>signals.c</code>.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/main.c</code></td>
+			<td>
+				Apres <code>readline</code>, si <code>g_signal == SIGINT</code>, le
+				status est mis a <code>130</code> puis <code>g_signal</code> est remis a
+				<code>0</code>.
+			</td>
+			<td>
+				Le handler ne modifie pas directement les structures du shell. Il note
+				seulement le signal recu, puis la loop transforme cette information en
+				status au bon moment.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/exec/exec.c</code></td>
+			<td>
+				<code>launch_exec</code> passe le parent en mode execution avant de lancer
+				la commande, puis remet le mode prompt apres.
+			</td>
+			<td>
+				Pendant qu'une commande tourne, le parent ne doit pas reafficher readline
+				sur Ctrl-C. Les enfants gerent le signal, le parent attend et recupere le
+				status.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/exec/exec_external.c</code></td>
+			<td>
+				L'enfant externe remet <code>SIGINT</code> et <code>SIGQUIT</code> en
+				<code>SIG_DFL</code> avant <code>execve</code>. Le parent appelle
+				<code>print_signal_message</code> si l'enfant meurt par signal.
+			</td>
+			<td>
+				Les commandes comme <code>cat</code> ou <code>sleep</code> doivent reagir
+				normalement a Ctrl-C/Ctrl-\. Le message apres <code>waitpid</code> evite
+				que le prompt colle a <code>^C</code> et permet d'afficher
+				<code>Quit (core dumped)</code> pour Ctrl-\.
+			</td>
+		</tr>
+		<tr>
+			<td><code>srcs/exec/exec_pipeline.c</code></td>
+			<td>
+				<code>wait_all_pids</code> memorise si un enfant est mort par
+				<code>SIGINT</code> ou <code>SIGQUIT</code>, puis affiche le message une
+				seule fois apres tous les waits.
+			</td>
+			<td>
+				Dans une pipeline comme <code>cat | cat</code>, plusieurs enfants peuvent
+				mourir par le meme signal. On ne veut pas afficher plusieurs retours ligne
+				ou plusieurs <code>Quit (core dumped)</code>.
+			</td>
+		</tr>
 	</table>
 
 	<h2>Pourquoi c'etait necessaire</h2>
@@ -391,6 +484,13 @@ EOF</code></pre>
 			<li>
 				Les signaux heredoc ont l'air corrects sur Ctrl-C / Ctrl-D, mais il faudra
 				encore tester les signaux globalement avec commandes bloquantes et pipelines.
+			</li>
+			<li>
+				Les signaux hors heredoc ont commence a etre integres. Le parent a
+				maintenant un mode prompt et un mode execution. Les enfants externes
+				remettent les signaux par defaut avant <code>execve</code>. Les messages
+				post-signal sont centralises dans <code>signals_utils.c</code>. A retester
+				avec Dounia : <code>cat | cat</code> + Ctrl-C, puis Ctrl-\ / SIGQUIT.
 			</li>
 			<li>
 				Valgrind cible a ete lance sur heredoc, redirections et expansion :

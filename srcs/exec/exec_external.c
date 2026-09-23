@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/21 02:04:16 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/23 23:28:37 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,6 +95,8 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	char	*path;
 	char	**env_tab;
 
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
 	env_tab = NULL;
 	handle_direct_path_error(cmd->cmd_and_args[0]);
 	path = find_path(cmd->cmd_and_args[0], env);
@@ -137,5 +139,8 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 	if (WIFEXITED(status))
 		*get_status() = WEXITSTATUS(status);
 	else if (WIFSIGNALED(status))
+	{
 		*get_status() = 128 + WTERMSIG(status);
+		print_signal_message(WTERMSIG(status));
+	}
 }

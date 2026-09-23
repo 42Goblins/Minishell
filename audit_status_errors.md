@@ -694,3 +694,85 @@ Points importants a garder pour la suite :
   - `PATH` unset : comportement actuel acceptable pour mandatory
   - `.` : bash le traite comme `source`, hors mandatory
   - `pwd` avec arguments : OK si ignore les args comme bash
+
+## Signaux hors heredoc
+
+Objectif : separer clairement le comportement du parent minishell et celui des
+enfants.
+
+### Comportement voulu
+
+- Parent au prompt :
+  - Ctrl-C / `SIGINT` : nouvelle ligne, ligne readline videe, prompt reaffiche,
+    status `130`
+  - Ctrl-\ / `SIGQUIT` : ignore
+- Parent pendant l'execution :
+  - ignore Ctrl-C / Ctrl-\ pour ne pas lancer le handler readline pendant que
+    les enfants tournent
+- Enfants :
+  - restaurent `SIGINT` et `SIGQUIT` en comportement par defaut avant `execve`
+  - comme ca `cat`, `sleep`, etc. peuvent etre interrompus normalement
+
+### Fichiers modifies
+
+- `srcs/signals/signals.c`
+  - ajout de la globale autorisee `g_signal`
+  - `setup_signals()` configure le mode prompt :
+    - `SIGINT` -> handler readline
+    - `SIGQUIT` -> ignore
+  - `ignore_exec_signals()` configure le parent pendant l'exec :
+    - `SIGINT` -> ignore
+    - `SIGQUIT` -> ignore
+- `srcs/signals/signals_utils.c`
+  - `print_signal_message()` centralise l'affichage apres un signal enfant :
+    - `SIGINT` -> newline
+    - `SIGQUIT` -> `Quit (core dumped)`
+  - `track_child_signal()` memorise si un enfant de pipeline est mort par
+    `SIGINT` ou `SIGQUIT`
+  - `print_pipeline_signal()` affiche une seule fois le message final de
+    pipeline
+- `include/minishell.h`
+  - declaration `extern int g_signal`
+  - prototypes des helpers signaux
+- `srcs/setup/setup.c`
+  - appel de `setup_signals()` au setup du shell
+- `srcs/main.c`
+  - apres `readline`, si `g_signal == SIGINT` :
+    - status `130`
+    - reset `g_signal = 0`
+- `srcs/exec/exec.c`
+  - `launch_exec` passe le parent en mode exec avant de lancer la commande
+  - puis remet le mode prompt avec `setup_signals()` apres l'execution
+- `srcs/exec/exec_external.c`
+  - dans l'enfant externe, avant `execve` :
+    - `SIGINT` -> `SIG_DFL`
+    - `SIGQUIT` -> `SIG_DFL`
+  - apres `waitpid`, si l'enfant meurt par signal, le parent appelle
+    `print_signal_message(WTERMSIG(status))`
+- `srcs/exec/exec_pipeline.c`
+  - pendant `wait_all_pids`, on memorise si au moins un enfant est mort par
+    `SIGINT` ou `SIGQUIT`
+  - apres tous les `wait`, on affiche une seule fois le message necessaire
+  - ca evite plusieurs messages pour `cat | cat`
+
+### Tests deja valides
+
+- Ctrl-C au prompt : nouveau prompt propre
+- Ctrl-C apres texte tape mais non valide : texte annule
+- `echo $?` apres Ctrl-C au prompt : `130`
+- `cat` puis Ctrl-C : retour prompt, status `130`
+- `sleep 10` puis Ctrl-C : retour prompt, status `130`
+- `cat | cat` puis Ctrl-C : status `130`, prompt a retester apres ajout de la
+  newline post-wait
+- `make` OK apres ajout de `signals_utils.c`
+- `norminette` OK sur les fichiers signaux/exec touches, avec seulement le
+  notice attendu sur la globale `g_signal`
+
+### Reste a tester / finir
+
+- Retester `cat | cat` puis Ctrl-C apres le fix newline.
+- Tester Ctrl-\ / `SIGQUIT` si possible :
+  - au prompt : ignore
+  - dans une commande externe : status `131`, message bash-like
+    `Quit (core dumped)` si on choisit de le faire
+- Repasser Valgrind / track-fds quand les signaux sont stabilises.

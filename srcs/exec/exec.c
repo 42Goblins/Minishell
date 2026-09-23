@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 02:40:17 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/23 21:59:22 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/23 23:44:12 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ void	launch_exec(t_shell *shell, t_cmd *cmds)
 
 	if (!cmds || !cmds->cmd_and_args || !cmds->cmd_and_args[0])
 		return ;
+	ignore_exec_signals();
 	cmd_count = count_cmds(cmds);
 	if (cmd_count == 1 && cmds->is_builtin)
 		exec_single_builtins(shell, cmds);
@@ -42,4 +43,5 @@ void	launch_exec(t_shell *shell, t_cmd *cmds)
 		exec_single_external(cmds, shell->env);
 	else
 		exec_pipeline(shell, cmds);
+	setup_signals();
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/18 05:02:54 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/23 23:40:57 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -222,6 +222,14 @@ void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2]);
 void	exec_cmd(t_shell *shell, t_cmd *cmds);
 pid_t	spawn_cmd(t_shell *shell, t_cmd *cmds, int *prev_fd, int pipefd[2]);
 void	exec_pipeline(t_shell *shell, t_cmd *cmds);
+
+/* signals.c */
+extern int	g_signal;
+int		setup_signals(void);
+int		ignore_exec_signals(void);
+void	print_signal_message(int signal);
+void	track_child_signal(int status, int *sigint, int *sigquit);
+void	print_pipeline_signal(int sigint, int sigquit);
 
 /* ========================================================================== */
 /*                                  UTILS                                     */

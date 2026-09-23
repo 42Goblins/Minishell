@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 06:06:47 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/23 23:09:57 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,11 @@ int	launch_loop(t_shell *shell)
 	char	*line;
 
 	line = readline("minishell$ ");
+	if (g_signal == SIGINT)
+	{
+		*get_status() = 130;
+		g_signal = 0;
+	}
 	if (!line)
 	{
 		ft_putstr_fd("exit\n", STDOUT_FILENO);
