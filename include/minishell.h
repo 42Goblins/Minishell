@@ -3,14 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-<<<<<<< HEAD
-/*   Updated: 2026/09/23 23:40:57 by cmauley          ###   ########.fr       */
-=======
-/*   Updated: 2026/09/18 05:25:32 by dgeara           ###   ########.fr       */
->>>>>>> 4f2f282 (chore: de la norm et suite correction premier audit)
+/*   Updated: 2026/09/26 14:54:30 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,9 +202,9 @@ int		count_cmds(t_cmd *cmds);
 void	launch_exec(t_shell *shell, t_cmd *cmds);
 
 /* exec_external_path.c */
-char	*try_path(char *dir, char *cmd);
+char	*try_path(char *dir, char *cmd, int *not_exec);
 char	*get_path(t_env *env);
-char	*find_path(char *cmd, t_env *env);
+char	*find_path(char *cmd, t_env *env, int *not_exec);
 
 /* exec_external.c */
 int		env_len(t_env *env);

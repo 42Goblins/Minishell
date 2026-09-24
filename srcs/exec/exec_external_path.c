@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:57:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 05:51:12 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/26 14:55:07 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
  * returning its full path if so and null if it doesn't exist or
  * doesn't have acces.
  */
-char	*try_path(char *dir, char *cmd)
+char	*try_path(char *dir, char *cmd, int *not_exec)
 {
 	struct stat	info;
 	char		*tmp;
@@ -26,9 +26,12 @@ char	*try_path(char *dir, char *cmd)
 	tmp = ft_strjoin(dir, "/");
 	full = ft_strjoin(tmp, cmd);
 	free(tmp);
-	if (stat(full, &info) == 0 && !S_ISDIR(info.st_mode)
-		&& access(full, X_OK) == 0)
-		return (full);
+	if (stat(full, &info) == 0 && !S_ISDIR(info.st_mode))
+	{
+		if (access(full, X_OK) == 0)
+			return (full);
+		*not_exec = 1;
+	}
 	free(full);
 	return (NULL);
 }
@@ -53,7 +56,7 @@ char	*get_path(t_env *env)
  * Absolute or relative paths (starting with / or ./) are checked
  * directly instead. The returned string is always allocated.
  */
-char	*find_path(char *cmd, t_env *env)
+char	*find_path(char *cmd, t_env *env, int *not_exec)
 {
 	char	**dirs;
 	char	*path;
@@ -73,7 +76,7 @@ char	*find_path(char *cmd, t_env *env)
 	i = 0;
 	while (dirs[i])
 	{
-		result = try_path(dirs[i], cmd);
+		result = try_path(dirs[i], cmd, not_exec);
 		if (result)
 			return (free_tab(dirs), result);
 		i++;
