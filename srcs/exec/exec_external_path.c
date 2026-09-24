@@ -19,13 +19,15 @@
  */
 char	*try_path(char *dir, char *cmd)
 {
-	char	*tmp;
-	char	*full;
+	struct stat	info;
+	char		*tmp;
+	char		*full;
 
 	tmp = ft_strjoin(dir, "/");
 	full = ft_strjoin(tmp, cmd);
 	free(tmp);
-	if (access(full, X_OK) == 0)
+	if (stat(full, &info) == 0 && !S_ISDIR(info.st_mode)
+		&& access(full, X_OK) == 0)
 		return (full);
 	free(full);
 	return (NULL);
