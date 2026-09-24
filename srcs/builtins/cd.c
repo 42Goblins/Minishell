@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   cd.c                                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/15 23:50:25 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/21 01:55:18 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void	update_env_pwd(t_env *env)
 	free(cwd);
 }
 
-void	go_to_oldpwd(t_env *env)
+int	go_to_oldpwd(t_env *env)
 {
 	char	*oldpwd;
 
@@ -41,10 +41,11 @@ void	go_to_oldpwd(t_env *env)
 		update_env_pwd(env);
 	}
 	else
-		ft_putstr_fd("cd: OLDPWD not set\n", 2);
+		return (ft_putstr_fd("cd: OLDPWD not set\n", 2), 1);
+	return (0);
 }
 
-void	go_to_home_dir(t_env *env)
+int	go_to_home_dir(t_env *env)
 {
 	char	*home;
 
@@ -55,22 +56,23 @@ void	go_to_home_dir(t_env *env)
 		update_env_pwd(env);
 	}
 	else
-		ft_putstr_fd("cd: HOME not set\n", 2);
+		return (ft_putstr_fd("cd: HOME not set\n", 2), 1);
+	return (0);
 }
 
 /* @brief */
 int	exec_cd(t_shell *shell, char **cmd)
 {
 	if (cmd[1] && cmd[2])
-		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2), 0);
+		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2), 1);
 	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
-		return (go_to_home_dir(shell->env), 0);
+		return (go_to_home_dir(shell->env));
 	if (ft_strncmp(cmd[1], "-", 2) == 0)
-		return (go_to_oldpwd(shell->env), 0);
+		return (go_to_oldpwd(shell->env));
 	if (chdir(cmd[1]) == -1)
 	{
-		ft_putstr_fd("minishell: cd:", 2);
-		perror(cmd[1]);
+		ft_putstr_fd("minishell: cd: ", 2);
+		return (perror(cmd[1]), 1);
 	}
 	update_env_pwd(shell->env);
 	return (0);
