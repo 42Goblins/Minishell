@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/26 14:48:04 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/26 14:54:53 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,23 +94,33 @@ void	exec_external(t_cmd *cmd, t_env *env)
 {
 	char	*path;
 	char	**env_tab;
-	
+	int		not_exec;
 
+<<<<<<< HEAD
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
 	env_tab = NULL;
 	handle_direct_path_error(cmd->cmd_and_args[0]);
 	path = find_path(cmd->cmd_and_args[0], env);
+=======
+	not_exec = 0;
+	path = find_path(cmd->cmd_and_args[0], env, &not_exec);
+>>>>>>> 83372ea (chore: add gestion erreur exec external 126/127 (permission denied vs cmd not found ))
 	if (!path)
 	{
 		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
+		if(not_exec)
+		{
+			ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
+			exit(126);
+		}
 		ft_putstr_fd(": command not found\n", STDERR_FILENO);
 		exit(127);
 	}
 	env_tab = t_env_to_tab(env);
 	execve(path, cmd->cmd_and_args, env_tab);
-	perror("execve");
+	perror("minishell: execve");
 	free(path);
 	free_tab(env_tab);
 	exit(126);
