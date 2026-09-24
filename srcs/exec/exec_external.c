@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec_external.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/23 23:28:37 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/26 14:48:04 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,6 +94,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 {
 	char	*path;
 	char	**env_tab;
+	
 
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
@@ -141,6 +142,13 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 	else if (WIFSIGNALED(status))
 	{
 		*get_status() = 128 + WTERMSIG(status);
+<<<<<<< HEAD
 		print_signal_message(WTERMSIG(status));
 	}
+=======
+	/* if (WTERMSIG(status) == SIGINT)
+			printf("\n");
+		else if (WTERMSIG(status) == SIGQUIT)
+			ft_putstr_fd("Quit (core dumped)\n", STDERR_FILENO); */
+>>>>>>> 4f2f282 (chore: de la norm et suite correction premier audit)
 }

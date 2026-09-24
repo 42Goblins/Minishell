@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:33:43 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 01:25:38 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 05:13:48 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ int	update_env_vars(t_env **env, char *key, char *value)
 				free(current->value);
 				current->value = value;
 			}
-			return (0) ;
+			return (0);
 		}
 		current = current->next;
 	}

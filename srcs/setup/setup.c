@@ -3,21 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   setup.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 02:57:32 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/23 22:46:04 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/26 14:48:24 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-int	safe_add_var(t_env **env, char *key, char *value)
-{
-	if (!key || !value)
-		return (free(key), free(value), 0);
-	return (add_new_var(env, key, value));
-}
 
 int	update_shlvl(t_env *env)
 {
@@ -88,10 +81,10 @@ int	setup(t_shell *shell, char **env)
 	shell->cmds = NULL;
 	shell->env = NULL;
 	if (env == NULL || env[0] == NULL)
-	 {
+	{
 		if (create_minimal_env(shell) != 0)
 			return (1);
-	 }
+	}
 	else if (setup_env(shell, env) != 0)
 		return (1);
 	if (ensure_pwd(shell) != 0)
@@ -103,97 +96,3 @@ int	setup(t_shell *shell, char **env)
 	*get_status() = 0;
 	return (0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
