@@ -6,7 +6,11 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/09/23 23:40:57 by cmauley          ###   ########.fr       */
+=======
+/*   Updated: 2026/09/18 05:25:32 by dgeara           ###   ########.fr       */
+>>>>>>> 4f2f282 (chore: de la norm et suite correction premier audit)
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,6 +151,7 @@ int		print_export(t_env *env);
 
 /* export.c */
 int		export_error(char *str);
+int		safe_add_var(t_env **env, char *key, char *value);
 int		add_new_var(t_env **env, char *key, char *value);
 int		parse_export(char *str, char **key, char **value);
 int		exec_export(t_env **env, char **cmd);

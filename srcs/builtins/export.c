@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 01:52:28 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 05:21:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,13 @@ int	export_error(char *str)
 	ft_putstr_fd(str, STDERR_FILENO);
 	ft_putstr_fd("': not a valid identifier\n", STDERR_FILENO);
 	return (0);
+}
+
+int	safe_add_var(t_env **env, char *key, char *value)
+{
+	if (!key || !value)
+		return (free(key), free(value), 0);
+	return (add_new_var(env, key, value));
 }
 
 int	add_new_var(t_env **env, char *key, char *value)

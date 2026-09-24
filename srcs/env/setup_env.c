@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 03:16:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/18 05:13:26 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ int	setup_env(t_shell *shell, char **env)
 	{
 		node = new_env_node(env[i]);
 		if (!node)
-			return (1) ;
+			return (1);
 		if (!shell->env)
 			shell->env = node;
 		else
