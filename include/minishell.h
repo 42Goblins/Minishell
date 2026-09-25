@@ -190,7 +190,16 @@ t_cmd	*parse_tokens(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
 int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+
+/* ========================================================================== */
+/*                                  HEREDOC                                   */
+/* ========================================================================== */
+
 int		open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env);
+int		write_heredoc_content(int write_fd, char *line, bool should_expand,
+			t_env *env);
+int		write_heredoc_line(int write_fd, char *line);
+
 
 /* ========================================================================== */
 /*                                    EXEC                                    */

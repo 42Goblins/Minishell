@@ -17,12 +17,11 @@
  * It reads heredoc input, stores it in a pipe, and gives the read fd to cmd.
  */
 
+static void	heredoc_child(int pipefd[2], t_token *delimiter, t_env *env);
+static int	wait_heredoc_child(pid_t pid, int pipefd[2]);
 static int	fill_heredoc_pipe(int write_fd, char *delimiter,
 				bool should_expand, t_env *env);
 static void	print_heredoc_eof_warning(char *delimiter);
-static int	write_heredoc_content(int write_fd, char *line, bool should_expand,
-				t_env *env);
-static int	write_heredoc_line(int write_fd, char *line);
 
 /**
  * @brief Reads a heredoc and stores its input fd in cmd->fd_in.
@@ -53,6 +52,11 @@ int	open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env)
 		close(cmd->fd_in);
 	cmd->fd_in = pipefd[0];
 	return (0);
+}
+
+void	heredoc_child(int pipefd[2], t_token *delimiter, t_env *env)
+{
+	
 }
 
 /**
@@ -95,42 +99,3 @@ static void	print_heredoc_eof_warning(char *delimiter)
 	ft_putstr_fd("')\n", STDERR_FILENO);
 }
 
-/**
- * @brief Writes a heredoc line after expanding it when needed.
- *
- * The original readline string is freed by the caller. If expansion creates a
- * new string, this function frees that expanded copy before returning.
- */
-static int	write_heredoc_content(int write_fd, char *line, bool should_expand,
-	t_env *env)
-{
-	char	*expanded;
-	int		ret;
-
-	if (!should_expand || env == NULL)
-		return (write_heredoc_line(write_fd, line));
-	expanded = expand_word(line, env);
-	if (!expanded)
-		return (1);
-	ret = write_heredoc_line(write_fd, expanded);
-	free(expanded);
-	return (ret);
-}
-
-/**
- * @brief Writes one heredoc line and its newline to the pipe.
- */
-static int	write_heredoc_line(int write_fd, char *line)
-{
-	if (write(write_fd, line, ft_strlen(line)) == -1)
-	{
-		perror("write");
-		return (1);
-	}
-	if (write(write_fd, "\n", 1) == -1)
-	{
-		perror("write");
-		return (1);
-	}
-	return (0);
-}
