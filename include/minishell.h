@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/23 23:40:57 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/25 02:32:45 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,6 +230,7 @@ int		ignore_exec_signals(void);
 void	print_signal_message(int signal);
 void	track_child_signal(int status, int *sigint, int *sigquit);
 void	print_pipeline_signal(int sigint, int sigquit);
+int		setup_heredoc_signals(void);
 
 /* ========================================================================== */
 /*                                  UTILS                                     */
