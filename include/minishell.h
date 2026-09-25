@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/25 02:32:45 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/25 17:10:55 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -190,7 +190,16 @@ t_cmd	*parse_tokens(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
 int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+
+/* ========================================================================== */
+/*                                  HEREDOC                                   */
+/* ========================================================================== */
+
 int		open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env);
+int		write_heredoc_content(int write_fd, char *line, bool should_expand,
+			t_env *env);
+int		write_heredoc_line(int write_fd, char *line);
+
 
 /* ========================================================================== */
 /*                                    EXEC                                    */
