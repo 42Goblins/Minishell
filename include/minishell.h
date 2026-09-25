@@ -232,6 +232,7 @@ int		ignore_exec_signals(void);
 void	print_signal_message(int signal);
 void	track_child_signal(int status, int *sigint, int *sigquit);
 void	print_pipeline_signal(int sigint, int sigquit);
+int		setup_heredoc_signals(void);
 
 /* ========================================================================== */
 /*                                  UTILS                                     */
