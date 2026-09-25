@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/15 18:49:11 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/18 01:45:30 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/25 03:43:52 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,13 +38,16 @@ int	open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env)
 		return (1);
 	if (pipe(pipefd) == -1)
 		return (perror("pipe"), 1);
+	setup_heredoc_signals();
 	if (fill_heredoc_pipe(pipefd[1], delimiter->value,
 			!delimiter->had_quotes, env) != 0)
 	{
+		setup_signals();
 		close(pipefd[0]);
 		close(pipefd[1]);
 		return (1);
 	}
+	setup_signals();
 	close(pipefd[1]);
 	if (cmd->fd_in != 0)
 		close(cmd->fd_in);
@@ -65,13 +68,12 @@ static int	fill_heredoc_pipe(int write_fd, char *delimiter, bool should_expand,
 	while (1)
 	{
 		line = readline("> ");
+		if (line == NULL && g_signal == SIGINT)
+			return (130);
 		if (line == NULL)
 			return (print_heredoc_eof_warning(delimiter), 0);
 		if (ft_strcmp(line, delimiter) == 0)
-		{
-			free(line);
-			return (0);
-		}
+			return (free(line), 0);
 		if (write_heredoc_content(write_fd, line, should_expand, env) != 0)
 		{
 			free(line);
