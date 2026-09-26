@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/26 14:54:53 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/26 15:13:28 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,16 +96,12 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	char	**env_tab;
 	int		not_exec;
 
-<<<<<<< HEAD
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
 	env_tab = NULL;
 	handle_direct_path_error(cmd->cmd_and_args[0]);
-	path = find_path(cmd->cmd_and_args[0], env);
-=======
 	not_exec = 0;
 	path = find_path(cmd->cmd_and_args[0], env, &not_exec);
->>>>>>> 83372ea (chore: add gestion erreur exec external 126/127 (permission denied vs cmd not found ))
 	if (!path)
 	{
 		ft_putstr_fd("minishell: ", 2);
@@ -152,13 +148,6 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 	else if (WIFSIGNALED(status))
 	{
 		*get_status() = 128 + WTERMSIG(status);
-<<<<<<< HEAD
 		print_signal_message(WTERMSIG(status));
 	}
-=======
-	/* if (WTERMSIG(status) == SIGINT)
-			printf("\n");
-		else if (WTERMSIG(status) == SIGQUIT)
-			ft_putstr_fd("Quit (core dumped)\n", STDERR_FILENO); */
->>>>>>> 4f2f282 (chore: de la norm et suite correction premier audit)
 }
