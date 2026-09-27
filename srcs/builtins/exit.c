@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/17 19:14:46 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/27 15:34:23 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ int	exec_exit(t_shell *shell, char **cmd)
 	int	status;
 
 	status = *get_status();
-	ft_putstr_fd("exit\n", 2);
+	ft_putstr_fd("exit\n", STDOUT_FILENO);
 	if (cmd[1])
 	{
 		if (!is_num(cmd[1]))
