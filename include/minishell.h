@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/28 00:19:28 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 00:59:27 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@
 # include <sys/ioctl.h>			// ioctl, isatty, ttyname, ttyslot
 # include <termios.h>			// tcsetattr, tcgetattr
 # include <termcap.h>			// tgetent, tgetflag, tgetnum, tgetstr, tputs
-# include "../libft/inc/libft.h"	// libft functions
+# include "../libft/inc/libft.h"// libft functions
 # include <stdbool.h>			// bool type
 
 # define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -201,6 +201,7 @@ int		count_cmds(t_cmd *cmds);
 void	launch_exec(t_shell *shell, t_cmd *cmds);
 
 /* exec_external_path.c */
+int		handle_direct_path_error(char *cmd);
 char	*try_path(char *dir, char *cmd, int *not_exec);
 char	*get_path(t_env *env);
 char	*find_path(char *cmd, t_env *env, int *not_exec);
@@ -208,11 +209,12 @@ char	*find_path(char *cmd, t_env *env, int *not_exec);
 /* exec_external.c */
 int		env_len(t_env *env);
 char	**t_env_to_tab(t_env *env);
+void	command_error(t_cmd *cmd, int not_exec);
 void	exec_external(t_cmd *cmd, t_env *env);
 void	exec_single_external(t_cmd *cmd, t_env *env);
 
 /* exec_builtins.c */
-bool		check_is_builtins(char *cmd);
+bool	check_is_builtins(char *cmd);
 void	exec_builtins(t_shell *shell, t_cmd *cmd);
 void	exec_single_builtins(t_shell *shell, t_cmd *cmd);
 

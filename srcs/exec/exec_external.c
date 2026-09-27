@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 01:13:25 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 01:14:42 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,32 +54,17 @@ char	**t_env_to_tab(t_env *env)
 	return (env_tab);
 }
 
-int	handle_direct_path_error(char *cmd)
+void	command_error(t_cmd *cmd, int not_exec)
 {
-	struct stat	info;
-
-	if (ft_strchr(cmd, '/') == NULL)
-		return (0);
-	if (stat(cmd, &info) == -1)
+	ft_putstr_fd("minishell: ", STDERR_FILENO);
+	ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
+	if (not_exec)
 	{
-		ft_putstr_fd("minishell: ", 2);
-		perror(cmd);
-		exit(127);
-	}
-	if (S_ISDIR(info.st_mode))
-	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd, 2);
-		ft_putstr_fd(": Is a directory\n", 2);
+		ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
 		exit(126);
 	}
-	if (access(cmd, X_OK) == -1)
-	{
-		ft_putstr_fd("minishell: ", 2);
-		perror(cmd);
-		exit(126);
-	}
-	return (0);
+	ft_putstr_fd(": command not found\n", STDERR_FILENO);
+	exit(127);
 }
 
 /**
@@ -103,17 +88,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
 	not_exec = 0;
 	path = find_path(cmd->cmd_and_args[0], env, &not_exec);
 	if (!path)
-	{
-		ft_putstr_fd("minishell: ", 2);
-		ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
-		if(not_exec)
-		{
-			ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
-			exit(126);
-		}
-		ft_putstr_fd(": command not found\n", STDERR_FILENO);
-		exit(127);
-	}
+		command_error(cmd, not_exec);
 	env_tab = t_env_to_tab(env);
 	execve(path, cmd->cmd_and_args, env_tab);
 	perror("minishell: execve");
