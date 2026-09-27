@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/23 21:58:33 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/28 00:20:13 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,7 +146,6 @@ t_cmd	*create_cmd_node(t_token *tokens, t_env *env)
 	if (!cmd)
 		return (NULL);
 	cmd->cmd_and_args = NULL;
-	cmd->path = NULL;
 	cmd->fd_in = 0;
 	cmd->fd_out = 1;
 	cmd->access_check = false;

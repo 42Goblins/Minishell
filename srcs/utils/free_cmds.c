@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/01 16:29:06 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/13 18:44:34 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 00:20:54 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ void	free_cmds(t_cmd *cmds)
 		if (cmds->fd_out != 1)
 			close(cmds->fd_out);
 		free_tab(cmds->cmd_and_args);
-		free(cmds->path);
 		free(cmds);
 		cmds = tmp;
 	}
