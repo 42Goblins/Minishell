@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/27 15:29:00 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/27 23:22:49 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,7 @@ int		update_env_vars(t_env **env, char *key, char *value);
 /* ========================================================================== */
 /*cd.c */
 int		exec_cd(t_shell *shell, char **cmd);
-void	update_env_pwd(t_env *env);
+void	update_env_pwd(t_env **env);
 int		go_to_oldpwd(t_env *env);
 int		go_to_home_dir(t_env *env);
 
