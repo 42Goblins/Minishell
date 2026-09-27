@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 16:11:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/16 02:18:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/27 15:28:36 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,23 +16,23 @@
  * @brief Checks whether the command name matches one of the shell's
  * builtins (cd, echo, env, pwd, unset, exit, export).
  */
-int	check_is_builtins(char *cmd)
+bool	check_is_builtins(char *cmd)
 {
 	if (ft_strcmp(cmd, "cd") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "echo") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "env") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "pwd") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "unset") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "exit") == 0)
-		return (1);
+		return (true);
 	if (ft_strcmp(cmd, "export") == 0)
-		return (1);
-	return (0);
+		return (true);
+	return (false);
 }
 
 /**
