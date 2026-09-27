@@ -12,6 +12,9 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Prints the visible message for a child signal.
+ */
 void	print_signal_message(int signal)
 {
 	if (signal == SIGINT)
@@ -20,6 +23,9 @@ void	print_signal_message(int signal)
 		ft_putstr_fd("Quit (core dumped)\n", STDERR_FILENO);
 }
 
+/**
+ * @brief Records whether a child exited because of SIGINT or SIGQUIT.
+ */
 void	track_child_signal(int status, int *sigint, int *sigquit)
 {
 	if (!WIFSIGNALED(status))
@@ -30,6 +36,9 @@ void	track_child_signal(int status, int *sigint, int *sigquit)
 		*sigquit = 1;
 }
 
+/**
+ * @brief Prints one signal message after all pipeline children are reaped.
+ */
 void	print_pipeline_signal(int sigint, int sigquit)
 {
 	if (sigint)
