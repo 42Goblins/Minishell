@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/26 14:54:30 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/27 15:29:00 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ void	exec_external(t_cmd *cmd, t_env *env);
 void	exec_single_external(t_cmd *cmd, t_env *env);
 
 /* exec_builtins.c */
-int		check_is_builtins(char *cmd);
+bool		check_is_builtins(char *cmd);
 void	exec_builtins(t_shell *shell, t_cmd *cmd);
 void	exec_single_builtins(t_shell *shell, t_cmd *cmd);
 
