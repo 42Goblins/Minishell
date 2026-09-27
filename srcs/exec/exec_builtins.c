@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 16:11:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/27 15:28:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/27 23:59:49 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,8 @@ void	exec_single_builtins(t_shell *shell, t_cmd *cmd)
 	int	saved_stdin;
 	int	saved_stdout;
 
+	if (ft_strcmp(cmd->cmd_and_args[0], "exit") == 0)
+		return (exec_builtins(shell, cmd));
 	saved_stdin = dup(STDIN_FILENO);
 	saved_stdout = dup(STDOUT_FILENO);
 	set_fds(cmd, -1, NULL);
