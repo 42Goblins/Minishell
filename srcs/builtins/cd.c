@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   cd.c                                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/21 01:55:18 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/27 23:52:04 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	update_env_pwd(t_env *env)
+void	update_env_pwd(t_env **env)
 {
 	char	*cwd;
 	char	*oldpwd;
@@ -20,14 +20,13 @@ void	update_env_pwd(t_env *env)
 
 	oldpwd_cpy = NULL;
 	cwd = getcwd(NULL, 0);
-	oldpwd = get_env_value(env, "PWD");
+	oldpwd = get_env_value(*env, "PWD");
 	if (oldpwd)
 		oldpwd_cpy = ft_strdup(oldpwd);
 	if (cwd)
-		set_env_value(env, "PWD", cwd);
+		update_env_vars(env, ft_strdup("PWD"), cwd);
 	if (oldpwd_cpy)
-		set_env_value(env, "OLDPWD", oldpwd_cpy);
-	free(cwd);
+		update_env_vars(env, ft_strdup("OLDPWD"), oldpwd_cpy);
 }
 
 int	go_to_oldpwd(t_env *env)
@@ -37,11 +36,16 @@ int	go_to_oldpwd(t_env *env)
 	oldpwd = get_env_value(env, "OLDPWD");
 	if (oldpwd)
 	{
-		chdir(oldpwd);
-		update_env_pwd(env);
+		if (chdir(oldpwd) == -1)
+		{
+			ft_putstr_fd("minishell: cd: ", 2);
+			return (perror(oldpwd), 1);
+		}
+		ft_putendl_fd(oldpwd, STDOUT_FILENO);
+		update_env_pwd(&env);
 	}
 	else
-		return (ft_putstr_fd("cd: OLDPWD not set\n", 2), 1);
+		return (ft_putstr_fd("minishell: cd: OLDPWD not set\n", 2), 1);
 	return (0);
 }
 
@@ -52,8 +56,12 @@ int	go_to_home_dir(t_env *env)
 	home = get_env_value(env, "HOME");
 	if (home)
 	{
-		chdir(home);
-		update_env_pwd(env);
+		if (chdir(home) == -1)
+		{
+			ft_putstr_fd("minishell: cd: ", 2);
+			return (perror(home), 1);
+		}
+		update_env_pwd(&env);
 	}
 	else
 		return (ft_putstr_fd("cd: HOME not set\n", 2), 1);
@@ -74,6 +82,6 @@ int	exec_cd(t_shell *shell, char **cmd)
 		ft_putstr_fd("minishell: cd: ", 2);
 		return (perror(cmd[1]), 1);
 	}
-	update_env_pwd(shell->env);
+	update_env_pwd(&shell->env);
 	return (0);
 }
