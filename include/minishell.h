@@ -200,7 +200,6 @@ int		write_heredoc_content(int write_fd, char *line, bool should_expand,
 			t_env *env);
 int		write_heredoc_line(int write_fd, char *line);
 
-
 /* ========================================================================== */
 /*                                    EXEC                                    */
 /* ========================================================================== */

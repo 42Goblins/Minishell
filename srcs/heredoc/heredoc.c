@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   heredoc.c                                           :+:      :+:    :+:   */
+/*   heredoc.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -19,52 +19,100 @@
 
 static void	heredoc_child(int pipefd[2], t_token *delimiter, t_env *env);
 static int	wait_heredoc_child(pid_t pid, int pipefd[2]);
-static int	fill_heredoc_pipe(int write_fd, char *delimiter,
+static int	read_heredoc(int write_fd, char *delimiter,
 				bool should_expand, t_env *env);
 static void	print_heredoc_eof_warning(char *delimiter);
 
 /**
- * @brief Reads a heredoc and stores its input fd in cmd->fd_in.
+ * @brief Reads a heredoc in a child process and stores its input fd.
  *
- * The delimiter token keeps both the delimiter value and the quote info.
- * If the delimiter was not quoted, heredoc content is expanded.
+ * The child fills the write side of a pipe. The parent keeps the read side in
+ * cmd->fd_in when heredoc collection succeeds.
  */
 int	open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env)
 {
-	int	pipefd[2];
+	int		pipefd[2];
+	pid_t	pid;
 
 	if (cmd == NULL || delimiter == NULL || delimiter->value == NULL)
 		return (1);
 	if (pipe(pipefd) == -1)
 		return (perror("pipe"), 1);
-	setup_heredoc_signals();
-	if (fill_heredoc_pipe(pipefd[1], delimiter->value,
-			!delimiter->had_quotes, env) != 0)
+	ignore_exec_signals();
+	pid = fork();
+	if (pid == -1)
 	{
 		setup_signals();
 		close(pipefd[0]);
 		close(pipefd[1]);
-		return (1);
+		return (perror("fork"), 1);
 	}
-	setup_signals();
-	close(pipefd[1]);
+	if (pid == 0)
+		heredoc_child(pipefd, delimiter, env);
+	if (wait_heredoc_child(pid, pipefd) != 0)
+		return (1);
 	if (cmd->fd_in != 0)
 		close(cmd->fd_in);
 	cmd->fd_in = pipefd[0];
 	return (0);
 }
 
-void	heredoc_child(int pipefd[2], t_token *delimiter, t_env *env)
+/**
+ * @brief Reads heredoc content in the child process and exits with its status.
+ */
+static void	heredoc_child(int pipefd[2], t_token *delimiter, t_env *env)
 {
-	
+	int	res;
+
+	setup_heredoc_signals();
+	close(pipefd[0]);
+	res = read_heredoc(pipefd[1], delimiter->value,
+			!delimiter->had_quotes, env);
+	close(pipefd[1]);
+	exit(res);
 }
 
 /**
- * @brief Reads heredoc lines until the delimiter or EOF is reached.
+ * @brief Waits for the heredoc child and cancels on interruption.
  *
- * Each line is optionally expanded, then written to the heredoc pipe.
+ * A Ctrl-C can appear as exit(130) from the child handler or as a SIGINT
+ * termination. Both cases close the read end and set the shell status to 130.
  */
-static int	fill_heredoc_pipe(int write_fd, char *delimiter, bool should_expand,
+static int	wait_heredoc_child(pid_t pid, int pipefd[2])
+{
+	int	status;
+	int	code;
+
+	close(pipefd[1]);
+	waitpid(pid, &status, 0);
+	setup_signals();
+	if (WIFEXITED(status))
+	{
+		code = WEXITSTATUS(status);
+		if (code != 0)
+		{
+			if (code == 130)
+				*get_status() = 130;
+			close(pipefd[0]);
+			return (1);
+		}
+	}
+	if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
+	{
+		*get_status() = 130;
+		close(pipefd[0]);
+		return (1);
+	}
+	return (0);
+}
+
+/**
+ * @brief Reads heredoc lines and writes them to the pipe.
+ *
+ * Each line is optionally expanded. EOF prints a warning, while SIGINT returns
+ * 130 so the parent can cancel the command.
+ */
+static int	read_heredoc(int write_fd, char *delimiter, bool should_expand,
 	t_env *env)
 {
 	char	*line;
@@ -98,4 +146,3 @@ static void	print_heredoc_eof_warning(char *delimiter)
 	ft_putstr_fd(delimiter, STDERR_FILENO);
 	ft_putstr_fd("')\n", STDERR_FILENO);
 }
-
