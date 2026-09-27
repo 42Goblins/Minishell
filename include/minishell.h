@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/27 23:22:49 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 00:19:28 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,6 @@ typedef struct s_env
 typedef struct s_cmd
 {
 	char			**cmd_and_args;
-	char			*path;
 	int				fd_in;
 	int				fd_out;
 	bool			is_builtin;
