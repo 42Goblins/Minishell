@@ -6,11 +6,39 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:57:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/26 14:55:07 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 00:55:18 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+int	handle_direct_path_error(char *cmd)
+{
+	struct stat	info;
+
+	if (ft_strchr(cmd, '/') == NULL)
+		return (0);
+	if (stat(cmd, &info) == -1)
+	{
+		ft_putstr_fd("minishell: ", 2);
+		perror(cmd);
+		exit(127);
+	}
+	if (S_ISDIR(info.st_mode))
+	{
+		ft_putstr_fd("minishell: ", 2);
+		ft_putstr_fd(cmd, 2);
+		ft_putstr_fd(": Is a directory\n", 2);
+		exit(126);
+	}
+	if (access(cmd, X_OK) == -1)
+	{
+		ft_putstr_fd("minishell: ", 2);
+		perror(cmd);
+		exit(126);
+	}
+	return (0);
+}
 
 /**
  * @brief Checks whether cmd exists and is executable inside dir,

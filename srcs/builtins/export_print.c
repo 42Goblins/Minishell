@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/04 03:18:09 by dgeara            #+#    #+#             */
-/*   Updated: 2026/08/04 03:18:45 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 00:28:01 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,6 @@ int	print_export(t_env *env)
 	int		i;
 
 	env_cpy = sort_export(env);
-	//sort_export(&env_cpy, env);
 	if (!env_cpy)
 		return (1);
 	i = 0;
@@ -91,6 +90,6 @@ int	print_export(t_env *env)
 		ft_putstr_fd("\n", STDOUT_FILENO);
 		i++;
 	}
-	free(env_cpy); //special free list type t_env ici plutôt ?
+	free(env_cpy);
 	return (0);
 }
