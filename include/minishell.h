@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   minishell.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/28 00:59:27 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 03:31:35 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ int		exec_echo(char **cmd);
 int		exec_env(t_env *env, char **cmd);
 
 /* pwd.c */
-int		exec_pwd(void);
+int		exec_pwd(char **cmd);
 
 /* unset.c */
 void	del_env_variable(t_env **first, t_env *prev, t_env *current);
@@ -190,6 +190,7 @@ t_cmd	*parse_tokens(t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
 int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+int		is_empty_unquoted_word(t_token *token);
 
 /* ========================================================================== */
 /*                                  HEREDOC                                   */
@@ -260,5 +261,8 @@ void	free_tab(char **tab);
 
 /* get_status.c */
 int		*get_status(void);
+
+/* read_input.c */
+char	*read_input(char *prompt);
 
 #endif

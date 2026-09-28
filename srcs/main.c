@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/23 23:09:57 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/28 01:58:05 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ int	launch_loop(t_shell *shell)
 {
 	char	*line;
 
-	line = readline("minishell$ ");
+	line = read_input("minishell$ ");
 	if (g_signal == SIGINT)
 	{
 		*get_status() = 130;
@@ -43,12 +43,14 @@ int	launch_loop(t_shell *shell)
 	}
 	if (!line)
 	{
-		ft_putstr_fd("exit\n", STDOUT_FILENO);
+		if (isatty(STDIN_FILENO))
+			ft_putstr_fd("exit\n", STDOUT_FILENO);
 		clean_exit(shell, *get_status());
 	}
 	if (line[0] != '\0')
 	{
-		add_history(line);
+		if (isatty(STDIN_FILENO))
+			add_history(line);
 		process_line(shell, line);
 		reset_shell_state(shell);
 	}

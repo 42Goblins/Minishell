@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/28 00:20:13 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 03:30:54 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ int	count_cmd_args(t_token *tokens)
 			if (current->next)
 				current = current->next;
 		}
-		else if (current->type == T_WORD)
+		else if (current->type == T_WORD && !is_empty_unquoted_word(current))
 			count++;
 		current = current->next;
 	}
@@ -106,7 +106,7 @@ char	**create_cmd_and_args(t_token *tokens)
 			if (current->next)
 				current = current->next;
 		}
-		else if (current->type == T_WORD)
+		else if (current->type == T_WORD && !is_empty_unquoted_word(current))
 		{
 			if (copy_word_to_args(cmd_and_args, &i, current->value))
 				return (NULL);

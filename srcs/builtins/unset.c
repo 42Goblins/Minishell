@@ -21,6 +21,9 @@ void	del_env_variable(t_env **first, t_env *prev, t_env *current)
 	free_t_env(current);
 }
 
+/**
+ * @brief Removes variables from the shell environment.
+ */
 int	exec_unset(t_env **env, char **cmd)
 {
 	int		i;

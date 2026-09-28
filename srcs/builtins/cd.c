@@ -68,7 +68,9 @@ int	go_to_home_dir(t_env *env)
 	return (0);
 }
 
-/* @brief */
+/**
+ * @brief Changes directory using a relative or absolute path.
+ */
 int	exec_cd(t_shell *shell, char **cmd)
 {
 	if (cmd[1] && cmd[2])

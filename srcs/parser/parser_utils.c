@@ -22,3 +22,14 @@ int	is_redirection_token(t_token_type type)
 		return (1);
 	return (0);
 }
+
+/**
+ * @brief Checks if an expanded word disappeared without being quoted.
+ */
+int	is_empty_unquoted_word(t_token *token)
+{
+	if (token->type == T_WORD && token->value[0] == '\0'
+		&& token->had_quotes == false)
+		return (1);
+	return (0);
+}

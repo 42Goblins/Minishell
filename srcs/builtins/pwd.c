@@ -12,10 +12,30 @@
 
 #include "minishell.h"
 
-int	exec_pwd(void)
+/**
+ * @brief Checks whether pwd received an unsupported option.
+ */
+static int	invalid_pwd_option(char *arg)
+{
+	if (!arg || arg[0] != '-' || arg[1] == '\0')
+		return (0);
+	if (ft_strcmp(arg, "--") == 0)
+		return (0);
+	ft_putstr_fd("minishell: pwd: ", STDERR_FILENO);
+	ft_putstr_fd(arg, STDERR_FILENO);
+	ft_putstr_fd(": invalid option\n", STDERR_FILENO);
+	return (1);
+}
+
+/**
+ * @brief Prints the current working directory after option validation.
+ */
+int	exec_pwd(char **cmd)
 {
 	char	*pwd;
 
+	if (invalid_pwd_option(cmd[1]))
+		return (2);
 	pwd = getcwd(NULL, 0);
 	if (!pwd)
 		return (perror("getcwd :"), 1);
