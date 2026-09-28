@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 01:58:05 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/28 18:26:39 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Frees the current command and token data before the next prompt.
+ */
 void	reset_shell_state(t_shell *shell)
 {
 	free_cmds(shell->cmds);
@@ -20,6 +23,9 @@ void	reset_shell_state(t_shell *shell)
 	shell->token = NULL;
 }
 
+/**
+ * @brief Tokenizes, expands, parses, and executes a command line.
+ */
 void	process_line(t_shell *shell, char *line)
 {
 	tokenizer(line, shell);
@@ -31,6 +37,9 @@ void	process_line(t_shell *shell, char *line)
 	launch_exec(shell, shell->cmds);
 }
 
+/**
+ * @brief Reads and processes one command line from the interactive prompt.
+ */
 int	launch_loop(t_shell *shell)
 {
 	char	*line;
@@ -58,6 +67,9 @@ int	launch_loop(t_shell *shell)
 	return (0);
 }
 
+/**
+ * @brief Initializes the shell and starts the main interactive loop.
+ */
 int	main(int ac, char **av, char **env)
 {
 	t_shell	shell;

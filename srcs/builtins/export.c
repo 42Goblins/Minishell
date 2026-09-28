@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 05:21:36 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 04:03:57 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Prints an error for an invalid export identifier.
+ */
 int	export_error(char *str)
 {
 	ft_putstr_fd("minishell: export: `", STDERR_FILENO);
@@ -20,6 +23,9 @@ int	export_error(char *str)
 	return (0);
 }
 
+/**
+ * @brief Adds a variable only when its key and value are valid.
+ */
 int	safe_add_var(t_env **env, char *key, char *value)
 {
 	if (!key || !value)
@@ -27,6 +33,9 @@ int	safe_add_var(t_env **env, char *key, char *value)
 	return (add_new_var(env, key, value));
 }
 
+/**
+ * @brief Appends a new variable to the environment list.
+ */
 int	add_new_var(t_env **env, char *key, char *value)
 {
 	t_env	*new;
@@ -50,6 +59,10 @@ int	add_new_var(t_env **env, char *key, char *value)
 	return (1);
 }
 
+/**
+ * @brief Checks if argument is a valid export argument and 
+ * splits it an into its key and value.
+ */
 int	parse_export(char *str, char **key, char **value)
 {
 	int	i;
@@ -73,6 +86,9 @@ int	parse_export(char *str, char **key, char **value)
 	return (1);
 }
 
+/**
+ * @brief Handles export arguments and updates the environment.
+ */
 int	exec_export(t_env **env, char **cmd)
 {
 	int		i;

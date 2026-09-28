@@ -6,12 +6,16 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 02:57:32 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/26 14:48:24 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:54:09 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Increments SHLVL and resets it when it becomes too high
+ * creat it if needed.
+ */
 int	update_shlvl(t_env *env)
 {
 	char	*shlvl_value;
@@ -41,6 +45,9 @@ int	update_shlvl(t_env *env)
 	return (0);
 }
 
+/**
+ * @brief Returns the current working directory or an empty string on failure.
+ */
 char	*safe_getcwd(void)
 {
 	char	*cwd;
@@ -51,6 +58,9 @@ char	*safe_getcwd(void)
 	return (cwd);
 }
 
+/**
+ * @brief Creates PWD if it is missing.
+ */
 int	ensure_pwd(t_shell *shell)
 {
 	char	*pwd;
@@ -64,6 +74,10 @@ int	ensure_pwd(t_shell *shell)
 	return (0);
 }
 
+/**
+ * @brief Creates the default environment variables for 
+ * when launched with an empty environment.
+ */
 int	create_minimal_env(t_shell *shell)
 {
 	if (!safe_add_var(&shell->env, ft_strdup("PWD"), safe_getcwd()))
@@ -75,6 +89,9 @@ int	create_minimal_env(t_shell *shell)
 	return (0);
 }
 
+/**
+ * @brief Initializes shell data, environment variables, signals, and status.
+ */
 int	setup(t_shell *shell, char **env)
 {
 	shell->token = NULL;

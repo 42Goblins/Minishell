@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/25 02:51:37 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/25 03:38:46 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:15:37 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Prints the environment variables.
+ */
 int	exec_env(t_env *env, char **cmd)
 {
 	if (cmd[1])

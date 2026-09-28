@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   exit.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 03:22:58 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/28 18:21:13 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Frees shell resources before exiting.
+ */
 void	clean_exit(t_shell *shell, int status)
 {
 	free_cmds(shell->cmds);
@@ -21,6 +24,9 @@ void	clean_exit(t_shell *shell, int status)
 	exit(status);
 }
 
+/**
+ * @brief Checks if a string is a valid numeric argument.
+ */
 int	is_num(char *str)
 {
 	int	i;
@@ -42,7 +48,7 @@ int	is_num(char *str)
 }
 
 /**
- * @brief Exits the shell, validating optional numeric status arguments.
+ * @brief Handles exit arguments and terminates the shell.
  */
 int	exec_exit(t_shell *shell, char **cmd)
 {

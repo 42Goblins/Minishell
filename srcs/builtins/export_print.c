@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/04 03:18:09 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 00:28:01 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:22:17 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Creates an array containing pointers to the t_env nodes.
+ */
 t_env	**lst_cpy(t_env *env)
 {
 	t_env	**cpy;
@@ -39,6 +42,9 @@ t_env	**lst_cpy(t_env *env)
 	return (cpy);
 }
 
+/**
+ * @brief Creates and sorts a copy of t_env variables by key.
+ */
 t_env	**sort_export(t_env *env)
 {
 	t_env	**cpy;
@@ -68,6 +74,9 @@ t_env	**sort_export(t_env *env)
 	return (cpy);
 }
 
+/**
+ * @brief Prints t_env variables in export format, sorted by key.
+ */
 int	print_export(t_env *env)
 {
 	t_env	**env_cpy;
