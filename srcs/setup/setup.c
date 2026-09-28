@@ -20,7 +20,7 @@ int	update_shlvl(t_env *env)
 	shlvl_value = get_env_value(env, "SHLVL");
 	if (!shlvl_value)
 	{
-		if (!update_env_vars(&env, "SHLVL", ft_strdup("1")))
+		if (!update_env_vars(&env, ft_strdup("SHLVL"), ft_strdup("1")))
 			return (1);
 		return (0);
 	}
@@ -79,6 +79,7 @@ int	setup(t_shell *shell, char **env)
 {
 	shell->token = NULL;
 	shell->cmds = NULL;
+	shell->current_line = NULL;
 	shell->env = NULL;
 	if (env == NULL || env[0] == NULL)
 	{

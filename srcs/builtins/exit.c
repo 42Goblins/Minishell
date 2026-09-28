@@ -14,6 +14,8 @@
 
 void	clean_exit(t_shell *shell, int status)
 {
+	free(shell->current_line);
+	shell->current_line = NULL;
 	free_cmds(shell->cmds);
 	free_tokens(shell->token);
 	free_lst_env(shell->env);

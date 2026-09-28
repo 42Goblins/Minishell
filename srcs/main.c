@@ -22,7 +22,8 @@ void	reset_shell_state(t_shell *shell)
 
 void	process_line(t_shell *shell, char *line)
 {
-	tokenizer(line, shell);
+	if (tokenizer(line, shell))
+		return ;
 	expand_tokens(shell->token, shell->env);
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
@@ -47,6 +48,7 @@ int	launch_loop(t_shell *shell)
 			ft_putstr_fd("exit\n", STDOUT_FILENO);
 		clean_exit(shell, *get_status());
 	}
+	shell->current_line = line;
 	if (line[0] != '\0')
 	{
 		if (isatty(STDIN_FILENO))
@@ -54,6 +56,7 @@ int	launch_loop(t_shell *shell)
 		process_line(shell, line);
 		reset_shell_state(shell);
 	}
+	shell->current_line = NULL;
 	free(line);
 	return (0);
 }

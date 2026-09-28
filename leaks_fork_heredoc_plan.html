@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Plan leaks fork/heredoc - Minishell</title>
+<style>
+:root { --bg:#f6f7f9; --panel:#fff; --text:#1f2933; --muted:#64748b; --border:#d7dde5; --red:#b42318; --amber:#a15c07; --green:#16794c; --blue:#175cd3; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+header { padding:28px 36px 20px; background:#111827; color:white; }
+main { max-width:1120px; margin:0 auto; padding:24px 28px 48px; }
+h1 { margin:0 0 8px; font-size:30px; }
+h2 { margin:30px 0 12px; font-size:22px; }
+h3 { margin:22px 0 10px; font-size:17px; }
+p { margin:8px 0; }
+.note { color:#d1d5db; max-width:920px; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:18px; margin:16px 0; }
+table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); }
+th,td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+th { background:#edf1f5; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:#f8fafc; margin-right:6px; }
+.high { color:var(--red); border-color:#f0b8b2; background:#fff1f0; }
+.medium { color:var(--amber); border-color:#f6d7a7; background:#fff8eb; }
+.ok { color:var(--green); border-color:#b9e3cb; background:#effaf3; }
+.info { color:var(--blue); border-color:#b7cdfb; background:#eff6ff; }
+pre { margin:10px 0 0; padding:12px; overflow:auto; background:#101828; color:#eef2ff; border-radius:6px; font-size:13px; white-space:pre-wrap; }
+code { background:#edf1f5; padding:1px 4px; border-radius:4px; }
+ul,ol { margin:8px 0 8px 22px; padding:0; }
+li { margin:6px 0; }
+.small { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+<h1>Plan leaks fork/heredoc - Minishell</h1>
+<p class="note">Diagnostic et TODO avant de modifier le code. Objectif choisi : ne plus avoir de <code>still reachable</code> dans les enfants forkes, pas seulement zero <code>definitely lost</code>.</p>
+</header>
+<main>
+<section class="panel">
+<h2>Etat actuel</h2>
+<p>Le log Valgrind du cas heredoc montre :</p>
+<pre>definitely lost: 0 bytes in 0 blocks
+indirectly lost: 0 bytes in 0 blocks
+possibly lost: 0 bytes in 0 blocks
+still reachable: 5,846 bytes in 201 blocks
+suppressed: 232,976 bytes in 244 blocks
+ERROR SUMMARY: 0 errors</pre>
+<p>Donc ce n'est pas une fuite perdue, mais le standard voulu maintenant est plus strict : supprimer aussi le <code>still reachable</code> venant de notre code.</p>
+</section>
+
+<section class="panel">
+<h2>Pourquoi ca arrive</h2>
+<p>Les enfants crees avec <code>fork()</code> heritent d'une copie de la memoire du shell parent : env, tokens, commandes parsees, ligne courante, etc. Si l'enfant fait juste <code>exit(status)</code>, il quitte sans nettoyer cette copie. Valgrind voit alors cette memoire comme encore accessible (<code>still reachable</code>).</p>
+<p>Dans le cas heredoc teste :</p>
+<pre>cat &lt;&lt; $USER
+nvlknwvl
+vbkwebne
+$USER</pre>
+<p>Les stacks Valgrind visibles dans ton log pointent vers :</p>
+<ul>
+<li><code>cpy_key</code>, <code>cpy_value</code>, <code>new_env_node</code> : environnement herite du parent.</li>
+<li><code>create_token_node</code>, <code>add_word_token</code>, <code>add_operator_token</code> : tokens de la commande heredoc.</li>
+<li><code>create_cmd_node</code>, <code>create_cmd_and_args</code> : commande en cours.</li>
+<li><code>expand_word</code> : expansion du delimiter <code>$USER</code>.</li>
+<li><code>read_input</code>, <code>add_char_to_line</code> : lignes lues pendant heredoc.</li>
+</ul>
+</section>
+
+<section class="panel">
+<h2>Piege important</h2>
+<p><span class="badge high">Important</span>Dans heredoc, le <code>t_cmd *cmd</code> local n'est pas encore forcement accroche dans <code>shell-&gt;cmds</code>.</p>
+<p>Le chemin actuel est :</p>
+<pre>process_line()
+  parse_tokens(shell-&gt;token, shell-&gt;env)
+    create_cmd_node(tokens, env)
+      open_redirections(cmd, tokens, env)
+        open_heredoc_redirection(cmd, delimiter, env)
+          fork()
+          heredoc_child(pipefd, delimiter, env)
+            exit(res)</pre>
+<p>Comme le heredoc se fait pendant la creation du <code>cmd</code>, un cleanup enfant qui nettoie seulement <code>shell-&gt;cmds</code> peut rater le <code>cmd</code> local. Il faut donc prevoir un parametre optionnel <code>local_cmd</code>.</p>
+</section>
+
+
+<section class="panel">
+<h2>Preuves depuis le log Valgrind colle</h2>
+<p>Le log visible contient 12 records detailles sur les 90 annonces par Valgrind. Les autres records ne sont pas affiches dans l'extrait colle, donc le diagnostic ci-dessous se base explicitement sur les stacks presentes dans ton message.</p>
+<table>
+<thead><tr><th>Record Valgrind</th><th>Stack principale</th><th>Memoire concernee</th><th>Deduction</th></tr></thead>
+<tbody>
+<tr><td><code>record 1</code><br>2 bytes</td><td><code>ft_strdup -> set_env_value -> update_shlvl -> setup -> main</code></td><td>Valeur de <code>SHLVL</code></td><td>Memoire d'environnement initialisee au demarrage, heritee par l'enfant fork.</td></tr>
+<tr><td><code>record 2</code><br>3 bytes</td><td><code>ft_strdup -> add_operator_token -> add_redir_in_or_heredoc -> tokenizer -> process_line</code></td><td>Token operateur heredoc <code>&lt;&lt;</code></td><td>Token cree pendant le parsing de la ligne <code>cat &lt;&lt; $USER</code>.</td></tr>
+<tr><td><code>record 5</code><br>4 bytes</td><td><code>ft_strdup -> expand_word -> expand_tokens -> process_line</code></td><td>Valeur issue de l'expansion</td><td>Expansion faite avant heredoc, probablement autour du delimiter <code>$USER</code>.</td></tr>
+<tr><td><code>record 6</code><br>4 bytes</td><td><code>ft_strdup -> copy_word_to_args -> create_cmd_and_args -> create_cmd_node</code></td><td>Argument copie dans <code>cmd_and_args</code></td><td>Commande locale deja construite au moment ou l'enfant heredoc est fork.</td></tr>
+<tr><td><code>record 7</code><br>6 bytes</td><td><code>ft_substr -> add_word_token -> tokenizer -> process_line</code></td><td>Token mot, ex: <code>$USER</code></td><td>Mot lu par le lexer et garde dans la liste de tokens.</td></tr>
+<tr><td><code>record 19</code><br>16 bytes</td><td><code>malloc -> create_cmd_and_args -> create_cmd_node</code></td><td>Tableau <code>cmd_and_args</code></td><td>Structure d'arguments de la commande en cours.</td></tr>
+<tr><td><code>record 23</code><br>32 bytes</td><td><code>malloc -> create_cmd_node -> parse_tokens</code></td><td>Structure <code>t_cmd</code></td><td>Commande locale creee avant que le parent finisse de parser toute la ligne.</td></tr>
+<tr><td><code>record 25</code><br>40 bytes</td><td><code>malloc -> create_token_node -> add_operator_token -> add_redir_in_or_heredoc</code></td><td>Noeud token heredoc</td><td>Noeud de la liste <code>shell-&gt;token</code>, herite par l'enfant.</td></tr>
+<tr><td><code>record 32</code><br>80 bytes</td><td><code>malloc -> create_token_node -> add_word_token -> tokenizer</code></td><td>Noeuds tokens mots</td><td>Tokens mots de la commande, toujours accessibles dans l'enfant.</td></tr>
+<tr><td><code>record 42</code><br>850 bytes / 64 blocks</td><td><code>malloc -> cpy_key -> new_env_node -> setup_env</code></td><td>Cles de l'environnement</td><td>Copie complete de l'env heritee par fork.</td></tr>
+<tr><td><code>record 54</code><br>1,536 bytes / 64 blocks</td><td><code>malloc -> new_env_node -> setup_env</code></td><td>Noeuds <code>t_env</code></td><td>Liste chainee env complete heritee par fork.</td></tr>
+<tr><td><code>record 59</code><br>3,273 bytes / 63 blocks</td><td><code>malloc -> cpy_value -> new_env_node -> setup_env</code></td><td>Valeurs de l'environnement</td><td>Valeurs env heritees par l'enfant heredoc.</td></tr>
+</tbody>
+</table>
+<p>Conclusion precise depuis ces stacks : les allocations restantes ne viennent pas d'un malloc perdu au milieu du heredoc. Elles correspondent a des objets normaux du shell parent, visibles dans l'enfant parce que l'enfant heredoc fait <code>exit(res)</code> sans nettoyage complet.</p>
+</section>
+
+<section class="panel">
+<h2>Comment on deduit que c'est l'enfant heredoc</h2>
+<ol>
+<li>La commande testee est <code>cat &lt;&lt; $USER</code>, donc elle passe par <code>open_heredoc_redirection</code>.</li>
+<li><code>open_heredoc_redirection</code> appelle <code>fork()</code>.</li>
+<li>Dans l'enfant, <code>heredoc_child</code> lit les lignes puis fait actuellement <code>exit(res)</code>.</li>
+<li>Le process enfant a une copie memoire de <code>env</code>, <code>tokens</code>, <code>cmd</code> et ligne courante, car <code>fork</code> duplique l'espace memoire du parent.</li>
+<li>Les stacks Valgrind montrent exactement ces familles : <code>setup_env</code>, <code>tokenizer</code>, <code>parse_tokens</code>, <code>expand_tokens</code>.</li>
+<li>Le resume final dit <code>definitely lost: 0</code> et <code>possibly lost: 0</code>, donc les pointeurs existent encore ; ils n'ont juste pas ete liberes avant la sortie de l'enfant.</li>
+</ol>
+</section>
+
+<section class="panel">
+<h2>Sorties a traiter</h2>
+<table>
+<thead><tr><th>Fichier</th><th>Sortie/fork</th><th>Probleme</th><th>Action conseillee</th></tr></thead>
+<tbody>
+<tr><td><code>srcs/heredoc/heredoc.c</code></td><td><code>fork()</code>, puis <code>exit(res)</code></td><td>L'enfant heredoc ne nettoie pas env/tokens/cmd local.</td><td>Passer <code>t_shell *</code> et <code>cmd</code>, puis utiliser <code>clean_child_exit(shell, cmd, res)</code>.</td></tr>
+<tr><td><code>srcs/exec/exec_pipeline.c</code></td><td><code>fork()</code>, puis <code>exit(*get_status())</code></td><td>L'enfant pipeline builtin garde la copie du shell.</td><td>Remplacer par <code>clean_child_exit(shell, NULL, *get_status())</code>.</td></tr>
+<tr><td><code>srcs/exec/exec_external.c</code></td><td><code>exit(126/127)</code> dans plusieurs chemins</td><td>Les erreurs externes quittent avant nettoyage.</td><td>Faire passer <code>t_shell *</code> ou transformer les erreurs en status retour, puis cleanup.</td></tr>
+<tr><td><code>srcs/exec/exec_external_path.c</code></td><td><code>exit(126/127)</code> dans <code>handle_direct_path_error</code></td><td>La fonction quitte brutalement sans cleanup.</td><td>Changer pour retourner un status d'erreur au lieu d'appeler <code>exit</code>.</td></tr>
+<tr><td><code>srcs/builtins/exit.c</code></td><td><code>clean_exit()</code></td><td>Parent principal, deja le bon endroit.</td><td>Ne pas remplacer aveuglement. Garder pour le shell parent.</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="panel">
+<h2>Design propose</h2>
+<h3>Nouvelle fonction</h3>
+<pre>void clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status);</pre>
+<p>Role : nettoyer la copie memoire de l'enfant avant <code>exit(status)</code>.</p>
+<pre>void clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status)
+{
+    if (local_cmd && local_cmd != shell-&gt;cmds)
+        free_cmds(local_cmd);
+    free(shell-&gt;current_line);
+    shell-&gt;current_line = NULL;
+    free_cmds(shell-&gt;cmds);
+    free_tokens(shell-&gt;token);
+    free_lst_env(shell-&gt;env);
+    clear_history();
+    exit(status);
+}</pre>
+<p>Le parametre <code>local_cmd</code> sert surtout a heredoc, parce que le <code>cmd</code> peut exister localement sans etre encore dans <code>shell-&gt;cmds</code>.</p>
+</section>
+
+<section class="panel">
+<h2>TODO etapes</h2>
+<ol>
+<li><strong>Checkpoint :</strong> garder en tete les changements deja non commit : <code>SHLVL</code>, <code>current_line</code>, quotes non fermees.</li>
+<li><strong>Ajouter</strong> <code>clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status)</code> dans <code>exit.c</code> + prototype dans <code>minishell.h</code>.</li>
+<li><strong>Adapter heredoc :</strong> faire passer <code>t_shell *</code> depuis <code>process_line</code> jusqu'a <code>open_heredoc_redirection</code> et <code>heredoc_child</code>.</li>
+<li><strong>Dans heredoc child :</strong> fermer le write fd, puis appeler <code>clean_child_exit(shell, cmd, res)</code> au lieu de <code>exit(res)</code>.</li>
+<li><strong>Tester heredoc Valgrind</strong> avant de toucher pipeline/external.</li>
+<li><strong>Adapter pipeline builtin :</strong> remplacer <code>exit(*get_status())</code> dans <code>exec_cmd</code> par <code>clean_child_exit(shell, NULL, *get_status())</code> apres builtin.</li>
+<li><strong>Adapter exec externe :</strong> eviter les <code>exit()</code> internes sur erreurs. Faire remonter des status ou passer <code>shell</code> aux fonctions concernees.</li>
+<li><strong>Retester :</strong> heredoc, pipeline, command not found, permission denied, directory, redirections.</li>
+</ol>
+</section>
+
+<section class="panel">
+<h2>Tests a lancer</h2>
+<h3>Heredoc</h3>
+<pre>valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./minishell
+cat &lt;&lt; $USER
+hello
+$USER
+exit</pre>
+<h3>Pipeline</h3>
+<pre>printf 'echo hi | cat\nexit\n' | valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./minishell</pre>
+<h3>Commande inconnue</h3>
+<pre>printf 'abcdef\necho $?\nexit\n' | valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./minishell</pre>
+<h3>Dossier execute</h3>
+<pre>printf '/tmp\necho $?\nexit\n' | valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./minishell</pre>
+<h3>Permission denied</h3>
+<pre>printf 'echo hi &gt; /tmp/ms_no_exec\nchmod 644 /tmp/ms_no_exec\n/tmp/ms_no_exec\necho $?\nrm -f /tmp/ms_no_exec\nexit\n' | valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./minishell</pre>
+</section>
+
+<section class="panel">
+<h2>Decision technique</h2>
+<p><span class="badge info">A retenir</span>Le probleme n'est pas readline dans ce log : readline est deja largement supprime par suppressions. Le reste vient surtout de notre memoire heritee dans les enfants forkes.</p>
+<p><span class="badge medium">Attention</span>Ne pas remplacer tous les <code>exit()</code> au marteau. Certains sont dans le parent (<code>clean_exit</code>), d'autres sont dans des enfants, et ceux d'exec externe court-circuitent le cleanup.</p>
+<p><span class="badge ok">Approche saine</span>Traiter un type d'enfant a la fois : heredoc, puis pipeline, puis exec externe.</p>
+</section>
+</main>
+</body>
+</html>
