@@ -261,4 +261,7 @@ void	free_tab(char **tab);
 /* get_status.c */
 int		*get_status(void);
 
+/* read_input.c */
+char	*read_input(char *prompt);
+
 #endif

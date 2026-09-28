@@ -119,7 +119,7 @@ static int	read_heredoc(int write_fd, char *delimiter, bool should_expand,
 
 	while (1)
 	{
-		line = readline("> ");
+		line = read_input("> ");
 		if (line == NULL && g_signal == SIGINT)
 			return (130);
 		if (line == NULL)
