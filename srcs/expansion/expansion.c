@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 23:25:04 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/09 16:22:46 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/29 00:19:39 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,6 +136,14 @@ static int	handle_expansion_char(char **result, int *i, t_env *env,
 {
 	int	new_i;
 
+	if ((*result)[*i] == '$' && !in_single
+		&& ((*result)[*i + 1] == '\'' || (*result)[*i + 1] == '"'))
+	{
+		*result = remove_char_at(*result, *i);
+		if (!*result)
+			return (1);
+		return (0);
+	}
 	if (is_dollar_expand(*result, *i, in_single) == false)
 	{
 		(*i)++;
