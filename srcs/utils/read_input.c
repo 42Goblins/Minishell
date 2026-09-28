@@ -12,10 +12,17 @@
 
 #include "minishell.h"
 
-/**
- * @brief Appends one character to a line read without readline.
+/*
+ * Interactive input: use readline with a visible prompt.
+ * Piped/file input: read silently, like bash.
+ * read() is used for silent input because it does not keep hidden buffered
+ * data that could be duplicated by the heredoc fork.
  */
-static char	*append_input_char(char *line, char c, size_t len)
+
+/**
+ * @brief Creates a new line containing the old line plus one character.
+ */
+static char	*add_char_to_line(char *line, char c, size_t len)
 {
 	char	*new_line;
 	size_t	i;
@@ -36,9 +43,9 @@ static char	*append_input_char(char *line, char c, size_t len)
 }
 
 /**
- * @brief Reads one line from stdin without readline buffering.
+ * @brief Reads one stdin line without readline or hidden buffering.
  */
-static char	*read_without_prompt(void)
+static char	*read_line_without_readline(void)
 {
 	char	*line;
 	char	c;
@@ -52,7 +59,7 @@ static char	*read_without_prompt(void)
 	{
 		if (c == '\n')
 			break ;
-		line = append_input_char(line, c, len);
+		line = add_char_to_line(line, c, len);
 		if (!line)
 			return (NULL);
 		len++;
@@ -64,11 +71,11 @@ static char	*read_without_prompt(void)
 }
 
 /**
- * @brief Reads one input line with a prompt only in interactive mode.
+ * @brief Reads one input line, using a prompt only in interactive mode.
  */
 char	*read_input(char *prompt)
 {
 	if (isatty(STDIN_FILENO))
 		return (readline(prompt));
-	return (read_without_prompt());
+	return (read_line_without_readline());
 }

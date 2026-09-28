@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Audit Titan Tester - Minishell</title>
+<style>
+:root { --bg:#f6f7f9; --panel:#fff; --text:#1f2933; --muted:#64748b; --border:#d7dde5; --red:#b42318; --amber:#a15c07; --green:#16794c; --blue:#175cd3; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); line-height:1.45; }
+header { padding:28px 36px 18px; background:#111827; color:white; }
+main { max-width:1180px; margin:0 auto; padding:24px 28px 48px; }
+h1 { margin:0 0 8px; font-size:30px; }
+h2 { margin:30px 0 12px; font-size:22px; }
+h3 { margin:22px 0 10px; font-size:17px; }
+p { margin:8px 0; }
+.note { color:#d1d5db; max-width:900px; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:18px; margin:16px 0; }
+table { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+th,td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+th { background:#edf1f5; font-weight:700; }
+.ok { color:var(--green); font-weight:700; } .ko { color:var(--red); font-weight:700; } .warn { color:var(--amber); font-weight:700; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:#f8fafc; margin-right:6px; }
+.badge.high { color:var(--red); border-color:#f0b8b2; background:#fff1f0; }
+.badge.medium { color:var(--amber); border-color:#f6d7a7; background:#fff8eb; }
+.badge.low { color:var(--blue); border-color:#b7cdfb; background:#eff6ff; }
+pre { margin:10px 0 0; padding:12px; overflow:auto; background:#101828; color:#eef2ff; border-radius:6px; font-size:13px; white-space:pre-wrap; }
+code { background:#edf1f5; padding:1px 4px; border-radius:4px; }
+ul { margin:8px 0 8px 22px; padding:0; }
+li { margin:6px 0; }
+.small { color:var(--muted); font-size:13px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+</style>
+</head>
+<body>
+<header>
+<h1>Audit Titan Tester - Minishell</h1>
+<p class="note">Rapport genere depuis les logs Titan captures dans <code>/tmp/minishell_titan_logs</code>. Le but n'est pas de prendre le score brut au pied de la lettre, mais d'isoler les vrais bugs probables des tests hors sujet ou fragiles.</p>
+</header>
+<main>
+<section class="panel">
+<h2>Resume global</h2>
+<table>
+<thead><tr><th>Categorie lancee</th><th>Total</th><th>OK</th><th>KO</th><th>Leaks signales</th></tr></thead>
+<tbody><tr><td>mandatory</td><td>3255</td><td class="ok">2285</td><td class="ko">970</td><td>0</td></tr><tr><td>redirections</td><td>346</td><td class="ok">334</td><td class="ko">12</td><td>0</td></tr><tr><td>hardcore</td><td>71</td><td class="ok">69</td><td class="ko">2</td><td>0</td></tr><tr><td>expansions</td><td>4616</td><td class="ok">4553</td><td class="ko">63</td><td>0</td></tr><tr><td>leaks</td><td>1100</td><td class="ok">50</td><td class="ko">1050</td><td>0</td></tr></tbody>
+</table>
+<p class="small">Commande de base utilisee : <code>bash /home/gpalemo/Téléchargements/titan_tester.sh &lt;categorie&gt;</code>. Le message <code>chmod: cannot access './minishell'</code> vient du script, pas du projet : il entre dans son dossier temporaire puis chmod le mauvais chemin.</p>
+</section>
+
+<section class="panel">
+<h2>Priorites</h2>
+<h3><span class="badge high">Majeur</span>1. Builtin exit imprime <code>exit</code> en non-interactif</h3>
+<p>Mandatory contient 368 KO sur des commandes <code>exit</code>. Dans ces tests, bash ne sort rien sur stdout parce qu'il lit depuis un pipe. Notre builtin <code>exit</code> imprime probablement <code>exit</code> sans verifier <code>isatty(STDIN_FILENO)</code>.</p>
+<pre>[KO] [Mandatory] exit   
+   [STDOUT EXPECTED]: &#x27;&#x27;
+   [STDOUT GOT]     : &#x27;exit&#x27;</pre>
+<p><strong>Action proposee :</strong> dans le builtin <code>exit</code>, afficher <code>exit</code> seulement si stdin est interactif. C'est le meme principe que celui deja applique dans <code>launch_loop</code> pour Ctrl-D.</p>
+
+<h3><span class="badge high">Majeur</span>2. Variables unset collees : argument vide/espace parasite</h3>
+<p>En expansions, <code>$UNEXISTING$UNEXISTING</code> doit disparaitre completement. Notre minishell garde un vide qui devient un espace avant l'argument suivant.</p>
+<pre>[KO] [Expansions] echo $UNEXISTING$UNEXISTING a
+   [STDOUT EXPECTED]: &#x27;a&#x27;
+   [STDOUT GOT]     : &#x27; a&#x27;</pre>
+<p><strong>Action proposee :</strong> verifier la phase expansion/token : quand un token non quote devient vide apres expansion, il doit etre supprime comme argument, pas conserve comme chaine vide, sauf cas quote explicite.</p>
+
+<h3><span class="badge medium">Moyen</span>3. Options des builtins</h3>
+<p>Beaucoup de KO mandatory concernent <code>pwd -l</code>, <code>unset -l</code>, <code>cd -n</code>, etc. Bash renvoie souvent status 2 pour option invalide. Le sujet 42 ne demande pas toujours de gerer toutes les options, mais en correction on peut tomber sur ces comportements.</p>
+<pre>[KO] [Mandatory] pwd  -l 
+   [STDOUT EXPECTED]: &#x27;&#x27;
+   [STDOUT GOT]     : &#x27;/home/gpalemo/Minishell/minishell_titan_tmp&#x27;
+   [EXIT CODE EXPECTED]: 2
+   [EXIT CODE GOT]     : 0</pre>
+<p><strong>Action proposee :</strong> decider avec Dounia si on vise strict sujet ou bash-like. Si bash-like, traiter les options invalides pour <code>pwd</code>, <code>unset</code>, <code>cd</code>, <code>export</code>.</p>
+
+<h3><span class="badge medium">Moyen</span>4. Quote syntax edge case</h3>
+<p>Hardcore signale un cas de quote invalide ou bash sort status 2, tandis que minishell sort 0. A verifier a la main, car la ligne est volontairement tordue.</p>
+<pre>[KO] [Hardcore] export aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=b ; echo $aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+   [STDOUT EXPECTED]: &#x27;b&#x27;
+   [STDOUT GOT]     : &#x27;&#x27;
+   [EXIT CODE EXPECTED]: 0
+   [EXIT CODE GOT]     : 1</pre>
+<p><strong>Action proposee :</strong> tester manuellement dans bash et minishell, puis verifier le lexer/parser de quotes si la difference est confirmee.</p>
+</section>
+
+<section class="panel">
+<h2>Par partie du projet</h2>
+<h3>Input / prompts / mode non-interactif</h3>
+<ul>
+<li>Les prompts <code>minishell$</code> et heredoc <code>&gt;</code> ne polluent plus les tests redirections/heredoc.</li>
+<li>Les tests heredoc de Titan sont OK.</li>
+<li>Reste a appliquer la meme logique au builtin <code>exit</code> : pas de <code>exit</code> affiche si stdin n'est pas un terminal.</li>
+</ul>
+
+<h3>Builtins</h3>
+<ul>
+<li><strong>exit :</strong> 368 KO mandatory, principalement stdout parasite <code>exit</code>.</li>
+<li><strong>pwd/cd/unset/export :</strong> nombreux KO sur options invalides. Priorite plus basse si vous restez strictement sur le sujet.</li>
+<li><strong>env/export sans arguments :</strong> KO nombreux, mais les comparaisons exactes d'environnement sont fragiles. Il faut verifier a la main avant de conclure a un bug.</li>
+</ul>
+
+<h3>Expansion</h3>
+<ul>
+<li><strong>Vrai bug probable :</strong> variables unset collees qui laissent un argument vide ou espace parasite.</li>
+<li><strong>Probablement hors sujet :</strong> <code>$$</code> correspond au PID dans bash, non demande par le sujet minishell classique.</li>
+<li><strong>Probablement hors sujet :</strong> <code>$"..."</code> et <code>$'...'</code> sont des syntaxes bash avancees, non demandees.</li>
+</ul>
+<pre>[KO] [Expansions] echo $$USER 
+   [STDOUT EXPECTED]: &#x27;127491USER&#x27;
+   [STDOUT GOT]     : &#x27;$gpalemo&#x27;</pre>
+
+<h3>Redirections / heredoc</h3>
+<ul>
+<li>334/346 OK.</li>
+<li>Les heredocs du tester passent.</li>
+<li>10 KO sont des <code>ls -la</code> fragiles : le contenu de <code>out_bash.txt</code>/<code>out_mini.txt</code> change pendant la comparaison, donc ce n'est pas forcement un bug redirection.</li>
+<li>2 KO utilisent <code>;</code>, qui n'est pas dans le sujet.</li>
+</ul>
+<pre>[KO] [Redir] ls -la &lt; out1 
+   [STDOUT EXPECTED]: &#x27;total 56
+drwxrwxr-x 4 gpalemo gpalemo  4096 Sep 28 03:04 .
+drwxrwxr-x 8 gpalemo gpalemo  4096 Sep 28 03:04 ..
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 err_bash.txt
+-rw-rw-r-- 1 gpalemo gpalemo    39 Sep 28 03:04 err_mini.txt
+-rw-rw-r-- 1 gpalemo gpalemo  3864 Sep 28 03:04 infile
+-rw-rw-r-- 1 gpalemo gpalemo  3864 Sep 28 03:04 nexistepas
+-rw-rw-rw- 1 gpalemo gpalemo     0 Sep 28 03:04 no_exec
+d--------- 2 gpalemo gpalemo  4096 Sep 28 03:04 no_perm_dir
+---------- 1 gpalemo gpalemo     0 Sep 28 03:04 no_read
+-r--r--r-- 1 gpalemo gpalemo     0 Sep 28 03:04 no_write
+drwxrwxr-x 2 gpalemo gpalemo  4096 Sep 28 03:04 norm_dir
+-rw-rw-r-- 1 gpalemo gpalemo  3796 Sep 28 03:04 out1
+-rw-rw-r-- 1 gpalemo gpalemo  3796 Sep 28 03:04 out2
+-rw-rw-r-- 1 gpalemo gpalemo   966 Sep 28 03:04 out3
+-rw-rw-r-- 1 gpalemo gpalemo 15321 Sep 28 03:04 out4
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 out_bash.txt
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 out_mini.txt&#x27;
+   [STDOUT GOT]     : &#x27;total 56
+drwxrwxr-x 4 gpalemo gpalemo  4096 Sep 28 03:04 .
+drwxrwxr-x 8 gpalemo gpalemo  4096 Sep 28 03:04 ..
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 err_bash.txt
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 err_mini.txt
+-rw-rw-r-- 1 gpalemo gpalemo  3864 Sep 28 03:04 infile
+-rw-rw-r-- 1 gpalemo gpalemo  3864 Sep 28 03:04 nexistepas
+-rw-rw-rw- 1 gpalemo gpalemo     0 Sep 28 03:04 no_exec
+d--------- 2 gpalemo gpalemo  4096 Sep 28 03:04 no_perm_dir
+---------- 1 gpalemo gpalemo     0 Sep 28 03:04 no_read
+-r--r--r-- 1 gpalemo gpalemo     0 Sep 28 03:04 no_write
+drwxrwxr-x 2 gpalemo gpalemo  4096 Sep 28 03:04 norm_dir
+-rw-rw-r-- 1 gpalemo gpalemo  3796 Sep 28 03:04 out1
+-rw-rw-r-- 1 gpalemo gpalemo  3796 Sep 28 03:04 out2
+-rw-rw-r-- 1 gpalemo gpalemo   966 Sep 28 03:04 out3
+-rw-rw-r-- 1 gpalemo gpalemo 15321 Sep 28 03:04 out4
+-rw-rw-r-- 1 gpalemo gpalemo   966 Sep 28 03:04 out_bash.txt
+-rw-rw-r-- 1 gpalemo gpalemo     0 Sep 28 03:04 out_mini.txt&#x27;</pre>
+
+<h3>Syntax / parser</h3>
+<ul>
+<li>Hardcore passe 69/71.</li>
+<li>Les pipes/syntaxes invalides courantes passent globalement.</li>
+<li>Un cas quote reste a confirmer.</li>
+</ul>
+
+<h3>Valgrind / leaks</h3>
+<ul>
+<li>La categorie leaks du tester est peu exploitable telle quelle : elle compare aussi stdout/status sous Valgrind et amplifie des differences deja connues.</li>
+<li>Le script reference <code>../readline.supp</code>, fichier absent du repo. Pourtant il annonce <code>Fuites Valgrind: 0</code>, donc les 1050 KO ne sont pas des leaks memoire detectees.</li>
+<li>A faire separement : lancer une petite batterie Valgrind manuelle sur les cas critiques, hors Titan.</li>
+</ul>
+</section>
+
+<section class="panel">
+<h2>Details chiffres par famille</h2>
+<div class="grid">
+<div><h3>Mandatory</h3><pre>Counter({&#x27;builtin option-like args&#x27;: 631, &#x27;stdout mismatch&#x27;: 560, &#x27;status mismatch&#x27;: 521, &#x27;exit builtin&#x27;: 368, &#x27;env exact comparison&#x27;: 199, &#x27;tilde expansion&#x27;: 120, &#x27;export&#x27;: 73, &#x27;ls -la fragile output&#x27;: 9, &#x27;semicolon / multi-command&#x27;: 5})</pre></div>
+<div><h3>Expansions</h3><pre>Counter({&#x27;stdout mismatch&#x27;: 57, &#x27;double dollar&#x27;: 32, &#x27;dollar-prefixed quotes&#x27;: 19, &#x27;status mismatch&#x27;: 12, &#x27;export&#x27;: 9, &#x27;adjacent unset variables&#x27;: 8, &#x27;semicolon / multi-command&#x27;: 4})</pre></div>
+<div><h3>Redirections</h3><pre>Counter({&#x27;stdout mismatch&#x27;: 12, &#x27;builtin option-like args&#x27;: 10, &#x27;ls -la fragile output&#x27;: 10, &#x27;semicolon / multi-command&#x27;: 2})</pre></div>
+<div><h3>Hardcore</h3><pre>Counter({&#x27;status mismatch&#x27;: 2, &#x27;semicolon / multi-command&#x27;: 1, &#x27;export&#x27;: 1, &#x27;stdout mismatch&#x27;: 1})</pre></div>
+</div>
+</section>
+
+<section class="panel">
+<h2>Plan conseille</h2>
+<ol>
+<li>Corriger <code>exit</code> pour ne pas imprimer <code>exit</code> en non-interactif.</li>
+<li>Retester <code>mandatory</code>. Le score devrait fortement remonter.</li>
+<li>Corriger l'expansion des variables unset collees.</li>
+<li>Verifier manuellement le cas quote hardcore.</li>
+<li>Decider si vous corrigez les options invalides des builtins ou si vous les classez hors priorite sujet.</li>
+<li>Faire Valgrind manuel sur commandes ciblees plutot que se fier a la categorie leaks Titan.</li>
+</ol>
+</section>
+
+<section class="panel">
+<h2>A ne pas oublier avant push</h2>
+<ul>
+<li><code>ascii_art.txt</code> a ete deplace vers <code>srcs/ascii_art.txt</code>.</li>
+<li>Le <code>Makefile</code> a ete ajuste pour lire <code>srcs/ascii_art.txt</code>.</li>
+<li>Avant commit, ajouter le rename avec : <code>git add Makefile ascii_art.txt srcs/ascii_art.txt srcs/utils/read_input.c</code>.</li>
+</ul>
+</section>
+
+<section class="panel">
+<h2>Logs</h2>
+<p>Logs bruts propres : <code>/tmp/minishell_titan_logs/*.clean.log</code></p>
+<ul>
+<li><code>mandatory.clean.log</code></li>
+<li><code>redirections.clean.log</code></li>
+<li><code>hardcore.clean.log</code></li>
+<li><code>expansions.clean.log</code></li>
+<li><code>leaks.clean.log</code></li>
+</ul>
+</section>
+</main>
+</body>
+</html>

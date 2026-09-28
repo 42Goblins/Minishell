@@ -99,7 +99,7 @@ re: fclean all
 
 ascii:
 	@echo "$(BOLD)$(ORANGE)"
-	@if [ -f ascii_art.txt ]; then cat ascii_art.txt; fi
+	@if [ -f srcs/ascii_art.txt ]; then cat srcs/ascii_art.txt; fi
 	@echo "$(END)"
 	@echo "$(BOLD)$(GREEN)✨  minishell is ready ✨$(END)"
 	@echo "$(YELLOW)➜   use ./$(NAME)$(END)"
