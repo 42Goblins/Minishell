@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 04:07:22 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 17:59:40 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,17 +61,17 @@ char	**t_env_to_tab(t_env *env)
  * Exits with 126 if the command exists but cannot be executed, or
  * 127 if the command was not found.
  */
-void	command_error(t_cmd *cmd, int not_exec)
+void	command_error(t_shell *shell, t_cmd *cmd, int not_exec)
 {
 	ft_putstr_fd("minishell: ", STDERR_FILENO);
 	ft_putstr_fd(cmd->cmd_and_args[0], STDERR_FILENO);
 	if (not_exec)
 	{
 		ft_putstr_fd(": Permission denied\n", STDERR_FILENO);
-		exit(126);
+		clean_exit(shell, 126);
 	}
 	ft_putstr_fd(": command not found\n", STDERR_FILENO);
-	exit(127);
+	clean_exit(shell, 127);
 }
 
 /**
@@ -95,13 +95,13 @@ void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env)
 	not_exec = 0;
 	path = find_path(cmd->cmd_and_args[0], env, &not_exec);
 	if (!path)
-		command_error(cmd, not_exec);
+		command_error(shell, cmd, not_exec);
 	env_tab = t_env_to_tab(env);
 	execve(path, cmd->cmd_and_args, env_tab);
 	perror("minishell: execve");
 	free(path);
 	free_tab(env_tab);
-	exit(126);
+	clean_exit(shell, 126);
 }
 
 /**

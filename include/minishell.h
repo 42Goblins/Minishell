@@ -6,7 +6,11 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/09/29 17:56:48 by dgeara           ###   ########.fr       */
+=======
+/*   Updated: 2026/09/29 00:53:08 by dgeara           ###   ########.fr       */
+>>>>>>> 50f9fc8 (chore: euuuuh trying to fix les still reachables des les child)
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -253,7 +257,11 @@ void	exec_single_builtins(t_shell *shell, t_cmd *cmd);
 /* exec_external.c */
 int		env_len(t_env *env);
 char	**t_env_to_tab(t_env *env);
+<<<<<<< HEAD
 void	command_error(t_cmd *cmd, int not_exec);
+=======
+void	command_error(t_shell *shell, t_cmd *cmd, int not_exec);
+>>>>>>> 50f9fc8 (chore: euuuuh trying to fix les still reachables des les child)
 void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env);
 void	exec_single_external(t_shell *shell, t_cmd *cmd, t_env *env);
 
