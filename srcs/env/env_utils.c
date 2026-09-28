@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:33:43 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 05:13:48 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:28:15 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,6 @@ char	*get_env_value(t_env *env, char *key)
 /**
  * @brief Updates env node VALUE corresponding to key or creates 
  * a new node if key is not found.
- *
  */
 int	update_env_vars(t_env **env, char *key, char *value)
 {

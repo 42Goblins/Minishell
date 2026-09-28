@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/25 01:39:54 by dgeara            #+#    #+#             */
-/*   Updated: 2026/07/25 03:29:06 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:16:47 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Checks whether a string is a valid echo -n flag.
+ */
 int	has_n_flag(char *str)
 {
 	int	i;
@@ -29,6 +32,9 @@ int	has_n_flag(char *str)
 	return (1);
 }
 
+/**
+ * @brief Prints arguments with optional -n flags (newline supression)
+ */
 int	exec_echo(char **cmd)
 {
 	int	i;

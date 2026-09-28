@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:57:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 00:55:18 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:32:03 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Handles errors for commands containing a direct path.
+ */
 int	handle_direct_path_error(char *cmd)
 {
 	struct stat	info;

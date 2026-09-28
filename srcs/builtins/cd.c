@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/27 23:52:04 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 18:20:58 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Updates PWD and OLDPWD after a directory change.
+ */
 void	update_env_pwd(t_env **env)
 {
 	char	*cwd;
@@ -29,6 +32,9 @@ void	update_env_pwd(t_env **env)
 		update_env_vars(env, ft_strdup("OLDPWD"), oldpwd_cpy);
 }
 
+/**
+ * @brief Changes to the directory stored in OLDPWD and updates t_env.
+ */
 int	go_to_oldpwd(t_env *env)
 {
 	char	*oldpwd;
@@ -49,6 +55,9 @@ int	go_to_oldpwd(t_env *env)
 	return (0);
 }
 
+/**
+ * @brief Changes to the directory stored in HOME and updates t_env.
+ */
 int	go_to_home_dir(t_env *env)
 {
 	char	*home;

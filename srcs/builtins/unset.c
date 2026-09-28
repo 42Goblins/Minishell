@@ -6,12 +6,15 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 02:32:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/15 23:09:49 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 18:22:21 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Removes the specified variables from the environment.
+ */
 void	del_env_variable(t_env **first, t_env *prev, t_env *current)
 {
 	if (prev)
@@ -22,7 +25,7 @@ void	del_env_variable(t_env **first, t_env *prev, t_env *current)
 }
 
 /**
- * @brief Removes variables from the shell environment.
+ * @brief Removes the specified variables from the environment.
  */
 int	exec_unset(t_env **env, char **cmd)
 {

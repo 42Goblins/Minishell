@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:01:35 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/18 05:13:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 01:34:42 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,19 +55,6 @@ char	*cpy_value(char *env)
 	ft_strlcpy(value, env + i, j + 1);
 	return (value);
 }
-
-/* void setup_env(t_shell *shell, char **env)
-{
-	int	i;
-	
-	i = 0;
-	while (env[i])
-	{
-		shell->env[i].key = cpy_key(env[i]); 
-		shell->env[i].value = cpy_value(env[i]); //
-		i++;
-	}
-} */
 
 /**
  * @brief Builds an env list node from a "KEY=VALUE" (env_line) string.

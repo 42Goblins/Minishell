@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 16:11:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/27 23:59:49 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 02:34:35 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,10 @@ void	exec_builtins(t_shell *shell, t_cmd *cmd)
 		*get_status() = exec_export(&shell->env, cmd->cmd_and_args);
 }
 
+/**
+ * @brief Prepares fds for a single builtin, executes it,
+ * and restores the original standard input and output.
+ */
 void	exec_single_builtins(t_shell *shell, t_cmd *cmd)
 {
 	int	saved_stdin;

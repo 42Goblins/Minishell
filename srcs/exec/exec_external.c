@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 01:14:42 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 01:35:21 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,13 @@ char	**t_env_to_tab(t_env *env)
 	return (env_tab);
 }
 
+/**
+ * @brief Prints the appropriate error message and exits with the
+ * corresponding status when an external command cannot be executed.
+ *
+ * Exits with 126 if the command exists but cannot be executed, or
+ * 127 if the command was not found.
+ */
 void	command_error(t_cmd *cmd, int not_exec)
 {
 	ft_putstr_fd("minishell: ", STDERR_FILENO);
