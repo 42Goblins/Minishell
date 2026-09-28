@@ -6,12 +6,21 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 04:01:16 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 17:57:17 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
+/**
+ * @brief Frees shell resources before exiting.
+ */
+void clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status)
+{
+	if (local_cmd && local_cmd != shell->cmds)
+        free_cmds(local_cmd);
+	clean_exit(shell, status);
+}
 /**
  * @brief Frees shell resources before exiting.
  */
