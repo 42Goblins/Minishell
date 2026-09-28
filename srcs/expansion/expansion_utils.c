@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 01:18:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/08/12 01:18:00 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/29 00:18:43 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,4 +39,29 @@ char	*append_expansion_part(char *built, char *part)
 	free(built);
 	free(part);
 	return (joined);
+}
+
+/**
+ * @brief Returns a new string without the character at index.
+ */
+char	*remove_char_at(char *str, int index)
+{
+	char	*new_str;
+	int		i;
+	int		j;
+
+	new_str = malloc(sizeof(char) * ft_strlen(str));
+	if (!new_str)
+		return (free(str), NULL);
+	i = 0;
+	j = 0;
+	while (str[i])
+	{
+		if (i != index)
+			new_str[j++] = str[i];
+		i++;
+	}
+	new_str[j] = '\0';
+	free(str);
+	return (new_str);
 }

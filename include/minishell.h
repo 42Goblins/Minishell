@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/28 03:31:35 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/28 21:42:39 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,7 @@ typedef struct s_shell
 	t_token		*token;
 	// char		**env_for_exec;
 	t_cmd		*cmds;
+	char		*current_line;
 }				t_shell;
 
 /* ========================================================================== */
@@ -136,6 +137,7 @@ int		exec_unset(t_env **env, char **cmd);
 
 /* exit.c */
 void	clean_exit(t_shell *shell, int status);
+void	clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status);
 int		is_num(char *str);
 int		exec_exit(t_shell *shell, char **cmd);
 
@@ -176,6 +178,7 @@ char	*get_var_value(char *var, t_env *env);
 bool	is_dollar_expand(char *word, int i, bool in_single);
 char	*expand_word(char *word, t_env *env);
 char	*append_expansion_part(char *built, char *part);
+char	*remove_char_at(char *str, int index);
 void	free_three_strings(char *first, char *second, char *third);
 int		expand_tokens(t_token *tokens, t_env *env);
 
