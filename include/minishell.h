@@ -119,8 +119,6 @@ int		exec_cd(t_shell *shell, char **cmd);
 void	update_env_pwd(t_env **env);
 int		go_to_oldpwd(t_env *env);
 int		go_to_home_dir(t_env *env);
-int		invalid_cd_option(char *arg);
-int		get_cd_path_index(char **cmd);
 
 /* echo.c */
 int		has_n_flag(char *str);
@@ -152,7 +150,6 @@ int		safe_add_var(t_env **env, char *key, char *value);
 int		add_new_var(t_env **env, char *key, char *value);
 int		parse_export(char *str, char **key, char **value);
 int		exec_export(t_env **env, char **cmd);
-int		get_export_arg_start(char **cmd, int *print_list, int *silent_empty);
 
 /* ========================================================================== */
 /*                                  LEXER                                     */

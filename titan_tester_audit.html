@@ -67,13 +67,12 @@ echo $?
 <pre>echo $UNEXISTING$UNEXISTING a     # affiche: a
 echo "$UNEXISTING$UNEXISTING" a   # affiche:  a</pre>
 
-<h3><span class="badge medium">Corrige</span>Options simples des builtins</h3>
-<p>Les cas invalides les plus visibles de <code>pwd</code>, <code>cd</code>, <code>unset</code> et <code>export</code> ont ete rapproches de bash : option invalide en debut de commande, status 2, et options valides simples acceptees quand necessaire.</p>
+<h3><span class="badge medium">Garde minimaliste</span>Options des builtins</h3>
+<p>On a volontairement retire les gestions avancees <code>cd -L/-P</code>, <code>unset -n/-f/-v</code> et <code>export -n/-a/-p</code>, parce que le sujet demande ces builtins sans options. Le seul check garde cote options est <code>pwd</code>, pour refuser proprement une option au lieu d'imprimer le dossier comme si de rien n'etait.</p>
 <pre>pwd -l       # status 2
-cd -n        # status 2
-unset -l     # status 2
-export -l    # status 2
-export -a    # status 0, sans affichage parasite</pre>
+cd -n        # comportement simple sujet : tente le path -n
+unset -l     # comportement simple sujet : tente d'unset la variable -l
+export -l    # comportement simple sujet : identifiant invalide</pre>
 </section>
 
 <section class="panel">
@@ -119,7 +118,7 @@ obtenu minishell   : comportement simple d'expansion $USER</pre>
 <h3>Builtins</h3>
 <ul>
 <li><code>exit</code> OK en pipe.</li>
-<li><code>pwd</code>, <code>cd</code>, <code>unset</code>, <code>export</code> meilleurs sur options.</li>
+<li><code>pwd</code> refuse les options evidentes ; <code>cd</code>, <code>unset</code> et <code>export</code> restent volontairement proches du sujet sans options.</li>
 <li>Reste possible : comparer quelques cas <code>env/export</code> a la main.</li>
 </ul>
 </div>
@@ -139,6 +138,7 @@ obtenu minishell   : comportement simple d'expansion $USER</pre>
 <ol>
 <li>Ne pas partir sur <code>$$</code>, <code>$'...'</code>, <code>$"..."</code> ou <code>;</code> sauf demande explicite : c'est trop bash avance pour le sujet.</li>
 <li>Faire une courte verification manuelle de <code>env</code>/<code>export</code> pour voir s'il reste un vrai bug hors comparaison fragile.</li>
+<li>Ne pas retomber dans les options avancees de <code>cd</code>, <code>unset</code> et <code>export</code> : le sujet precise qu'elles ne sont pas demandees.</li>
 <li>Decider si <code>~</code> vaut le coup. C'est defendable de ne pas le faire, mais c'est le plus gros paquet Titan restant.</li>
 <li>Faire une passe Valgrind manuelle sur commandes representatives, plutot que se fier a la categorie leaks Titan.</li>
 <li>Avant PR : <code>make</code>, <code>norminette</code> sur les fichiers touches, puis relancer au moins mandatory/redirections/hardcore.</li>
