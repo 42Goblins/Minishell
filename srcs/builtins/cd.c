@@ -68,19 +68,27 @@ int	go_to_home_dir(t_env *env)
 	return (0);
 }
 
-/* @brief */
+/**
+ * @brief Changes directory after validating options and argument count.
+ */
 int	exec_cd(t_shell *shell, char **cmd)
 {
-	if (cmd[1] && cmd[2])
+	int	path_i;
+
+	if (invalid_cd_option(cmd[1]))
+		return (2);
+	path_i = get_cd_path_index(cmd);
+	if (cmd[path_i] && cmd[path_i + 1])
 		return (ft_putstr_fd("minishell: cd: too many arguments\n", 2), 1);
-	if (!cmd[1] || (ft_strncmp(cmd[1], "~", 2) == 0))
+	if (!cmd[path_i] || ft_strcmp(cmd[path_i], "--") == 0
+		|| (ft_strncmp(cmd[path_i], "~", 2) == 0))
 		return (go_to_home_dir(shell->env));
-	if (ft_strncmp(cmd[1], "-", 2) == 0)
+	if (ft_strncmp(cmd[path_i], "-", 2) == 0)
 		return (go_to_oldpwd(shell->env));
-	if (chdir(cmd[1]) == -1)
+	if (chdir(cmd[path_i]) == -1)
 	{
 		ft_putstr_fd("minishell: cd: ", 2);
-		return (perror(cmd[1]), 1);
+		return (perror(cmd[path_i]), 1);
 	}
 	update_env_pwd(&shell->env);
 	return (0);

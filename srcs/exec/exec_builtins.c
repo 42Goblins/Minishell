@@ -47,7 +47,7 @@ void	exec_builtins(t_shell *shell, t_cmd *cmd)
 	else if (ft_strcmp(cmd->cmd_and_args[0], "env") == 0)
 		*get_status() = exec_env(shell->env, cmd->cmd_and_args);
 	else if (ft_strcmp(cmd->cmd_and_args[0], "pwd") == 0)
-		*get_status() = exec_pwd();
+		*get_status() = exec_pwd(cmd->cmd_and_args);
 	else if (ft_strcmp(cmd->cmd_and_args[0], "unset") == 0)
 		*get_status() = exec_unset(&shell->env, cmd->cmd_and_args);
 	else if (ft_strcmp(cmd->cmd_and_args[0], "exit") == 0)

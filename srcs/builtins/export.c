@@ -79,10 +79,15 @@ int	exec_export(t_env **env, char **cmd)
 	char	*cmd_key;
 	char	*cmd_value;
 	int		ret;
+	int		flags[2];
 
-	i = 1;
+	i = get_export_arg_start(cmd, &flags[0], &flags[1]);
 	ret = 0;
-	if (!cmd[1])
+	if (i == -1)
+		return (2);
+	if (!cmd[i] && flags[1] && !flags[0])
+		return (0);
+	if (!cmd[i])
 		return (print_export(*env), ret);
 	while (cmd[i])
 	{
