@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:57:59 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 02:32:03 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 01:31:45 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 /**
  * @brief Handles errors for commands containing a direct path.
  */
-int	handle_direct_path_error(char *cmd)
+int	handle_direct_path_error(t_shell *shell, char *cmd)
 {
 	struct stat	info;
 
@@ -25,20 +25,20 @@ int	handle_direct_path_error(char *cmd)
 	{
 		ft_putstr_fd("minishell: ", 2);
 		perror(cmd);
-		exit(127);
+		clean_exit(shell, 127);
 	}
 	if (S_ISDIR(info.st_mode))
 	{
 		ft_putstr_fd("minishell: ", 2);
 		ft_putstr_fd(cmd, 2);
 		ft_putstr_fd(": Is a directory\n", 2);
-		exit(126);
+		clean_exit(shell, 126);
 	}
 	if (access(cmd, X_OK) == -1)
 	{
 		ft_putstr_fd("minishell: ", 2);
 		perror(cmd);
-		exit(126);
+		clean_exit(shell, 126);
 	}
 	return (0);
 }
