@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 17:59:33 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 18:17:40 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ void	exec_cmd(t_shell *shell, t_cmd *cmds)
 		exec_builtins(shell, cmds);
 	else
 		exec_external(shell, cmds, shell->env);
-	exit(*get_status());
+	clean_exit(shell, *get_status());
 }
 
 /**
