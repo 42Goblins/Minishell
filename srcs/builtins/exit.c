@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 18:20:05 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/30 01:05:39 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,9 @@ int	is_num(char *str)
 	i = 0;
 	if (str[i] == '+' || str[i] == '-')
 		i++;
-	if (ft_strlen(str + i) > 19)
+	while (str[i] == '0')
+		i++;
+	if (strlen(str + i) >= 19)
 		return (0);
 	if (!str[i])
 		return (0);
