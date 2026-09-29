@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 00:06:41 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 02:35:25 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ void clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status)
  */
 void	clean_exit(t_shell *shell, int status)
 {
+	printf("CLEAN EXIT PID = %d\n", getpid());
 	if (shell->current_line)
 	{
 		free(shell->current_line);

@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 01:52:32 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 02:36:09 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,8 @@ int	launch_loop(t_shell *shell)
 int	main(int ac, char **av, char **env)
 {
 	t_shell	shell;
+
+	printf("MAIN PID = %d\n", getpid());
 
 	if (ac != 1 || av[0] == NULL)
 		return (1);
