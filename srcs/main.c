@@ -28,7 +28,8 @@ void	reset_shell_state(t_shell *shell)
  */
 void	process_line(t_shell *shell, char *line)
 {
-	tokenizer(line, shell);
+	if (tokenizer(line, shell))
+		return ;
 	expand_tokens(shell->token, shell->env);
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
