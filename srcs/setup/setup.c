@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 02:57:32 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 02:54:09 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/28 22:05:16 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,7 @@ int	setup(t_shell *shell, char **env)
 {
 	shell->token = NULL;
 	shell->cmds = NULL;
+	shell->current_line = NULL;
 	shell->env = NULL;
 	if (env == NULL || env[0] == NULL)
 	{
