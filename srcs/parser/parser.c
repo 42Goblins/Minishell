@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/17 18:38:33 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 01:42:21 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:17:48 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value);
  *
  * Env is passed down to redirections so heredoc content can expand variables.
  */
-t_cmd	*parse_tokens(t_shell *shell, t_token *tokens, t_env *env)
+t_cmd	*parse_tokens(t_shell *shell, t_token *tokens)
 {
 	t_token	*current;
 	t_cmd	*cmds;
@@ -37,7 +37,7 @@ t_cmd	*parse_tokens(t_shell *shell, t_token *tokens, t_env *env)
 	last_cmd = NULL;
 	while (current)
 	{
-		new_cmd = create_cmd_node(shell, current, env);
+		new_cmd = create_cmd_node(shell, current);
 		if (!new_cmd)
 			return (free_cmds(cmds), NULL);
 		if (cmds == NULL)
@@ -138,7 +138,7 @@ static int	copy_word_to_args(char **cmd_and_args, int *i, char *value)
  *
  * Redirections may need env when a heredoc expands its content.
  */
-t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens, t_env *env)
+t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens)
 {
 	t_cmd	*cmd;
 
@@ -156,7 +156,7 @@ t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens, t_env *env)
 	cmd->is_builtin = false;
 	if (cmd->cmd_and_args[0])
 		cmd->is_builtin = check_is_builtins(cmd->cmd_and_args[0]);
-	if (open_redirections(shell, cmd, tokens, env))
+	if (open_redirections(shell, cmd, tokens))
 		return (free_cmds(cmd), NULL);
 	return (cmd);
 }

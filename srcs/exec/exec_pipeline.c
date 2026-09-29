@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 23:47:02 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/16 02:20:53 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:06:29 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,7 @@ void	exec_cmd(t_shell *shell, t_cmd *cmds)
 	if (cmds->is_builtin)
 		exec_builtins(shell, cmds);
 	else
-		exec_external(cmds, shell->env);
+		exec_external(shell, cmds, shell->env);
 	exit(*get_status());
 }
 

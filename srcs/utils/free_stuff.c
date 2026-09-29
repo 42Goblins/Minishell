@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/08 03:21:34 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 02:39:06 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:19:23 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ void	free_lst_env(t_env *env)
 void	free_tab(char **tab)
 {
 	int	i;
+
 	if (!tab)
 		return ;
 	i = 0;

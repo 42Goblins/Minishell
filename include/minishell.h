@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 03:55:12 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:20:35 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,18 +188,19 @@ int		expand_tokens(t_token *tokens, t_env *env);
 
 int		count_cmd_args(t_token *tokens);
 char	**create_cmd_and_args(t_token *tokens);
-t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens, t_env *env);
-t_cmd	*parse_tokens(t_shell *shell, t_token *tokens, t_env *env);
+t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens);
+t_cmd	*parse_tokens(t_shell *shell, t_token *tokens);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
-int		open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens, t_env *env);
+int		open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens);
 int		is_empty_unquoted_word(t_token *token);
 
 /* ========================================================================== */
 /*                                  HEREDOC                                   */
 /* ========================================================================== */
 
-int		open_heredoc_redirection(t_shell *shell, t_cmd *cmd, t_token *delimiter, t_env *env);
+int		open_heredoc_redirection(t_shell *shell, t_cmd *cmd,
+			t_token *delimiter);
 int		write_heredoc_content(int write_fd, char *line, bool should_expand,
 			t_env *env);
 int		write_heredoc_line(int write_fd, char *line);
@@ -222,8 +223,8 @@ char	*find_path(char *cmd, t_env *env, int *not_exec);
 int		env_len(t_env *env);
 char	**t_env_to_tab(t_env *env);
 void	command_error(t_cmd *cmd, int not_exec);
-void	exec_external(t_cmd *cmd, t_env *env);
-void	exec_single_external(t_cmd *cmd, t_env *env);
+void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env);
+void	exec_single_external(t_shell *shell, t_cmd *cmd, t_env *env);
 
 /* exec_builtins.c */
 bool	check_is_builtins(char *cmd);

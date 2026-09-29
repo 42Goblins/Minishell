@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 03:55:55 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:07:22 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,7 +82,7 @@ void	command_error(t_cmd *cmd, int not_exec)
  * process, whether the command is not found, not executable, or
  * successfully launched.
  */
-void	exec_external(t_cmd *cmd, t_env *env)
+void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env)
 {
 	char	*path;
 	char	**env_tab;
@@ -108,7 +108,7 @@ void	exec_external(t_cmd *cmd, t_env *env)
  * @brief Forks and runs an external command outside of any
  * pipeline, then waits for it and stores its exit status.
  */
-void	exec_single_external(t_cmd *cmd, t_env *env)
+void	exec_single_external(t_shell *shell, t_cmd *cmd, t_env *env)
 {
 	pid_t	pid;
 	int		status;
@@ -122,7 +122,7 @@ void	exec_single_external(t_cmd *cmd, t_env *env)
 	if (pid == 0)
 	{
 		set_fds(cmd, -1, NULL);
-		exec_external(cmd, env);
+		exec_external(shell, cmd, env);
 	}
 	waitpid(pid, &status, 0);
 	if (WIFEXITED(status))
