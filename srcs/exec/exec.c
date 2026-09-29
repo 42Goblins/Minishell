@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
+/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 02:40:17 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/23 23:44:12 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/29 04:08:21 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ void	launch_exec(t_shell *shell, t_cmd *cmds)
 	if (cmd_count == 1 && cmds->is_builtin)
 		exec_single_builtins(shell, cmds);
 	else if (cmd_count == 1)
-		exec_single_external(cmds, shell->env);
+		exec_single_external(shell, cmds, shell->env);
 	else
 		exec_pipeline(shell, cmds);
 	setup_signals();

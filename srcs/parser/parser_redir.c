@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/03 01:52:56 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 01:48:10 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:15:57 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,8 @@
  * Classic redirections are opened here, and heredoc is delegated to its file.
  */
 
-static int	open_current_redirection(t_shell *shell, t_cmd *cmd, t_token *current, t_env *env);
+static int	open_current_redirection(t_shell *shell, t_cmd *cmd, \
+t_token *current);
 static int	open_input_redirection(t_cmd *cmd, char *filename);
 static int	open_output_redirection(t_cmd *cmd, char *filename, int flags);
 static int	print_redirection_error(char *filename);
@@ -29,7 +30,7 @@ static int	print_redirection_error(char *filename);
  * side, the last one replaces the previous fd. Env is only needed by heredoc
  * so its content can be expanded when the delimiter is not quoted.
  */
-int	open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens, t_env *env)
+int	open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens)
 {
 	t_token	*current;
 
@@ -40,7 +41,7 @@ int	open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens, t_env *env)
 	{
 		if (is_redirection_token(current->type))
 		{
-			if (open_current_redirection(shell, cmd, current, env))
+			if (open_current_redirection(shell, cmd, current))
 				return (1);
 			current = current->next->next;
 		}
@@ -56,7 +57,8 @@ int	open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens, t_env *env)
  * Classic redirections open files directly. Heredoc is passed to the heredoc
  * helper because it reads user input before giving an fd to the command.
  */
-static int	open_current_redirection(t_shell *shell, t_cmd *cmd, t_token *current, t_env *env)
+static int	open_current_redirection(t_shell *shell, t_cmd *cmd,
+	t_token *current)
 {
 	if (current->type == T_REDIR_IN)
 		return (open_input_redirection(cmd, current->next->value));
@@ -67,7 +69,7 @@ static int	open_current_redirection(t_shell *shell, t_cmd *cmd, t_token *current
 		return (open_output_redirection(cmd, current->next->value,
 				O_WRONLY | O_CREAT | O_APPEND));
 	if (current->type == T_HEREDOC)
-		return (open_heredoc_redirection(shell, cmd, current->next, env));
+		return (open_heredoc_redirection(shell, cmd, current->next));
 	return (0);
 }
 

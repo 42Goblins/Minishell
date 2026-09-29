@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 03:58:49 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 02:35:25 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:01:16 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,22 +15,12 @@
 /**
  * @brief Frees shell resources before exiting.
  */
-void clean_child_exit(t_shell *shell, t_cmd *local_cmd, int status)
-{
-	if (local_cmd && local_cmd != shell->cmds)
-        free_cmds(local_cmd);
-	clean_exit(shell, status);
-}
-/**
- * @brief Frees shell resources before exiting.
- */
 void	clean_exit(t_shell *shell, int status)
 {
-	printf("CLEAN EXIT PID = %d\n", getpid());
 	if (shell->current_line)
 	{
 		free(shell->current_line);
-		shell->current_line = NULL;	
+		shell->current_line = NULL;
 	}
 	free_cmds(shell->cmds);
 	free_tokens(shell->token);

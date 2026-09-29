@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 02:36:09 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 04:17:42 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	process_line(t_shell *shell, char *line)
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
 		return ;
-	shell->cmds = parse_tokens(shell, shell->token, shell->env);
+	shell->cmds = parse_tokens(shell, shell->token);
 	launch_exec(shell, shell->cmds);
 }
 
@@ -76,8 +76,6 @@ int	launch_loop(t_shell *shell)
 int	main(int ac, char **av, char **env)
 {
 	t_shell	shell;
-
-	printf("MAIN PID = %d\n", getpid());
 
 	if (ac != 1 || av[0] == NULL)
 		return (1);
