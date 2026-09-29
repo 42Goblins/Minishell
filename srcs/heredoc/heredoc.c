@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/15 18:49:11 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 02:05:26 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 03:37:50 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
  * It reads heredoc input, stores it in a pipe, and gives the read fd to cmd.
  */
 
-static void	heredoc_child(t_shell *shell, int pipefd[2], t_token *delimiter, t_env *env);
+static void	heredoc_child(t_shell *shell, t_cmd *cmd, int pipefd[2], t_token *delimiter, t_env *env);
 static int	wait_heredoc_child(pid_t pid, int pipefd[2]);
 static int	read_heredoc(int write_fd, char *delimiter,
 				bool should_expand, t_env *env);
@@ -48,7 +48,7 @@ int	open_heredoc_redirection(t_shell *shell, t_cmd *cmd, t_token *delimiter, t_e
 		return (perror("fork"), 1);
 	}
 	if (pid == 0)
-		heredoc_child(shell, pipefd, delimiter, env);
+		heredoc_child(shell, cmd, pipefd, delimiter, env);
 	if (wait_heredoc_child(pid, pipefd) != 0)
 		return (1);
 	if (cmd->fd_in != 0)
@@ -60,7 +60,7 @@ int	open_heredoc_redirection(t_shell *shell, t_cmd *cmd, t_token *delimiter, t_e
 /**
  * @brief Reads heredoc content in the child process and exits with its status.
  */
-static void	heredoc_child(t_shell *shell, int pipefd[2], t_token *delimiter, t_env *env)
+static void	heredoc_child(t_shell *shell, t_cmd *cmd, int pipefd[2], t_token *delimiter, t_env *env)
 {
 	int	res;
 
@@ -69,6 +69,8 @@ static void	heredoc_child(t_shell *shell, int pipefd[2], t_token *delimiter, t_e
 	res = read_heredoc(pipefd[1], delimiter->value,
 			!delimiter->had_quotes, env);
 	close(pipefd[1]);
+	free_tab(cmd->cmd_and_args);
+	free(cmd);
 	clean_exit(shell, res);
 }
 
