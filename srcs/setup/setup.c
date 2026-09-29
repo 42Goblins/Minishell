@@ -13,7 +13,8 @@
 #include "minishell.h"
 
 /**
- * @brief Increments SHLVL, creates it if needed, and resets high values.
+ * @brief Increments SHLVL and resets it when it becomes too high
+ * creat it if needed.
  */
 int	update_shlvl(t_env *env)
 {
@@ -74,7 +75,8 @@ int	ensure_pwd(t_shell *shell)
 }
 
 /**
- * @brief Creates default environment variables when env is empty.
+ * @brief Creates the default environment variables for 
+ * when launched with an empty environment.
  */
 int	create_minimal_env(t_shell *shell)
 {
