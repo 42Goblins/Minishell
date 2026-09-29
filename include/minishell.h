@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 03:53:08 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 03:55:12 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,18 +188,18 @@ int		expand_tokens(t_token *tokens, t_env *env);
 
 int		count_cmd_args(t_token *tokens);
 char	**create_cmd_and_args(t_token *tokens);
-t_cmd	*create_cmd_node(t_token *tokens, t_env *env);
-t_cmd	*parse_tokens(t_token *tokens, t_env *env);
+t_cmd	*create_cmd_node(t_shell *shell, t_token *tokens, t_env *env);
+t_cmd	*parse_tokens(t_shell *shell, t_token *tokens, t_env *env);
 int		validate_syntax(t_token *tokens);
 int		is_redirection_token(t_token_type type);
-int		open_redirections(t_cmd *cmd, t_token *tokens, t_env *env);
+int		open_redirections(t_shell *shell, t_cmd *cmd, t_token *tokens, t_env *env);
 int		is_empty_unquoted_word(t_token *token);
 
 /* ========================================================================== */
 /*                                  HEREDOC                                   */
 /* ========================================================================== */
 
-int		open_heredoc_redirection(t_cmd *cmd, t_token *delimiter, t_env *env);
+int		open_heredoc_redirection(t_shell *shell, t_cmd *cmd, t_token *delimiter, t_env *env);
 int		write_heredoc_content(int write_fd, char *line, bool should_expand,
 			t_env *env);
 int		write_heredoc_line(int write_fd, char *line);
@@ -213,7 +213,7 @@ int		count_cmds(t_cmd *cmds);
 void	launch_exec(t_shell *shell, t_cmd *cmds);
 
 /* exec_external_path.c */
-int		handle_direct_path_error(char *cmd);
+int		handle_direct_path_error(t_shell *shell, char *cmd);
 char	*try_path(char *dir, char *cmd, int *not_exec);
 char	*get_path(t_env *env);
 char	*find_path(char *cmd, t_env *env, int *not_exec);

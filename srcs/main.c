@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:34:41 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 22:06:43 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 01:52:32 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void	process_line(t_shell *shell, char *line)
 	remove_quotes_from_tokens(shell->token);
 	if (validate_syntax(shell->token))
 		return ;
-	shell->cmds = parse_tokens(shell->token, shell->env);
+	shell->cmds = parse_tokens(shell, shell->token, shell->env);
 	launch_exec(shell, shell->cmds);
 }
 
