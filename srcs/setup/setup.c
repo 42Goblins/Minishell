@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   setup.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/16 02:57:32 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 22:05:16 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 22:22:35 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ int	update_shlvl(t_env *env)
 	shlvl_value = get_env_value(env, "SHLVL");
 	if (!shlvl_value)
 	{
-		if (!update_env_vars(&env, "SHLVL", ft_strdup("1")))
+		if (!update_env_vars(&env, ft_strdup("SHLVL"), ft_strdup("1")))
 			return (1);
 		return (0);
 	}
