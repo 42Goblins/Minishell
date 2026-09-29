@@ -13,7 +13,7 @@
 #include "minishell.h"
 
 /**
- * @brief magiiic returns a pointer to the shell's persistent exit status.
+ * @brief Returns a pointer to the shell's persistent exit status.
  * This is used to set the exit status in child processes 
  * and retrieve it in the parent.
  */

@@ -15,6 +15,11 @@
   and process execution.
 </p>
 
+<p align="center">
+  Authors: <code>cmauley</code> - GitHub profile: <a href="https://github.com/gpalemo">gpalemo</a> |
+  <code>dgeara</code> - GitHub profile: <a href="https://github.com/deltafraktal">deltafraktal</a>
+</p>
+
 | Project area | Status |
 |---|---|
 | Mandatory features | Implemented |
@@ -50,7 +55,6 @@
 13. [Scope And Bash Differences](#13-scope-and-bash-differences)
 14. [Resources](#14-resources)
 15. [Use of AI](#15-use-of-ai)
-16. [Authors](#16-authors)
 
 ## 1. Description
 
@@ -683,7 +687,3 @@ Other 42 students also tested the shell, tried edge cases, and shared feedback.
 These hands-on sessions helped identify issues and verify the shell's behavior
 beyond our own test scenarios.
 
-## 16. Authors
-
-- `cmauley` - GitHub profile: [gpalemo](https://github.com/gpalemo)
-- `dgeara` - GitHub profile: [deltafraktal](https://github.com/deltafraktal)

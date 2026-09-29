@@ -2,7 +2,6 @@ minishell
 objs/
 libft/obj
 libft/libft.a
-main.c
 *.dSYM
 launch.sh
 readline.supp

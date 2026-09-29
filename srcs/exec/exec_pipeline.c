@@ -71,8 +71,9 @@ void	set_fds(t_cmd *cmds, int prev_fd, int pipefd[2])
 }
 
 /**
- * @brief Launch exec_builtins or exec_external 
- * if they fail, exit with the command's status.
+ * @brief Executes one parsed command in a pipeline child process.
+ *
+ * Builtins and external commands both end by exiting with the current status.
  */
 void	exec_cmd(t_shell *shell, t_cmd *cmds)
 {
