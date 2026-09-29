@@ -12,6 +12,9 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Counts the number of command nodes in a parsed command list.
+ */
 int	count_cmds(t_cmd *cmds)
 {
 	int	count;

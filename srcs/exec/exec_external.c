@@ -13,7 +13,7 @@
 #include "minishell.h"
 
 /**
- * @brief Counts the number of nodes in an t_env list.
+ * @brief Counts the number of nodes in a t_env list.
  */
 int	env_len(t_env *env)
 {
@@ -75,7 +75,7 @@ void	command_error(t_cmd *cmd, int not_exec)
 }
 
 /**
- * @brief Find cmd's path and replaces the current process
+ * @brief Finds cmd's path and replaces the current process
  * with it via execve.
  *
  * Meant to run inside an already-forked child: it always exits the

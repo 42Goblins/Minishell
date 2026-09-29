@@ -12,6 +12,9 @@
 
 #include "minishell.h"
 
+/**
+ * @brief Frees one environment node and its allocated key/value strings.
+ */
 void	free_t_env(t_env *env)
 {
 	if (!env)
@@ -23,6 +26,9 @@ void	free_t_env(t_env *env)
 	free(env);
 }
 
+/**
+ * @brief Frees the full environment linked list.
+ */
 void	free_lst_env(t_env *env)
 {
 	t_env	*next;
@@ -35,6 +41,9 @@ void	free_lst_env(t_env *env)
 	}
 }
 
+/**
+ * @brief Frees a NULL-terminated array of allocated strings.
+ */
 void	free_tab(char **tab)
 {
 	int	i;
