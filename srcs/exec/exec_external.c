@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   exec_external.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
+/*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/09 20:22:24 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/29 18:02:11 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/29 22:20:20 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,8 @@ void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env)
 	signal(SIGINT, SIG_DFL);
 	signal(SIGQUIT, SIG_DFL);
 	env_tab = NULL;
+	if (!cmd || !cmd->cmd_and_args || !cmd->cmd_and_args[0])
+		clean_exit(shell, 0);
 	handle_direct_path_error(shell, cmd->cmd_and_args[0]);
 	not_exec = 0;
 	path = find_path(cmd->cmd_and_args[0], env, &not_exec);

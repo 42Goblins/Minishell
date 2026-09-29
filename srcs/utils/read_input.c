@@ -6,7 +6,7 @@
 /*   By: cmauley <cmauley@student.42lausanne.ch>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/09/28 00:00:00 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/28 00:00:00 by cmauley          ###   ########.fr       */
+/*   Updated: 2026/09/29 22:16:36 by cmauley          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,8 @@ static char	*read_line_without_readline(void)
 	}
 	if (bytes <= 0 && len == 0)
 		return (NULL);
+	if (c == '\n' && len == 0)
+		return (ft_strdup(""));
 	return (line);
 }
 
