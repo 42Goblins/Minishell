@@ -64,6 +64,11 @@ static int	quoted_word_len(char *input, int i, char quote)
 	if (input[i + len] == quote)
 		len++;
 	else
+	{
+		ft_putstr_fd("minishell: syntax error: unclosed quote\n",
+			STDERR_FILENO);
+		*get_status() = 2;
 		return (-1);
+	}
 	return (len);
 }
