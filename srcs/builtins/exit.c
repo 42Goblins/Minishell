@@ -39,7 +39,7 @@ int	is_num(char *str)
 	i = 0;
 	if (str[i] == '+' || str[i] == '-')
 		i++;
-	if (strlen(str + i) > 19)
+	if (ft_strlen(str + i) > 19)
 		return (0);
 	if (!str[i])
 		return (0);

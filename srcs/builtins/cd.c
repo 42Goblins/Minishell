@@ -73,7 +73,7 @@ int	go_to_home_dir(t_env *env)
 		update_env_pwd(&env);
 	}
 	else
-		return (ft_putstr_fd("cd: HOME not set\n", 2), 1);
+		return (ft_putstr_fd("minishell: cd: HOME not set\n", 2), 1);
 	return (0);
 }
 

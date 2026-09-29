@@ -33,7 +33,7 @@ int	has_n_flag(char *str)
 }
 
 /**
- * @brief Prints arguments with optional -n flags, suppressing the newline.
+ * @brief Prints arguments with optional -n flags (newline supression)
  */
 int	exec_echo(char **cmd)
 {
