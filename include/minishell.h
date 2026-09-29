@@ -6,11 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-<<<<<<< HEAD
-/*   Updated: 2026/09/29 17:56:48 by dgeara           ###   ########.fr       */
-=======
-/*   Updated: 2026/09/29 00:53:08 by dgeara           ###   ########.fr       */
->>>>>>> 50f9fc8 (chore: euuuuh trying to fix les still reachables des les child)
+/*   Updated: 2026/09/29 18:11:14 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -239,8 +235,6 @@ int		open_heredoc_redirection(t_shell *shell, t_cmd *cmd,
 /* heredoc_utils.c */
 int		write_heredoc_content(int write_fd, char *line, bool should_expand,
 			t_env *env);
-int		write_heredoc_line(int write_fd, char *line);
-
 /* ========================================================================== */
 /*                                    EXEC                                    */
 /* ========================================================================== */
@@ -257,11 +251,7 @@ void	exec_single_builtins(t_shell *shell, t_cmd *cmd);
 /* exec_external.c */
 int		env_len(t_env *env);
 char	**t_env_to_tab(t_env *env);
-<<<<<<< HEAD
-void	command_error(t_cmd *cmd, int not_exec);
-=======
 void	command_error(t_shell *shell, t_cmd *cmd, int not_exec);
->>>>>>> 50f9fc8 (chore: euuuuh trying to fix les still reachables des les child)
 void	exec_external(t_shell *shell, t_cmd *cmd, t_env *env);
 void	exec_single_external(t_shell *shell, t_cmd *cmd, t_env *env);
 
