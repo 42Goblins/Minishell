@@ -6,30 +6,30 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 16:12:40 by cmauley           #+#    #+#             */
-/*   Updated: 2026/09/29 18:16:14 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/30 19:25:41 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
-# include <stdio.h>				// printf
-# include <stdlib.h>			// malloc, free, exit
-# include <string.h>			// strerror
-# include <unistd.h>			// write, access, read, close, fork, execve
-# include <fcntl.h>				// open, O_RDONLY, O_WRONLY, O_CREAT
-# include <sys/stat.h>			// stat, lstat, fstat
-# include <sys/types.h>			// system types
-# include <sys/wait.h>			// wait, waitpid, wait3, wait4
-# include <dirent.h>			// opendir, readdir, closedir
-# include <readline/readline.h>	// readline, rl_*
-# include <readline/history.h>	// add_history, rl_clear_history
-# include <signal.h>			// signal, sigaction, kill
-# include <sys/ioctl.h>			// ioctl, isatty, ttyname, ttyslot
-# include <termios.h>			// tcsetattr, tcgetattr
-# include <termcap.h>			// tgetent, tgetflag, tgetnum, tgetstr, tputs
-# include "../libft/inc/libft.h"// libft functions
-# include <stdbool.h>			// bool type
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <unistd.h>
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <dirent.h>
+# include <readline/readline.h>
+# include <readline/history.h>
+# include <signal.h>
+# include <sys/ioctl.h>
+# include <termios.h>
+# include <termcap.h>
+# include "../libft/inc/libft.h"
+# include <stdbool.h>
 
 # define DEFAULT_PATH "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
