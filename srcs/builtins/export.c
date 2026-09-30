@@ -6,7 +6,7 @@
 /*   By: dgeara <dgeara@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/30 05:22:01 by dgeara            #+#    #+#             */
-/*   Updated: 2026/09/28 04:03:57 by dgeara           ###   ########.fr       */
+/*   Updated: 2026/09/30 19:13:55 by dgeara           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,10 @@ int	add_new_var(t_env **env, char *key, char *value)
 	if (!new)
 		return (0);
 	new->key = key;
-	new->value = value;
+	if (value)
+		new->value = value;
+	else
+		new->value = ft_strdup("");
 	new->next = NULL;
 	if (!*env)
 	{
